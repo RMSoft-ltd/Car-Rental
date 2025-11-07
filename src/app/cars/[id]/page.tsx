@@ -3,10 +3,8 @@ import { Car } from "@/types/car";
 import { 
   ArrowLeft, 
   Users, 
-  Briefcase, 
   Clock, 
   Settings, 
-  Star, 
   MapPin, 
   Calendar,
   User,
@@ -30,7 +28,10 @@ const mockCar: Car = {
   mileage: 450,
   fuelType: "Petrol",
   transmission: "Automatic",
-  features: ["Air Conditioning", "GPS", "Bluetooth"]
+  features: ["Air Conditioning", "GPS", "Bluetooth"],
+  available: true,
+  location: "Kigali, Rwanda",
+  rating: 4.5
 };
 
 export default function CarDetailPage() {

@@ -46,7 +46,7 @@ export default function ImportantInfoModal({
                 Driver & license requirements
               </h3>
               <p className="text-gray-600 mb-3">
-                When you pick the car up, you'll need:
+                When you pick the car up, you&apos;ll need:
               </p>
               <div className="space-y-2">
                 <div className="flex items-center">
@@ -102,7 +102,7 @@ export default function ImportantInfoModal({
               </h3>
               <p className="text-lg font-semibold text-gray-700 mb-2">250,000 RWF</p>
               <p className="text-gray-600">
-                If the car's bodywork gets damaged, the most you'll pay towards repairs covered by the Collision Damage Waiver is the damage excess (250,000 RWF). This cover is only valid if you stick to the terms of the rental agreement. It doesn't cover other parts of the car (e.g. windows, wheels, interior or undercarriage), or charges (e.g. for towing or off-road time), or anything in the car (e.g. child seats, GPS devices or personal belongings).
+                If the car&apos;s bodywork gets damaged, the most you&apos;ll pay towards repairs covered by the Collision Damage Waiver is the damage excess (250,000 RWF). This cover is only valid if you stick to the terms of the rental agreement. It doesn&apos;t cover other parts of the car (e.g. windows, wheels, interior or undercarriage), or charges (e.g. for towing or off-road time), or anything in the car (e.g. child seats, GPS devices or personal belongings).
               </p>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function ImportantInfoModal({
               </h3>
               <p className="text-lg font-semibold text-gray-700 mb-2">Like for like</p>
               <p className="text-gray-600">
-                When you pick your car up, the fuel tank will be full or partly full. You will leave a deposit to cover the cost of the fuel: the counter staff will block this money on your credit card. Just before you return your car, please replace the fuel you've used.
+                When you pick your car up, the fuel tank will be full or partly full. You will leave a deposit to cover the cost of the fuel: the counter staff will block this money on your credit card. Just before you return your car, please replace the fuel you&apos;ve used.
               </p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function ImportantInfoModal({
                 {carData?.mileage || 450} kilometres per rental
               </p>
               <p className="text-gray-600">
-                If you drive more than {carData?.mileage || 450} kilometres during your rental, you'll pay 700 RWF for each additional kilometre when you drop your car off.
+                If you drive more than {carData?.mileage || 450} kilometres during your rental, you&apos;ll pay 700 RWF for each additional kilometre when you drop your car off.
               </p>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function ImportantInfoModal({
           {/* Footer Disclaimer */}
           <div className="border-t border-gray-200 pt-6">
             <p className="text-sm text-gray-500">
-              Please see the Service Provider's full terms and conditions below, which include the full name and company registered address of your Service Provider, information on and fees of extra products and services purchasable at the counter or based on your use of the rental, such as driving cross border and, if any, pick-up and drop-off grace periods.
+              Please see the Service Provider&apos;s full terms and conditions below, which include the full name and company registered address of your Service Provider, information on and fees of extra products and services purchasable at the counter or based on your use of the rental, such as driving cross border and, if any, pick-up and drop-off grace periods.
             </p>
           </div>
         </div>

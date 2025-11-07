@@ -11,6 +11,9 @@ export interface Car {
   location: string;
   mileage: number;
   rating: number;
+  fuelType: string;
+  transmission: string;
+  
 }
 
 export interface RentalBooking {

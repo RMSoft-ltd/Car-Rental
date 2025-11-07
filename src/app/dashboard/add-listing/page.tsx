@@ -17,12 +17,6 @@ const steps = [
   { id: "image", title: "Image", icon: <Image className="w-5 h-5" /> },
 ];
 
-// Mock user data
-const user = {
-  name: "Benny Chrispin",
-  email: "ndizibaidu23@gmail.com",
-  avatar: "/images/abstract-user-flat-4.png"
-};
 
 export default function AddListingPage() {
   const router = useRouter();
@@ -129,11 +123,6 @@ export default function AddListingPage() {
     { value: "EUR", label: "EUR" },
   ];
 
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
 
   const handlePrevious = () => {
     if (currentStep > 0) {
@@ -527,7 +516,7 @@ export default function AddListingPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Driver & license requirements</h3>
         <p className="text-sm text-gray-600 mb-4">
-          When you pick up your car, you'll need:
+          When you pick up your car, you&apos;ll need:
         </p>
         <div className="space-y-3">
           <Checkbox
@@ -590,7 +579,7 @@ export default function AddListingPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Damage Excess</h3>
         <p className="text-sm text-gray-600">
-          If the car's bodywork gets damaged, the most you'll pay towards repairs covered by the Collision Damage Waiver is the damage excess ({info.damageExcess} {price.currency}). This cover is only valid if you stick to the terms of the rental agreement. It doesn't cover other parts of the car (e.g. windows, wheels, interior or undercarriage), or charges (e.g. for towing or off-road time), or anything in the car (e.g. child seats, GPS devices or personal belongings).
+          If the car&apos;s bodywork gets damaged, the most you&apos;ll pay towards repairs covered by the Collision Damage Waiver is the damage excess ({info.damageExcess} {price.currency}). This cover is only valid if you stick to the terms of the rental agreement. It doesn&apos;t cover other parts of the car (e.g. windows, wheels, interior or undercarriage), or charges (e.g. for towing or off-road time), or anything in the car (e.g. child seats, GPS devices or personal belongings).
         </p>
       </div>
 
@@ -598,7 +587,7 @@ export default function AddListingPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Fuel Policy</h3>
         <p className="text-sm text-gray-600">
-          If the car's bodywork gets damaged, the most you'll pay towards repairs covered by the Collision Damage Waiver is the damage excess ({info.damageExcess} {price.currency}). This cover is only valid if you stick to the terms of the rental agreement. It doesn't cover other parts of the car (e.g. windows, wheels, interior or undercarriage), or charges (e.g. for towing or off-road time), or anything in the car (e.g. child seats, GPS devices or personal belongings).
+          If the car&apos;s bodywork gets damaged, the most you&apos;ll pay towards repairs covered by the Collision Damage Waiver is the damage excess ({info.damageExcess} {price.currency}). This cover is only valid if you stick to the terms of the rental agreement. It doesn&apos;t cover other parts of the car (e.g. windows, wheels, interior or undercarriage), or charges (e.g. for towing or off-road time), or anything in the car (e.g. child seats, GPS devices or personal belongings).
         </p>
       </div>
     </div>
