@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Car } from "@/types/car";
 import { Users, Briefcase, Clock, Settings, Info, User } from "lucide-react";
+import ImportantInfoModal from "./ImportantInfoModal";
+import Link from "next/link";
 
 interface HorizontalCarCardProps {
   car: Car;
@@ -17,7 +19,18 @@ export default function HorizontalCarCard({
   reviewCount = 111,
   reviewRating = 9.3
 }: HorizontalCarCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleInfoClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
   return (
+    <>
     <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-all duration-300 relative transform hover:-translate-y-1 overflow-hidden">
       {/* Top Pick Badge */}
       {isTopPick && (
@@ -83,9 +96,12 @@ export default function HorizontalCarCard({
                 <p className="text-2xl font-bold text-gray-900">{car.pricePerDay.toLocaleString()} RWF</p>
                 <p className="text-sm text-gray-500">Free cancellation</p>
               </div>
-              <button className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors">
-                View Deal
-              </button>
+                     <Link 
+                       href={`/cars/${car.id}`}
+                       className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors text-center block"
+                     >
+                       View Deal
+                     </Link>
             </div>
           </div>
         </div>
@@ -113,13 +129,29 @@ export default function HorizontalCarCard({
             <span className="text-sm text-gray-500">({reviewCount} reviews)</span>
           </div>
           
-          {/* Important Info */}
-          <div className="flex items-center text-gray-500">
-            <Info className="w-4 h-4 mr-1" />
-            <span className="text-sm">Important Info</span>
-          </div>
+                 {/* Important Info */}
+                 <button 
+                   onClick={handleInfoClick}
+                   className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"
+                 >
+                   <Info className="w-4 h-4 mr-1" />
+                   <span className="text-sm">Important Info</span>
+                 </button>
         </div>
       </div>
     </div>
+
+    {/* Important Info Modal */}
+    <ImportantInfoModal 
+      isOpen={isModalOpen}
+      onClose={handleCloseModal}
+      carData={{
+        make: car.make,
+        model: car.model,
+        year: car.year,
+        mileage: car.mileage
+      }}
+    />
+    </>
   );
 }

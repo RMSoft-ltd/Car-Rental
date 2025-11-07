@@ -21,7 +21,9 @@ export default function Home() {
       features: ["GPS", "Bluetooth", "Air Conditioning", "Premium Interior", "Panoramic Sunroof"],
       location: "Kigali",
       mileage: 150,
-      rating: 4.9
+      rating: 4.9,
+      fuelType: "Petrol",
+      transmission: "Automatic"
     },
     {
       id: "2",
@@ -35,7 +37,9 @@ export default function Home() {
       features: ["GPS", "Bluetooth", "Air Conditioning", "Hybrid"],
       location: "Kigali",
       mileage: 380,
-      rating: 4.6
+      rating: 4.6,
+      fuelType: "Hybrid",
+      transmission: "Automatic"
     },
     {
       id: "3",
@@ -49,7 +53,9 @@ export default function Home() {
       features: ["GPS", "Bluetooth", "Air Conditioning", "Sunroof"],
       location: "Kigali",
       mileage: 320,
-      rating: 4.7
+      rating: 4.7,
+      fuelType: "Petrol",
+      transmission: "Automatic"
     },
     {
       id: "4",
@@ -63,7 +69,9 @@ export default function Home() {
       features: ["GPS", "Bluetooth", "Air Conditioning", "Leather Seats", "Premium Sound"],
       location: "Kigali",
       mileage: 280,
-      rating: 4.9
+      rating: 4.9,
+      fuelType: "Petrol",
+      transmission: "Automatic"
     },
     {
       id: "5",
@@ -77,7 +85,9 @@ export default function Home() {
       features: ["GPS", "Bluetooth", "Air Conditioning", "Premium Interior", "Panoramic Sunroof"],
       location: "Kigali",
       mileage: 150,
-      rating: 4.9
+      rating: 4.9,
+      fuelType: "Petrol",
+      transmission: "Automatic"
     },
     {
       id: "6",
@@ -91,7 +101,9 @@ export default function Home() {
       features: ["GPS", "Bluetooth", "Air Conditioning", "Heated Seats"],
       location: "Kigali",
       mileage: 400,
-      rating: 4.5
+      rating: 4.5,
+      fuelType: "Petrol",
+      transmission: "Automatic"
     },
     {
       id: "7",
@@ -105,7 +117,9 @@ export default function Home() {
       features: ["GPS", "Bluetooth", "Air Conditioning", "Premium Interior", "Panoramic Sunroof"],
       location: "Kigali",
       mileage: 150,
-      rating: 4.9
+      rating: 4.9,
+      fuelType: "Petrol",
+      transmission: "Automatic"
     }
   ];
 
