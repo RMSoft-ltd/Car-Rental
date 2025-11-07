@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
+import carsReducer from "./slices/carSlice";
 import socketReducer from "./slices/socketSlice";
 import notificationReducer from "./slices/notificationSlice";
 import notificationPreferencesReducer from "./slices/notificationPreferencesSlice";
@@ -9,6 +10,7 @@ export const store = configureStore({
   reducer: {
     socket: socketReducer,
     auth: authReducer,
+    cars: carsReducer,
     notifications: notificationReducer,
     notificationPreferences: notificationPreferencesReducer,
   },

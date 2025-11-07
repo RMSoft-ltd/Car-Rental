@@ -4,6 +4,9 @@ import axios, {
   AxiosResponse,
 } from "axios";
 
+export const Image_Url = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+
 const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   timeout: 10000,

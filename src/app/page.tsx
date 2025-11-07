@@ -3,143 +3,54 @@
 import React from "react";
 import { MapPin, Calendar, Clock, Search, ArrowUpDown } from "lucide-react";
 import HorizontalCarCard from "@/components/HorizontalCarCard";
-import { Car } from "@/types/car";
+import {
+  selectCars,
+  fetchCars,
+  selectCarsLoading,
+} from "@/store/slices/carSlice";
+
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { CarQueryParams } from "@/types/car-listing";
+import { HorizontalCarCardSkeleton } from "@/components/skelton/HorizontalCarCardSkeleton";
+import EmptyState from "@/components/EmptySatate";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SelectInput } from "@/components/SelectInput";
 
 export default function Home() {
+  const cars = useAppSelector(selectCars);
+  const isLoading = useAppSelector(selectCarsLoading);
 
-  // Sample car data with diverse, high-quality images
-  const cars: Car[] = [
-    {
-      id: "1",
-      make: "Mercedes-Benz",
-      model: "GLC",
-      year: 2023,
-      seats: 5,
-      pricePerDay: 85000,
-      image: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      available: true,
-      features: ["GPS", "Bluetooth", "Air Conditioning", "Premium Interior", "Panoramic Sunroof"],
-      location: "Kigali",
-      mileage: 150,
-      rating: 4.9,
-      fuelType: "Petrol",
-      transmission: "Automatic"
-    },
-    {
-      id: "2",
-      make: "Toyota",
-      model: "Camry",
-      year: 2020,
-      seats: 5,
-      pricePerDay: 45000,
-      image: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      available: true,
-      features: ["GPS", "Bluetooth", "Air Conditioning", "Hybrid"],
-      location: "Kigali",
-      mileage: 380,
-      rating: 4.6,
-      fuelType: "Hybrid",
-      transmission: "Automatic"
-    },
-    {
-      id: "3",
-      make: "Honda",
-      model: "Civic",
-      year: 2019,
-      seats: 5,
-      pricePerDay: 42000,
-      image: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      available: true,
-      features: ["GPS", "Bluetooth", "Air Conditioning", "Sunroof"],
-      location: "Kigali",
-      mileage: 320,
-      rating: 4.7,
-      fuelType: "Petrol",
-      transmission: "Automatic"
-    },
-    {
-      id: "4",
-      make: "BMW",
-      model: "X3",
-      year: 2022,
-      seats: 5,
-      pricePerDay: 75000,
-      image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      available: true,
-      features: ["GPS", "Bluetooth", "Air Conditioning", "Leather Seats", "Premium Sound"],
-      location: "Kigali",
-      mileage: 280,
-      rating: 4.9,
-      fuelType: "Petrol",
-      transmission: "Automatic"
-    },
-    {
-      id: "5",
-      make: "Mercedes-Benz",
-      model: "GLC",
-      year: 2023,
-      seats: 5,
-      pricePerDay: 85000,
-      image: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      available: true,
-      features: ["GPS", "Bluetooth", "Air Conditioning", "Premium Interior", "Panoramic Sunroof"],
-      location: "Kigali",
-      mileage: 150,
-      rating: 4.9,
-      fuelType: "Petrol",
-      transmission: "Automatic"
-    },
-    {
-      id: "6",
-      make: "Hyundai",
-      model: "Tucson",
-      year: 2021,
-      seats: 5,
-      pricePerDay: 48000,
-      image: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      available: true,
-      features: ["GPS", "Bluetooth", "Air Conditioning", "Heated Seats"],
-      location: "Kigali",
-      mileage: 400,
-      rating: 4.5,
-      fuelType: "Petrol",
-      transmission: "Automatic"
-    },
-    {
-      id: "7",
-      make: "Mercedes-Benz",
-      model: "GLC",
-      year: 2023,
-      seats: 5,
-      pricePerDay: 85000,
-      image: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      available: true,
-      features: ["GPS", "Bluetooth", "Air Conditioning", "Premium Interior", "Panoramic Sunroof"],
-      location: "Kigali",
-      mileage: 150,
-      rating: 4.9,
-      fuelType: "Petrol",
-      transmission: "Automatic"
-    }
-  ];
+  console.log("Alls Cars", cars);
+
+  const dispatch = useAppDispatch();
+
+  React.useEffect(() => {
+    dispatch(fetchCars(filters));
+  }, [dispatch]);
+
+  const filters: CarQueryParams = {
+    page: 1,
+    limit: 25,
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* Hero Section */}
       <div className="relative h-[80vh]">
         {/* Background Image */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1555215695-3004980ad54e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')"
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1555215695-3004980ad54e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')",
           }}
         >
           {/* Secondary Car Image Overlay */}
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
             style={{
-              backgroundImage: "url('https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')"
+              backgroundImage:
+                "url('https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')",
             }}
           ></div>
         </div>
@@ -292,7 +203,9 @@ export default function Home() {
 
                 {/* Car Type Filter */}
                 <div className="mb-4 pb-4 border-b border-gray-200">
-                  <h4 className="text-sm font-bold text-gray-900 mb-2">Car Type</h4>
+                  <h4 className="text-sm font-bold text-gray-900 mb-2">
+                    Car Type
+                  </h4>
                   <div className="space-y-1">
                     <label className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -300,7 +213,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Sedan</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Sedan
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(3)</span>
                     </label>
@@ -320,7 +235,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Hatchback</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Hatchback
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(2)</span>
                     </label>
@@ -329,7 +246,9 @@ export default function Home() {
 
                 {/* Transmission Filter */}
                 <div className="mb-4 pb-4 border-b border-gray-200">
-                  <h4 className="text-sm font-bold text-gray-900 mb-2">Transmission</h4>
+                  <h4 className="text-sm font-bold text-gray-900 mb-2">
+                    Transmission
+                  </h4>
                   <div className="space-y-1">
                     <label className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -338,7 +257,9 @@ export default function Home() {
                           defaultChecked
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Automatic</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Automatic
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(6)</span>
                     </label>
@@ -348,7 +269,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Manual</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Manual
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(3)</span>
                     </label>
@@ -357,7 +280,9 @@ export default function Home() {
 
                 {/* Price Range Filter */}
                 <div className="mb-4 pb-4 border-b border-gray-200">
-                  <h4 className="text-sm font-bold text-gray-900 mb-2">Price Range</h4>
+                  <h4 className="text-sm font-bold text-gray-900 mb-2">
+                    Price Range
+                  </h4>
                   <div className="space-y-1">
                     <label className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -365,7 +290,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Under 50,000 RWF</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Under 50,000 RWF
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(3)</span>
                     </label>
@@ -375,7 +302,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">50,000 - 80,000 RWF</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          50,000 - 80,000 RWF
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(4)</span>
                     </label>
@@ -385,7 +314,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Above 80,000 RWF</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Above 80,000 RWF
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(2)</span>
                     </label>
@@ -394,7 +325,9 @@ export default function Home() {
 
                 {/* Features Filter */}
                 <div className="mb-4 pb-4 border-b border-gray-200">
-                  <h4 className="text-sm font-bold text-gray-900 mb-2">Features</h4>
+                  <h4 className="text-sm font-bold text-gray-900 mb-2">
+                    Features
+                  </h4>
                   <div className="space-y-1">
                     <label className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -402,7 +335,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Air Conditioning</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Air Conditioning
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(9)</span>
                     </label>
@@ -412,7 +347,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">GPS Navigation</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          GPS Navigation
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(7)</span>
                     </label>
@@ -422,7 +359,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Bluetooth</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Bluetooth
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(8)</span>
                     </label>
@@ -431,7 +370,9 @@ export default function Home() {
 
                 {/* Fuel Type Filter */}
                 <div className="mb-4 pb-4 border-b border-gray-200">
-                  <h4 className="text-sm font-bold text-gray-900 mb-2">Fuel Type</h4>
+                  <h4 className="text-sm font-bold text-gray-900 mb-2">
+                    Fuel Type
+                  </h4>
                   <div className="space-y-1">
                     <label className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -439,7 +380,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Petrol</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Petrol
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(7)</span>
                     </label>
@@ -449,7 +392,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Diesel</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Diesel
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(2)</span>
                     </label>
@@ -459,7 +404,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Electric</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Electric
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(0)</span>
                     </label>
@@ -476,7 +423,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">2020 - 2024</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          2020 - 2024
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(5)</span>
                     </label>
@@ -486,7 +435,9 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">2018 - 2019</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          2018 - 2019
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(3)</span>
                     </label>
@@ -496,13 +447,14 @@ export default function Home() {
                           type="checkbox"
                           className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Below 2018</span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Below 2018
+                        </span>
                       </div>
                       <span className="text-sm text-gray-500">(1)</span>
                     </label>
                   </div>
                 </div>
-
               </div>
             </div>
 
@@ -512,12 +464,17 @@ export default function Home() {
               <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6 mb-6">
                 {/* Header Section */}
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">{cars.length} Cars Available</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {cars?.total} Cars Available
+                  </h2>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
                       <ArrowUpDown className="w-4 h-4 text-gray-600" />
                       <span className="text-sm text-gray-600">Sort By:</span>
                     </div>
+
+
+                    {/* <SelectInput /> */}
                     <select className="border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white">
                       <option>Recommended</option>
                       <option>Price: Low to High</option>
@@ -528,7 +485,7 @@ export default function Home() {
                 </div>
 
                 {/* Car Category Filter Buttons */}
-                <div className="flex flex-wrap gap-2">
+                {/* <div className="flex flex-wrap gap-2">
                   <button className="bg-black text-white px-6 py-3 rounded-full text-sm font-medium">
                     All Cars
                   </button>
@@ -544,21 +501,36 @@ export default function Home() {
                   <button className="bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-full text-sm font-medium hover:bg-gray-50">
                     SUVs Cars
                   </button>
-                </div>
+                </div> */}
+
+                <Tabs defaultValue="all" className="flex flex-wrap gap-2">
+                <TabsList>
+                  <TabsTrigger value="all"> All Cars</TabsTrigger>
+                  <TabsTrigger value="small">Small Cars</TabsTrigger>
+                  <TabsTrigger value="medium">Medium Cars</TabsTrigger>
+                  <TabsTrigger value="large">Large Cars</TabsTrigger>
+                </TabsList>
+
+              </Tabs>
               </div>
 
               {/* Car Listings */}
               <div className="space-y-6">
-                {cars.map((car, index) => (
-                  <HorizontalCarCard 
-                    key={car.id} 
-                    car={car} 
-                    isTopPick={index < 2} // First two cars are "Top Pick"
-                    hostName={index % 2 === 0 ? "Benny Crispin Host" : "Sarah Johnson Host"}
-                    reviewCount={111 + index * 15}
-                    reviewRating={9.3 - index * 0.1}
-                  />
-                ))}
+                {isLoading ? (
+                  Array(3)
+                    .fill(0)
+                    .map((_, i) => <HorizontalCarCardSkeleton key={i} />)
+                ) : cars?.total === 0 ? (
+                  <EmptyState />
+                ) : (
+                  cars?.rows.map((car, index) => (
+                    <HorizontalCarCard
+                      isTopPick={index < 2}
+                      key={car.id}
+                      car={car}
+                    />
+                  ))
+                )}
               </div>
             </div>
           </div>
