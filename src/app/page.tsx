@@ -151,6 +151,7 @@ const SearchInput: React.FC<{
         type="text"
         value={value}
         readOnly
+        placeholder="..."
         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-gray-50"
       />
     </div>

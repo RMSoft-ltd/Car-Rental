@@ -287,6 +287,7 @@ export default function RentalHistoryContent() {
                       <button
                         onClick={() => handleAction(rental.id, "menu")}
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="More actions"
                       >
                         <MoreVertical className="w-5 h-5 text-gray-500" />
                       </button>
@@ -304,6 +305,7 @@ export default function RentalHistoryContent() {
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
+              title="Previous Page"
               className="w-10 h-10 rounded-full border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -315,11 +317,10 @@ export default function RentalHistoryContent() {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`w-10 h-10 rounded-full font-medium transition-colors ${
-                  currentPage === page
-                    ? "bg-black text-white"
-                    : "border border-gray-300 hover:bg-gray-50"
-                }`}
+                className={`w-10 h-10 rounded-full font-medium transition-colors ${currentPage === page
+                  ? "bg-black text-white"
+                  : "border border-gray-300 hover:bg-gray-50"
+                  }`}
               >
                 {page}
               </button>
@@ -328,6 +329,7 @@ export default function RentalHistoryContent() {
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
+              title="Next Page"
               className="w-10 h-10 rounded-full border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

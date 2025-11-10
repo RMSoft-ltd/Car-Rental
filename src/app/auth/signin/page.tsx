@@ -3,8 +3,9 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { loginUser, clearError } from "@/store/authSlice";
+import { useMutation } from "@tanstack/react-query";
+import authService from "@/services/auth.service";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import Link from "next/link";
 import {
@@ -27,11 +28,23 @@ interface SignInForm {
 
 export default function SignInPage() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const toast = useToast();
-  const { isLoading, error, isAuthenticated } = useAppSelector(
-    (state) => state.auth
-  );
+  const { isAuthenticated, setUser, setIsAuthenticated } = useAuth();
+
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: { email: string; password: string }) => {
+      return await authService.login(credentials);
+    },
+    onSuccess: (data) => {
+      setUser(data.user);
+      setIsAuthenticated(true);
+      toast.success("Welcome back!", "You have been successfully signed in.");
+      router.push("/");
+    },
+    onError: (error: any) => {
+      toast.error("Sign In Failed", error.message || "Invalid credentials");
+    },
+  });
 
   const {
     register,
@@ -45,40 +58,14 @@ export default function SignInPage() {
     }
   }, [isAuthenticated, router]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(clearError());
-    };
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error("Sign In Failed", error);
-    }
-  }, [error, toast]);
-
   const onSubmit = async (data: SignInForm) => {
     try {
-      dispatch(clearError());
-
-      const result = await dispatch(
-        loginUser({
-          email: data.email,
-          password: data.password,
-        })
-      );
-
-      if (loginUser.fulfilled.match(result)) {
-        toast.success("Welcome back!", "You have been successfully signed in.");
-      } else {
-        console.error("Login failed");
-      }
+      await loginMutation.mutateAsync({
+        email: data.email,
+        password: data.password,
+      });
     } catch (err) {
       console.warn(err);
-      toast.error(
-        "Unexpected Error",
-        "An unexpected error occurred. Please try again."
-      );
     }
   };
 
@@ -257,10 +244,10 @@ export default function SignInPage() {
             {/* Submit Button */}
             <button
               onClick={handleSubmit(onSubmit)}
-              disabled={isSubmitting || isLoading}
+              disabled={isSubmitting || loginMutation.isPending}
               className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
-              {isSubmitting || isLoading ? "Signing in..." : "Login"}
+              {isSubmitting || loginMutation.isPending ? "Signing in..." : "Login"}
             </button>
 
             {/* Or Continue With */}

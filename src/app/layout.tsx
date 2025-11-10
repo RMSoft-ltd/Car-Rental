@@ -2,14 +2,13 @@
 
 import { Inter } from "next/font/google";
 import { usePathname } from "next/navigation";
-import { Provider } from "react-redux";
-import { store } from "@/store/store";
 import Navbar from "@/components/Navbar";
-import AuthInitializer from "@/components/AuthInitializer";
 import "./globals.css";
 import ToastProvider from "@/app/shared/ToastProvider";
 import { SocketProvider } from "@/components/SocketProvider";
 import QueryProvider from "@/config/queries-provider";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,15 +37,15 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
         <QueryProvider>
-        <Provider store={store}>
-          <ToastProvider>
-            <AuthInitializer>
-              <SocketProvider apiUrl={process.env.NEXT_PUBLIC_SOCKET_URL!}>
-                <LayoutContent>{children}</LayoutContent>
-              </SocketProvider>
-            </AuthInitializer>
-          </ToastProvider>
-        </Provider>
+          <AuthProvider>
+            <NotificationProvider>
+              <ToastProvider>
+                <SocketProvider apiUrl={process.env.NEXT_PUBLIC_SOCKET_URL!}>
+                  <LayoutContent>{children}</LayoutContent>
+                </SocketProvider>
+              </ToastProvider>
+            </NotificationProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

@@ -1,10 +1,8 @@
 "use client";
 
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  fetchNotificationPreferences,
-  updateNotificationPreferences,
-} from "@/store/slices/notificationPreferencesSlice";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import notificationService from "@/services/notification.service";
+import { useAuth } from "@/contexts/AuthContext";
 import React, { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useToast } from "@/app/shared/ToastProvider";
@@ -21,12 +19,29 @@ type NotificationForm = {
 };
 
 export default function NotificationSettings() {
-  const dispatch = useAppDispatch();
-  const { notificationPreferences } = useAppSelector(
-    (state) => state.notificationPreferences
-  );
-  const { user } = useAppSelector((state) => state.auth);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { success, error } = useToast();
+
+  const { data: notificationPreferences } = useQuery({
+    queryKey: ["notificationPreferences", user?.id],
+    queryFn: () => notificationService.getNotificationPreferences(user!.id),
+    enabled: !!user?.id,
+  });
+
+  const updatePreferencesMutation = useMutation({
+    mutationFn: (preferences: any) =>
+      notificationService.updateNotificationPreferences(preferences),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["notificationPreferences", user?.id],
+      });
+      success("Notification Settings Updated", "Your preferences have been saved");
+    },
+    onError: (err: any) => {
+      error("Update Failed", err.message || "Failed to update preferences");
+    },
+  });
 
   const {
     control,
@@ -40,13 +55,6 @@ export default function NotificationSettings() {
     },
   });
 
-  // Fetch notification preferences on mount
-  useEffect(() => {
-    if (user) {
-      dispatch(fetchNotificationPreferences(user.id));
-    }
-  }, [dispatch, user]);
-
   // Reset form when preferences are loaded
   useEffect(() => {
     if (notificationPreferences?.preferences) {
@@ -57,19 +65,8 @@ export default function NotificationSettings() {
   }, [notificationPreferences, reset]);
 
   const onSubmit = async (data: NotificationForm) => {
-    try {
-      dispatch(updateNotificationPreferences(data));
-      reset(data);
-      success(
-        "Preferences Saved",
-        "Your notification preferences have been updated successfully."
-      );
-    } catch (err) {
-      const errorMessage =
-        (err as Error)?.message ||
-        "Failed to save preferences. Please try again.";
-      error("Save Failed", errorMessage);
-    }
+    await updatePreferencesMutation.mutateAsync({ preferences: data.preferences });
+    reset(data);
   };
 
   return (
@@ -114,6 +111,7 @@ export default function NotificationSettings() {
                         }
                       );
                     }}
+                    placeholder="..."
                     className="w-4 h-4 text-black bg-white border border-gray-300 rounded cursor-pointer transition-all duration-200 ease-in-out focus:ring-1 focus:ring-black focus:ring-offset-1 hover:border-gray-400 checked:bg-black checked:border-black checked:text-white accent-black"
                   />
                 )}

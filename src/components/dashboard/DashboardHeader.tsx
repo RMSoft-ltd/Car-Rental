@@ -1,8 +1,7 @@
 "use client";
 
 import { Menu, User } from "lucide-react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useAuth } from "@/contexts/AuthContext";
 import NotificationDropdown from "./NotificationDropdown";
 
 interface DashboardHeaderProps {
@@ -15,7 +14,7 @@ export default function DashboardHeader({
   title,
   onMobileMenuToggle,
 }: DashboardHeaderProps) {
-  const { user, isLoading } = useSelector((state: RootState) => state.auth);
+  const { user, isLoading } = useAuth();
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 lg:px-8 py-4 lg:py-6">

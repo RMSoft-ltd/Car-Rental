@@ -3,24 +3,25 @@
 import { useState, useRef, useEffect } from "react";
 import { Bell, X, AlertCircle, Info, CheckCircle, Clock } from "lucide-react";
 import { LuBell } from "react-icons/lu";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  fetchNotifications,
-  markAllNotificationsAsRead,
-  markNotificationAsRead,
-  removeNotification,
-  resetNewNotificationFlag,
-} from "@/store/slices/notificationSlice";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import notificationService from "@/services/notification.service";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { useToast } from "@/app/shared/ToastProvider";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const dispatch = useAppDispatch();
-  const { notifications, isNewNotification } = useAppSelector(
-    (state) => state.notifications
-  );
-  const { user } = useAppSelector((state) => state.auth);
-  // const { user } = useAppSelector((state) => state.auth);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const {
+    notifications,
+    isNewNotification,
+    setNotifications,
+    updateNotification,
+    removeNotification: removeNotificationFromContext,
+    resetNewNotificationFlag,
+    setUnreadCount,
+  } = useNotifications();
   const { success: showToast } = useToast();
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -29,13 +30,45 @@ export default function NotificationDropdown() {
   const unreadCount =
     notifications && notifications.filter((n) => n.status === "unread").length;
 
+  const { data: fetchedNotifications } = useQuery({
+    queryKey: ["notifications", user?.id],
+    queryFn: () =>
+      notificationService.getNotifications({
+        limit: 10,
+        userId: user!.id,
+      }),
+    enabled: !!user?.id,
+  });
+
   useEffect(() => {
-    if (user && user.id) {
-      dispatch(
-        fetchNotifications({ skip: 0, limit: 10, userId: user.id })
-      ).unwrap();
+    if (fetchedNotifications?.data?.rows) {
+      setNotifications(fetchedNotifications.data.rows);
+      const count = fetchedNotifications.data.rows.filter(
+        (n: any) => n.status === "unread"
+      ).length;
+      setUnreadCount(count);
     }
-  }, [dispatch, user]);
+  }, [fetchedNotifications, setNotifications, setUnreadCount]);
+
+  const markAsReadMutation = useMutation({
+    mutationFn: (id: number) => notificationService.markAsRead(id),
+    onSuccess: (response) => {
+      updateNotification(response.data);
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+    },
+  });
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => notificationService.markAllAsRead(),
+    onSuccess: () => {
+      notifications.forEach((n) => {
+        if (n.status === "unread") {
+          updateNotification({ ...n, status: "read" });
+        }
+      });
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+    },
+  });
 
   // Initialize audio
   useEffect(() => {
@@ -70,9 +103,9 @@ export default function NotificationDropdown() {
         showToast("You have a new notification 🔔", latestNotification.message);
       }
 
-      dispatch(resetNewNotificationFlag());
+      resetNewNotificationFlag();
     }
-  }, [isNewNotification, notifications, showToast, dispatch]);
+  }, [isNewNotification, notifications, showToast, resetNewNotificationFlag]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -144,12 +177,11 @@ export default function NotificationDropdown() {
               </h3>
               {unreadCount > 0 && (
                 <button
-                  onClick={async () => {
-                    await dispatch(markAllNotificationsAsRead()).unwrap();
-                  }}
-                  className="text-sm text-gray-800 hover:text-gray-800 font-semibold transition-colors cursor-pointer"
+                  onClick={() => markAllAsReadMutation.mutate()}
+                  disabled={markAllAsReadMutation.isPending}
+                  className="text-sm text-gray-800 hover:text-gray-800 font-semibold transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  Mark all read
+                  {markAllAsReadMutation.isPending ? "Marking..." : "Mark all read"}
                 </button>
               )}
             </div>
@@ -166,16 +198,13 @@ export default function NotificationDropdown() {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${
-                    notification.status === "unread"
+                  className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${notification.status === "unread"
                       ? "bg-gray-50 border-l-4 border-l-gray-500"
                       : ""
-                  }`}
+                    }`}
                   onClick={async () => {
                     if (notification.actionUrl || notification.id) {
-                      await dispatch(
-                        markNotificationAsRead(notification.id)
-                      ).unwrap();
+                      await markAsReadMutation.mutateAsync(notification.id);
 
                       if (notification.actionUrl) {
                         window.location.href = notification.actionUrl;
@@ -192,11 +221,10 @@ export default function NotificationDropdown() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p
-                            className={`text-sm font-medium ${
-                              notification.status === "unread"
+                            className={`text-sm font-medium ${notification.status === "unread"
                                 ? "text-gray-900"
                                 : "text-gray-700"
-                            }`}
+                              }`}
                           >
                             {notification.title}
                           </p>
@@ -220,9 +248,10 @@ export default function NotificationDropdown() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            dispatch(removeNotification(notification.id));
+                            removeNotificationFromContext(notification.id);
                           }}
                           className="ml-2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                          aria-label="Remove notification"
                         >
                           <X className="w-4 h-4" />
                         </button>

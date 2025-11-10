@@ -3,8 +3,9 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { registerUser, clearError } from "@/store/authSlice";
+import { useMutation } from "@tanstack/react-query";
+import authService from "@/services/auth.service";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import Link from "next/link";
 import {
@@ -30,11 +31,32 @@ interface SignUpForm {
 
 export default function SignUpPage() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const toast = useToast();
-  const { isLoading, error, isAuthenticated } = useAppSelector(
-    (state) => state.auth
-  );
+  const { isAuthenticated, setUser, setIsAuthenticated } = useAuth();
+
+  const registerMutation = useMutation({
+    mutationFn: async (userData: {
+      fName: string;
+      lName: string;
+      email: string;
+      password: string;
+      isTermsAccepted: boolean;
+    }) => {
+      return await authService.register(userData);
+    },
+    onSuccess: (data) => {
+      setUser(data.user);
+      setIsAuthenticated(true);
+      toast.success(
+        "Account Created!",
+        "Your account has been successfully created."
+      );
+      router.push("/auth/verify-email");
+    },
+    onError: (error: any) => {
+      toast.error("Registration Failed", error.message || "Registration failed");
+    },
+  });
 
   const {
     register,
@@ -52,48 +74,17 @@ export default function SignUpPage() {
     }
   }, [isAuthenticated, router]);
 
-  // Clear errors when component unmounts
-  useEffect(() => {
-    return () => {
-      dispatch(clearError());
-    };
-  }, [dispatch]);
-
-  // Show error toast when Redux error changes
-  useEffect(() => {
-    if (error) {
-      toast.error("Registration Failed", error);
-    }
-  }, [error, toast]);
-
   const onSubmit = async (data: SignUpForm) => {
     try {
-      dispatch(clearError());
-
-      const result = await dispatch(
-        registerUser({
-          fName: data.firstName,
-          lName: data.lastName,
-          email: data.email,
-          password: data.password,
-          isTermsAccepted: data.agreeToTerms,
-        })
-      );
-
-      if (registerUser.fulfilled.match(result)) {
-        toast.success(
-          "Account Created!",
-          "Welcome! Your account has been created successfully."
-        );
-      } else {
-        console.error("Registration failed");
-      }
+      await registerMutation.mutateAsync({
+        fName: data.firstName,
+        lName: data.lastName,
+        email: data.email,
+        password: data.password,
+        isTermsAccepted: data.agreeToTerms,
+      });
     } catch (err) {
       console.warn(err);
-      toast.error(
-        "Unexpected Error",
-        "An unexpected error occurred. Please try again."
-      );
     }
   };
 
@@ -351,10 +342,10 @@ export default function SignUpPage() {
             {/* Submit Button */}
             <button
               onClick={handleSubmit(onSubmit)}
-              disabled={isSubmitting || isLoading}
+              disabled={isSubmitting || registerMutation.isPending}
               className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
-              {isSubmitting || isLoading
+              {isSubmitting || registerMutation.isPending
                 ? "Creating Account..."
                 : "Create Account"}
             </button>

@@ -8,16 +8,14 @@ import { Menu, Transition } from "@headlessui/react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { User, LayoutDashboard, LogOut } from "lucide-react";
 import { HiChevronDown } from "react-icons/hi";
-import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { logoutUser } from "@/store/authSlice";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import clsx from "clsx";
 
 export default function Navbar() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const toast = useToast();
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -26,14 +24,15 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
-    const response = await dispatch(logoutUser());
-    console.log("Logout response:", response);
-    toast.success(
-      "Signed Out",
-      response.payload ?? "You have been signed out successfully."
-    );
-    setIsMobileMenuOpen(false);
-    router.push("/");
+    try {
+      await logout();
+      toast.success("Signed Out", "You have been signed out successfully.");
+      setIsMobileMenuOpen(false);
+      router.push("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Logout Failed", "An error occurred during logout");
+    }
   };
 
   const handleProfileClick = () => {

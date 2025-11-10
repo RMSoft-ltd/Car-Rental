@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { AppDispatch, RootState } from "@/store/store";
-import { updateProfile, changePassword } from "@/store/authSlice";
+import authService from "@/services/auth.service";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import Image from "next/image";
 import {
@@ -34,12 +34,55 @@ interface PasswordFormData {
 }
 
 export default function ProfilePage() {
-  const dispatch = useDispatch<AppDispatch>();
-  const { user, isLoading } = useSelector((state: RootState) => state.auth);
+  const { user, setUser } = useAuth();
+  const queryClient = useQueryClient();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: ProfileFormData) => {
+      return await authService.updateProfile(data);
+    },
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
+      setIsEditingProfile(false);
+      toast.success(
+        "Profile Updated",
+        "Your profile has been updated successfully!"
+      );
+    },
+    onError: (error: any) => {
+      toast.error("Update Failed", error.message || "Failed to update profile");
+    },
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: {
+      currentPassword: string;
+      newPassword: string;
+    }) => {
+      return await authService.changePassword(
+        data.currentPassword,
+        data.newPassword
+      );
+    },
+    onSuccess: () => {
+      setIsChangingPassword(false);
+      resetPassword();
+      toast.success(
+        "Password Changed",
+        "Your password has been updated successfully!"
+      );
+    },
+    onError: (error: any) => {
+      toast.error(
+        "Password Change Failed",
+        error.message || "Failed to change password"
+      );
+    },
+  });
 
   const {
     register: registerProfile,
@@ -65,35 +108,14 @@ export default function ProfilePage() {
   const watchNewPassword = watch("newPassword");
 
   const onProfileSubmit = async (data: ProfileFormData) => {
-    try {
-      await dispatch(updateProfile(data)).unwrap();
-      setIsEditingProfile(false);
-      toast.success(
-        "Profile Updated",
-        "Your profile has been updated successfully!"
-      );
-    } catch (error) {
-      toast.error("Update Failed", error as string);
-    }
+    await updateProfileMutation.mutateAsync(data);
   };
 
   const onPasswordSubmit = async (data: PasswordFormData) => {
-    try {
-      await dispatch(
-        changePassword({
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword,
-        })
-      ).unwrap();
-      setIsChangingPassword(false);
-      resetPassword();
-      toast.success(
-        "Password Changed",
-        "Your password has been updated successfully!"
-      );
-    } catch (error) {
-      toast.error("Password Change Failed", error as string);
-    }
+    await changePasswordMutation.mutateAsync({
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
+    });
   };
 
   const handleProfilePictureClick = () => {
@@ -202,7 +224,7 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={handleProfileSubmit(onProfileSubmit)}
-                    disabled={isLoading}
+                    disabled={updateProfileMutation.isPending}
                     className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-700 hover:bg-gray-900 disabled:opacity-50 cursor-pointer"
                   >
                     <Check className="w-4 h-4 mr-1" />
@@ -421,7 +443,7 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={handlePasswordSubmit(onPasswordSubmit)}
-                    disabled={isLoading}
+                    disabled={changePasswordMutation.isPending}
                     className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-700 hover:bg-gray-900 disabled:opacity-50 cursor-pointer"
                   >
                     <Check className="w-4 h-4 mr-1" />
@@ -543,11 +565,10 @@ export default function ProfilePage() {
                       </h4>
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div
-                          className={`flex items-center space-x-1 ${
-                            watchNewPassword && watchNewPassword.length >= 8
+                          className={`flex items-center space-x-1 ${watchNewPassword && watchNewPassword.length >= 8
                               ? "text-green-600"
                               : "text-gray-500"
-                          }`}
+                            }`}
                         >
                           {watchNewPassword && watchNewPassword.length >= 8 ? (
                             <Check className="w-3 h-3" />
@@ -557,14 +578,13 @@ export default function ProfilePage() {
                           <span>8+ characters</span>
                         </div>
                         <div
-                          className={`flex items-center space-x-1 ${
-                            watchNewPassword && /[A-Z]/.test(watchNewPassword)
+                          className={`flex items-center space-x-1 ${watchNewPassword && /[A-Z]/.test(watchNewPassword)
                               ? "text-green-600"
                               : "text-gray-500"
-                          }`}
+                            }`}
                         >
                           {watchNewPassword &&
-                          /[A-Z]/.test(watchNewPassword) ? (
+                            /[A-Z]/.test(watchNewPassword) ? (
                             <Check className="w-3 h-3" />
                           ) : (
                             <div className="w-3 h-3 border border-gray-300 rounded-full" />
@@ -572,14 +592,13 @@ export default function ProfilePage() {
                           <span>Uppercase letter</span>
                         </div>
                         <div
-                          className={`flex items-center space-x-1 ${
-                            watchNewPassword && /[a-z]/.test(watchNewPassword)
+                          className={`flex items-center space-x-1 ${watchNewPassword && /[a-z]/.test(watchNewPassword)
                               ? "text-green-600"
                               : "text-gray-500"
-                          }`}
+                            }`}
                         >
                           {watchNewPassword &&
-                          /[a-z]/.test(watchNewPassword) ? (
+                            /[a-z]/.test(watchNewPassword) ? (
                             <Check className="w-3 h-3" />
                           ) : (
                             <div className="w-3 h-3 border border-gray-300 rounded-full" />
@@ -587,11 +606,10 @@ export default function ProfilePage() {
                           <span>Lowercase letter</span>
                         </div>
                         <div
-                          className={`flex items-center space-x-1 ${
-                            watchNewPassword && /\d/.test(watchNewPassword)
+                          className={`flex items-center space-x-1 ${watchNewPassword && /\d/.test(watchNewPassword)
                               ? "text-green-600"
                               : "text-gray-500"
-                          }`}
+                            }`}
                         >
                           {watchNewPassword && /\d/.test(watchNewPassword) ? (
                             <Check className="w-3 h-3" />
@@ -601,15 +619,14 @@ export default function ProfilePage() {
                           <span>Number</span>
                         </div>
                         <div
-                          className={`flex items-center space-x-1 col-span-2 ${
-                            watchNewPassword &&
-                            /[@$!%*?&]/.test(watchNewPassword)
+                          className={`flex items-center space-x-1 col-span-2 ${watchNewPassword &&
+                              /[@$!%*?&]/.test(watchNewPassword)
                               ? "text-green-600"
                               : "text-gray-500"
-                          }`}
+                            }`}
                         >
                           {watchNewPassword &&
-                          /[@$!%*?&]/.test(watchNewPassword) ? (
+                            /[@$!%*?&]/.test(watchNewPassword) ? (
                             <Check className="w-3 h-3" />
                           ) : (
                             <div className="w-3 h-3 border border-gray-300 rounded-full" />

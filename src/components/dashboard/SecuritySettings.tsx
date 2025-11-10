@@ -1,16 +1,31 @@
-import { enable2FA } from "@/store/authSlice";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useMutation } from "@tanstack/react-query";
+import authService from "@/services/auth.service";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import { Bell, Lock } from "lucide-react";
 import React, { useState } from "react";
 
 export default function SecuritySettings() {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, setUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const dispatch = useAppDispatch();
   const { success: showToast } = useToast();
+
+  const enable2FAMutation = useMutation({
+    mutationFn: async () => {
+      return await authService.enable2FA();
+    },
+    onSuccess: (response) => {
+      if (user) {
+        setUser({ ...user, is2fa: true });
+      }
+      showToast("Two-Factor Authentication enabled", response.data.message);
+    },
+    onError: (error: any) => {
+      console.error("2FA Enable error:", error);
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -102,24 +117,14 @@ export default function SecuritySettings() {
 
           {user && (
             <button
-              disabled={user.is2fa}
-              className={`${
-                user.is2fa
+              disabled={user.is2fa || enable2FAMutation.isPending}
+              className={`${user.is2fa
                   ? "bg-gray-300 text-gray-400"
                   : "bg-gray-700 text-white"
-              } px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors cursor-pointer`}
-              onClick={async () => {
-                const response = await dispatch(enable2FA()).unwrap();
-                console.log("2FA Enabled:", response);
-                if (response) {
-                  showToast(
-                    "Two-Factor Authentication enabled",
-                    response.message
-                  );
-                }
-              }}
+                } px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors cursor-pointer disabled:cursor-not-allowed`}
+              onClick={() => enable2FAMutation.mutate()}
             >
-              {user.is2fa ? "Enabled" : "Enable"}
+              {user.is2fa ? "Enabled" : enable2FAMutation.isPending ? "Enabling..." : "Enable"}
             </button>
           )}
         </div>
