@@ -157,6 +157,7 @@ export interface CarQueryParams {
   isRainSensingWipe?: string;
   isSunRoof?: string;
   isWindowDefroster?: string;
+  isBluetooth?: string;
 
   status?: string;
   userId?: number;
