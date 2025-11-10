@@ -1,7 +1,3 @@
-/** ================================
- *  CAR RESPONSE STRUCTURES
- *  ================================ */
-
 export interface CarResponse {
   total: number;
   limit: number;

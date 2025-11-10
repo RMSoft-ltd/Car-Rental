@@ -9,6 +9,7 @@ import AuthInitializer from "@/components/AuthInitializer";
 import "./globals.css";
 import ToastProvider from "@/app/shared/ToastProvider";
 import { SocketProvider } from "@/components/SocketProvider";
+import QueryProvider from "@/config/queries-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
+        <QueryProvider>
         <Provider store={store}>
           <ToastProvider>
             <AuthInitializer>
@@ -45,6 +47,7 @@ export default function RootLayout({
             </AuthInitializer>
           </ToastProvider>
         </Provider>
+        </QueryProvider>
       </body>
     </html>
   );
