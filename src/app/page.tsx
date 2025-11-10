@@ -3,9 +3,8 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { MapPin, Calendar, Clock, Search, ArrowUpDown } from "lucide-react";
 import HorizontalCarCard from "@/components/HorizontalCarCard";
-import { CarQueryParams } from "@/types/car-listing";
+import { CarQueryParams, Car } from "@/types/car-listing";
 import { HorizontalCarCardSkeleton } from "@/components/skelton/HorizontalCarCardSkeleton";
-import EmptyState from "@/components/EmptySatate";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCarList } from "@/hooks/use-car-list";
 import { SelectInput } from "@/components/SelectInput";
@@ -124,23 +123,24 @@ interface FilterCheckboxProps {
 }
 
 // ============================================
-// Subcomponents
+// Subcomponents (Memoized for performance)
 // ============================================
 
-const FeatureItem: React.FC<{ label: string }> = ({ label }) => (
+const FeatureItem = React.memo<{ label: string }>(({ label }) => (
   <div className="flex items-center text-white">
     <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
       <span className="text-white text-sm">✓</span>
     </div>
     <span className="text-lg">{label}</span>
   </div>
-);
+));
+FeatureItem.displayName = "FeatureItem";
 
-const SearchInput: React.FC<{
+const SearchInput = React.memo<{
   label: string;
   value: string;
   icon: React.ReactNode;
-}> = ({ label, value, icon }) => (
+}>(({ label, value, icon }) => (
   <div className="md:col-span-1">
     <label className="block text-sm font-medium text-gray-700 mb-2">
       {label}
@@ -156,9 +156,10 @@ const SearchInput: React.FC<{
       />
     </div>
   </div>
-);
+));
+SearchInput.displayName = "SearchInput";
 
-const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
+const FilterCheckbox = React.memo<FilterCheckboxProps>(({
   label,
   count,
   checked,
@@ -176,15 +177,16 @@ const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
     </div>
     <span className="text-sm text-gray-500">({count})</span>
   </label>
-);
+));
+FilterCheckbox.displayName = "FilterCheckbox";
 
-const FilterSection: React.FC<{
+const FilterSection = React.memo<{
   title: string;
   items: readonly { label: string; count: number; defaultChecked?: boolean }[];
   selectedItems: string[];
   onToggle: (label: string) => void;
   showBorder?: boolean;
-}> = ({ title, items, selectedItems, onToggle, showBorder = true }) => (
+}>(({ title, items, selectedItems, onToggle, showBorder = true }) => (
   <div className={`mb-4 ${showBorder ? "pb-4 border-b border-gray-200" : ""}`}>
     <h4 className="text-sm font-bold text-gray-900 mb-2">{title}</h4>
     <div className="space-y-1">
@@ -199,7 +201,8 @@ const FilterSection: React.FC<{
       ))}
     </div>
   </div>
-);
+));
+FilterSection.displayName = "FilterSection";
 
 // ============================================
 // Main Component
@@ -208,7 +211,7 @@ const FilterSection: React.FC<{
 export default function Home() {
   // Filter state
   const [selectedCarTypes, setSelectedCarTypes] = useState<string[]>([]);
-  const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>(["Automatic"]);
+  const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>([""]);
   const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [selectedFuelTypes, setSelectedFuelTypes] = useState<string[]>([]);
@@ -218,7 +221,7 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSort, setSelectedSort] = useState<string>("recommended");
   const [page, setPage] = useState<number>(1);
-  const [allCars, setAllCars] = useState<any[]>([]);
+  const [allCars, setAllCars] = useState<Car[]>([]);
 
   // Refs
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -272,7 +275,7 @@ export default function Home() {
     selectedFeatures.forEach((feature) => {
       const apiParam = FEATURE_MAP[feature];
       if (apiParam) {
-        (params as any)[apiParam] = "true";
+        (params as Record<string, unknown>)[apiParam] = "true";
       }
     });
 
@@ -290,8 +293,6 @@ export default function Home() {
 
   // Fetch data
   const { data, isLoading, isError, error } = useCarList(queryParams);
-
-  console.log("Fetched cars data:", data);
 
   // Accumulate cars for infinite scroll
   useEffect(() => {
@@ -361,7 +362,7 @@ export default function Home() {
 
   const clearAllFilters = useCallback(() => {
     setSelectedCarTypes([]);
-    setSelectedTransmissions(["Automatic"]);
+    setSelectedTransmissions([""]);
     setSelectedPriceRange(null);
     setSelectedFeatures([]);
     setSelectedFuelTypes([]);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import authService from "@/services/auth.service";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,7 +35,6 @@ interface PasswordFormData {
 
 export default function ProfilePage() {
   const { user, setUser } = useAuth();
-  const queryClient = useQueryClient();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -53,7 +52,7 @@ export default function ProfilePage() {
         "Your profile has been updated successfully!"
       );
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error("Update Failed", error.message || "Failed to update profile");
     },
   });
@@ -76,7 +75,7 @@ export default function ProfilePage() {
         "Your password has been updated successfully!"
       );
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(
         "Password Change Failed",
         error.message || "Failed to change password"
@@ -170,6 +169,7 @@ export default function ProfilePage() {
               </div>
               <button
                 onClick={handleProfilePictureClick}
+                title="Change Profile Picture"
                 className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-shadow duration-200 cursor-pointer"
               >
                 <Camera className="w-4 h-4 text-gray-600" />
@@ -180,6 +180,7 @@ export default function ProfilePage() {
                 accept="image/*"
                 onChange={handleFileChange}
                 className="hidden"
+                placeholder="Select profile picture"
               />
             </div>
 
@@ -372,6 +373,7 @@ export default function ProfilePage() {
                         type="email"
                         value={user.email}
                         disabled
+                        placeholder="Enter your email address"
                         className="block w-full px-4 py-3 text-gray-500 placeholder-gray-400 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed outline-none"
                       />
                       <Mail className="absolute right-3 top-3.5 w-5 h-5 text-gray-400" />
@@ -566,8 +568,8 @@ export default function ProfilePage() {
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div
                           className={`flex items-center space-x-1 ${watchNewPassword && watchNewPassword.length >= 8
-                              ? "text-green-600"
-                              : "text-gray-500"
+                            ? "text-green-600"
+                            : "text-gray-500"
                             }`}
                         >
                           {watchNewPassword && watchNewPassword.length >= 8 ? (
@@ -579,8 +581,8 @@ export default function ProfilePage() {
                         </div>
                         <div
                           className={`flex items-center space-x-1 ${watchNewPassword && /[A-Z]/.test(watchNewPassword)
-                              ? "text-green-600"
-                              : "text-gray-500"
+                            ? "text-green-600"
+                            : "text-gray-500"
                             }`}
                         >
                           {watchNewPassword &&
@@ -593,8 +595,8 @@ export default function ProfilePage() {
                         </div>
                         <div
                           className={`flex items-center space-x-1 ${watchNewPassword && /[a-z]/.test(watchNewPassword)
-                              ? "text-green-600"
-                              : "text-gray-500"
+                            ? "text-green-600"
+                            : "text-gray-500"
                             }`}
                         >
                           {watchNewPassword &&
@@ -607,8 +609,8 @@ export default function ProfilePage() {
                         </div>
                         <div
                           className={`flex items-center space-x-1 ${watchNewPassword && /\d/.test(watchNewPassword)
-                              ? "text-green-600"
-                              : "text-gray-500"
+                            ? "text-green-600"
+                            : "text-gray-500"
                             }`}
                         >
                           {watchNewPassword && /\d/.test(watchNewPassword) ? (
@@ -620,9 +622,9 @@ export default function ProfilePage() {
                         </div>
                         <div
                           className={`flex items-center space-x-1 col-span-2 ${watchNewPassword &&
-                              /[@$!%*?&]/.test(watchNewPassword)
-                              ? "text-green-600"
-                              : "text-gray-500"
+                            /[@$!%*?&]/.test(watchNewPassword)
+                            ? "text-green-600"
+                            : "text-gray-500"
                             }`}
                         >
                           {watchNewPassword &&

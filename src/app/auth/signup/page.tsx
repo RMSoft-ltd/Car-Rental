@@ -53,7 +53,7 @@ export default function SignUpPage() {
       );
       router.push("/auth/verify-email");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error("Registration Failed", error.message || "Registration failed");
     },
   });

@@ -22,7 +22,7 @@ export default function SecuritySettings() {
       }
       showToast("Two-Factor Authentication enabled", response.data.message);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("2FA Enable error:", error);
     },
   });
@@ -41,6 +41,7 @@ export default function SecuritySettings() {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
+                placeholder="Enter your current password"
                 className="w-full pr-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
               />
               <button
@@ -63,6 +64,7 @@ export default function SecuritySettings() {
             <div className="relative">
               <input
                 type={showNewPassword ? "text" : "password"}
+                placeholder="At least 8 characters"
                 className="w-full pr-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
               />
               <button
@@ -85,6 +87,7 @@ export default function SecuritySettings() {
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
+                placeholder="Re-enter new password"
                 className="w-full pr-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
               />
               <button
@@ -119,8 +122,8 @@ export default function SecuritySettings() {
             <button
               disabled={user.is2fa || enable2FAMutation.isPending}
               className={`${user.is2fa
-                  ? "bg-gray-300 text-gray-400"
-                  : "bg-gray-700 text-white"
+                ? "bg-gray-300 text-gray-400"
+                : "bg-gray-700 text-white"
                 } px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors cursor-pointer disabled:cursor-not-allowed`}
               onClick={() => enable2FAMutation.mutate()}
             >

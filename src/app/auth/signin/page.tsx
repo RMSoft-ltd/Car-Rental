@@ -41,7 +41,7 @@ export default function SignInPage() {
       toast.success("Welcome back!", "You have been successfully signed in.");
       router.push("/");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error("Sign In Failed", error.message || "Invalid credentials");
     },
   });

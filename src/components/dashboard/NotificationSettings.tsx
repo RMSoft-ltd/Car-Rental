@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import React, { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useToast } from "@/app/shared/ToastProvider";
+import type { NotificationPreferenceItem } from "@/types/notification";
 
 type NotificationPreferencess = {
   title: string;
@@ -30,7 +31,7 @@ export default function NotificationSettings() {
   });
 
   const updatePreferencesMutation = useMutation({
-    mutationFn: (preferences: any) =>
+    mutationFn: (preferences: { preferences: NotificationPreferenceItem[] }) =>
       notificationService.updateNotificationPreferences(preferences),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -38,7 +39,7 @@ export default function NotificationSettings() {
       });
       success("Notification Settings Updated", "Your preferences have been saved");
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       error("Update Failed", err.message || "Failed to update preferences");
     },
   });

@@ -8,6 +8,7 @@ import notificationService from "@/services/notification.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useToast } from "@/app/shared/ToastProvider";
+import type { Notification as NotificationType } from "@/types/notification";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,7 +45,7 @@ export default function NotificationDropdown() {
     if (fetchedNotifications?.data?.rows) {
       setNotifications(fetchedNotifications.data.rows);
       const count = fetchedNotifications.data.rows.filter(
-        (n: any) => n.status === "unread"
+        (n: NotificationType) => n.status === "unread"
       ).length;
       setUnreadCount(count);
     }
@@ -199,8 +200,8 @@ export default function NotificationDropdown() {
                 <div
                   key={notification.id}
                   className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${notification.status === "unread"
-                      ? "bg-gray-50 border-l-4 border-l-gray-500"
-                      : ""
+                    ? "bg-gray-50 border-l-4 border-l-gray-500"
+                    : ""
                     }`}
                   onClick={async () => {
                     if (notification.actionUrl || notification.id) {
@@ -222,8 +223,8 @@ export default function NotificationDropdown() {
                         <div className="flex-1">
                           <p
                             className={`text-sm font-medium ${notification.status === "unread"
-                                ? "text-gray-900"
-                                : "text-gray-700"
+                              ? "text-gray-900"
+                              : "text-gray-700"
                               }`}
                           >
                             {notification.title}
