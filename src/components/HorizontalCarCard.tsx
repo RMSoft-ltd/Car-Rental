@@ -46,13 +46,11 @@ export default function HorizontalCarCard({
           {/* Car Image */}
           <div className="w-72 h-48 flex-shrink-0">
             <Image
-              src={
-                car.carImages && car.carImages.length > 0
-                  ? `${baseUrl}${car.carImages[0]}`
-                  : `${baseUrl}${car.carImages[1]}`
-              }
+              src={car.carImages && car.carImages.length > 0 ? `${baseUrl}${car.carImages[0]}`: `${baseUrl}${car.carImages[1]}`}
+              objectFit="cover"
+              width={500}
+              height={500}
               alt={`${car.make} ${car.model}`}
-              className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.src = `${baseUrl}/${car.carImages[0]}`;
               }}

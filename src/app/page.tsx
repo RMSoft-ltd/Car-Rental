@@ -16,120 +16,9 @@ import { useCarList } from "@/hooks/use-car-list";
 import { SelectInput } from "@/components/SelectInput";
 import { LuCar } from "react-icons/lu";
 import Button from "@/components/shared/Button";
+import { CAR_CATEGORIES, DEFAULT_SEARCH_VALUES, FEATURE_MAP, FILTER_SECTIONS, FilterCheckboxProps, HERO_FEATURES, PRICE_RANGE_MAP, SORT_OPTIONS, YEAR_RANGE_MAP } from "@/types/landing-constants";
 
 
-// ============================================
-// Constants
-// ============================================
-
-const HERO_FEATURES = [
-  { label: "Free Cancellation" },
-  { label: "10,000 + Car Rentals" },
-  { label: "Customer support 24/7" },
-] as const;
-
-const SORT_OPTIONS = [
-  { value: "recommended", label: "Recommended" },
-  { value: "pricePerDay-asc", label: "Price: Low to High" },
-  { value: "pricePerDay-desc", label: "Price: High to Low" },
-  { value: "year", label: "Newest First" },
-] as const;
-
-const CAR_CATEGORIES = [
-  { value: "all", label: "All Cars" },
-  { value: "small", label: "Small Cars" },
-  { value: "medium", label: "Medium Cars" },
-  { value: "large", label: "Large Cars" },
-] as const;
-
-const FILTER_SECTIONS = {
-  carType: [
-    { label: "Hatchback", count: 0 },
-    { label: "SUV", count: 0 },
-    { label: "Convertible", count: 0 },
-    { label: "Sedan", count: 0 },
-    { label: "Coupe", count: 0 },
-    { label: "Minivan", count: 0 },
-    { label: "Sports Car", count: 0 },
-    { label: "Wagon", count: 0 },
-    { label: "Crossover", count: 0 },
-    { label: "Luxury", count: 0 },
-    { label: "Pickup Truck", count: 0 },
-    { label: "Hybrid Vehicle", count: 0 },
-    { label: "Large Car", count: 0 },
-    { label: "Electric Vehicle", count: 0 },
-    { label: "Grand Tourer", count: 0 },
-    { label: "Limousine", count: 0 },
-    { label: "Minivan (MPV)", count: 0 },
-    { label: "Roadster", count: 0 },
-    { label: "Off-Road", count: 0 },
-    { label: "Microcar", count: 0 },
-  ],
-  transmission: [
-    { label: "Automatic", count: 0 },
-    { label: "Manual", count: 0 },
-  ],
-  priceRange: [
-    { label: "Under 50,000 RWF", count: 0 },
-    { label: "50,000 - 80,000 RWF", count: 0 },
-    { label: "Above 80,000 RWF", count: 0 },
-  ],
-  features: [
-    { label: "Air Conditioning", count: 0 },
-    { label: "GPS Navigation", count: 0 },
-    { label: "Bluetooth", count: 0 },
-  ],
-  fuelType: [
-    { label: "Petrol", count: 0 },
-    { label: "Diesel", count: 0 },
-    { label: "Electric", count: 0 },
-  ],
-  year: [
-    { label: "2020 - 2024", count: 0 },
-    { label: "2018 - 2019", count: 0 },
-    { label: "Below 2018", count: 0 },
-  ],
-} as const;
-
-const DEFAULT_SEARCH_VALUES = {
-  location: "Kigali, Kigali, Rwanda",
-  pickupDate: "Sun 9 Mar",
-  pickupTime: "10:30",
-  dropoffDate: "Mon 16 Mar",
-  dropoffTime: "21:00",
-} as const;
-
-const PRICE_RANGE_MAP: Record<
-  string,
-  { pricePerDayMin?: number; pricePerDayMax?: number }
-> = {
-  "Under 50,000 RWF": { pricePerDayMax: 50000 },
-  "50,000 - 80,000 RWF": { pricePerDayMin: 50000, pricePerDayMax: 80000 },
-  "Above 80,000 RWF": { pricePerDayMin: 80000 },
-};
-
-const YEAR_RANGE_MAP: Record<string, { yearMin?: number; yearMax?: number }> = {
-  "2020 - 2024": { yearMin: 2020, yearMax: 2024 },
-  "2018 - 2019": { yearMin: 2018, yearMax: 2019 },
-  "Below 2018": { yearMax: 2018 },
-};
-
-const FEATURE_MAP: Record<string, string> = {
-  "Air Conditioning": "isAirConditioner",
-  "GPS Navigation": "isNavigation",
-  Bluetooth: "isBluetooth",
-};
-
-// ============================================
-// Types
-// ============================================
-
-interface FilterCheckboxProps {
-  label: string;
-  count: number;
-  checked: boolean;
-  onChange: () => void;
-}
 
 // ============================================
 // Subcomponents
@@ -220,7 +109,7 @@ const EmptyState = React.memo<{ refetch: () => void , reset : () => void }>(({ r
         No cars available
       </h3>
       <p className="text-gray-600 mb-6">
-        We couldn't find any cars matching your current filters. Try adjusting your search criteria or clearing some filters to see more options.
+        We couldn&apos;t find any cars matching your current filters. Try adjusting your search criteria or clearing some filters to see more options.
       </p>
       <div className="space-x-3">
 
