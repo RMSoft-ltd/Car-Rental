@@ -13,7 +13,6 @@ export interface Car {
   rating: number;
   fuelType: string;
   transmission: string;
-  
 }
 
 export interface RentalBooking {
