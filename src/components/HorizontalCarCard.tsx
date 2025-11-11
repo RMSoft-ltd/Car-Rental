@@ -3,7 +3,8 @@ import { Users, Briefcase, Clock, Settings, Info, User } from "lucide-react";
 import ImportantInfoModal from "./ImportantInfoModal";
 import Link from "next/link";
 import { Car } from "@/types/car-listing";
-import { Image_Url } from "@/lib/api";
+import { baseUrl } from "@/lib/api";
+import Image from "next/image";
 
 interface HorizontalCarCardProps {
   car: Car;
@@ -16,7 +17,7 @@ interface HorizontalCarCardProps {
 export default function HorizontalCarCard({
   car,
   isTopPick = false,
-  hostName = car.owner.fName + " " + car.owner.lName ||  car.owner.email  ,
+  hostName = car.owner.fName + " " + car.owner.lName || car.owner.email,
   reviewCount = 111,
   reviewRating = 9.3,
 }: HorizontalCarCardProps) {
@@ -44,16 +45,16 @@ export default function HorizontalCarCard({
         <div className="flex">
           {/* Car Image */}
           <div className="w-72 h-48 flex-shrink-0">
-            <img
+            <Image
               src={
                 car.carImages && car.carImages.length > 0
-                  ? `${Image_Url}${car.carImages[0]}`
-                  : `${Image_Url}${car.carImages[1]}`
+                  ? `${baseUrl}${car.carImages[0]}`
+                  : `${baseUrl}${car.carImages[1]}`
               }
               alt={`${car.make} ${car.model}`}
               className="w-full h-full object-cover"
               onError={(e) => {
-                e.currentTarget.src = `${Image_Url}/${car.carImages[0]}`;
+                e.currentTarget.src = `${baseUrl}/${car.carImages[0]}`;
               }}
             />
           </div>

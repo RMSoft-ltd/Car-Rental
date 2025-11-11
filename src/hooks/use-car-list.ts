@@ -1,6 +1,16 @@
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  UseQueryResult,
+} from "@tanstack/react-query";
 import { CarQueryParams, CarResponse } from "@/types/car-listing";
-import { getCars } from "@/services/car-listing-service";
+import {
+  createCarListing,
+  getCarByUserId,
+  getCars,
+  updateCarListing,
+} from "@/services/car-listing-service";
 
 /** Query key factory for car listings */
 export const carKeys = {
@@ -16,7 +26,8 @@ const CAR_QUERY_CONFIG = {
   staleTime: 2 * 60 * 1000, // 2 minutes
   gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
   retry: 2,
-  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  retryDelay: (attemptIndex: number) =>
+    Math.min(1000 * 2 ** attemptIndex, 30000),
 } as const;
 
 /**
@@ -43,5 +54,57 @@ export const useCarList = (
     // Performance optimizations
     retry: CAR_QUERY_CONFIG.retry,
     retryDelay: CAR_QUERY_CONFIG.retryDelay,
+  });
+};
+
+export const useUserCarList = (
+  userId: number,
+  params?: Pick<CarQueryParams, "search" | "limit" | "skip">
+) => {
+  return useQuery<CarResponse, Error>({
+    queryKey: carKeys.list(params),
+    queryFn: () => getCarByUserId(userId, params),
+
+    // Cache configuration
+    staleTime: CAR_QUERY_CONFIG.staleTime,
+    gcTime: CAR_QUERY_CONFIG.gcTime,
+
+    // Refetch behaviors
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+
+    // Performance optimizations
+    retry: CAR_QUERY_CONFIG.retry,
+    retryDelay: CAR_QUERY_CONFIG.retryDelay,
+  });
+};
+
+// Hook to create a new scheduled trip
+export const useCreateCarListing = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (carData: FormData) => createCarListing(carData),
+    onSuccess: () => {
+      // Invalidate and refetch cars list
+      queryClient.invalidateQueries({ queryKey: carKeys.lists() });
+    },
+    onError: () => {},
+  });
+};
+
+// Hook to update a scheduled trip
+export const useUpdateCarListing = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ carId, carData }: { carId: number; carData: FormData }) =>
+      updateCarListing(carId, carData),
+    onSuccess: () => {
+      // Invalidate lists to ensure consistency
+      queryClient.invalidateQueries({ queryKey: carKeys.lists() });
+    },
+    onError: () => {},
   });
 };
