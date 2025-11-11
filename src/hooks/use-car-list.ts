@@ -4,9 +4,10 @@ import {
   useQueryClient,
   UseQueryResult,
 } from "@tanstack/react-query";
-import { CarQueryParams, CarResponse } from "@/types/car-listing";
+import { Car, CarQueryParams, CarResponse } from "@/types/car-listing";
 import {
   createCarListing,
+  getCarById,
   getCarByUserId,
   getCars,
   updateCarListing,
@@ -57,6 +58,36 @@ export const useCarList = (
   });
 };
 
+/**
+ * Custom hook for fetching a single car listing by ID
+ * @param id - Car listing ID
+ * @returns React Query result with car data, loading state, and error handling
+ */
+export const useCarListing = (id: number): UseQueryResult<Car, Error> => {
+  return useQuery<Car, Error>({
+    queryKey: carKeys.detail(id),
+    queryFn: async () => {
+      const response = await getCarById(id);
+      // getCarById returns CarResponse, we need to extract the first car
+      return Array.isArray(response) ? response[0] : (response as any);
+    },
+    enabled: !!id && id > 0, // Only run query if valid ID
+
+    // Cache configuration
+    staleTime: CAR_QUERY_CONFIG.staleTime,
+    gcTime: CAR_QUERY_CONFIG.gcTime,
+
+    // Refetch behaviors
+    refetchOnWindowFocus: false, // Don't refetch on focus for detail view
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+
+    // Performance optimizations
+    retry: CAR_QUERY_CONFIG.retry,
+    retryDelay: CAR_QUERY_CONFIG.retryDelay,
+  });
+};
+
 export const useUserCarList = (
   userId: number,
   params?: Pick<CarQueryParams, "search" | "limit" | "skip">
@@ -85,7 +116,8 @@ export const useCreateCarListing = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (carData: FormData) => createCarListing(carData),
+    mutationFn: ({ userId, carData }: { userId: number; carData: FormData }) =>
+      createCarListing(userId, carData),
     onSuccess: () => {
       // Invalidate and refetch cars list
       queryClient.invalidateQueries({ queryKey: carKeys.lists() });
