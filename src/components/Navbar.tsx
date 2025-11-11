@@ -11,6 +11,7 @@ import { HiChevronDown } from "react-icons/hi";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import clsx from "clsx";
+import { UserAvatar } from "./Avator";
 
 export default function Navbar() {
   const router = useRouter();
@@ -122,13 +123,25 @@ export default function Navbar() {
                   className="flex items-center text-gray-900 hover:text-gray-700 p-2 rounded-md cursor-pointer outline-none focus:outline-none transition-colors"
                   onClick={!isAuthenticated ? handleProfileClick : undefined}
                 >
-                  <Image
+                  {/* <Image
                     src="/images/abstract-user-flat-4.png"
                     alt="User Icon"
                     width={32}
                     height={32}
                     className="h-8 w-8 lg:h-10 lg:w-10"
-                  />
+                  /> */}
+
+                  {user ? (
+                    <UserAvatar user={user} size="default" />
+                  ) : (
+                    <Image
+                      src="/images/abstract-user-flat-4.png"
+                      alt="User Icon"
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 lg:h-10 lg:w-10"
+                    />
+                  )}
 
                   {/* User Info */}
                   {isAuthenticated && user && (

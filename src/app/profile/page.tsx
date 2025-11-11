@@ -20,6 +20,7 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
+import { UserAvatar } from "@/components/Avator";
 
 interface ProfileFormData {
   fName: string;
@@ -154,7 +155,7 @@ export default function ProfilePage() {
           <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
             {/* Profile Picture */}
             <div className="relative">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white/20 backdrop-blur-sm border-4 border-white/30 flex items-center justify-center overflow-hidden">
+              {/* <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white/20 backdrop-blur-sm border-4 border-white/30 flex items-center justify-center overflow-hidden">
                 {user.picture ? (
                   <Image
                     src={user.picture}
@@ -166,7 +167,8 @@ export default function ProfilePage() {
                 ) : (
                   <User className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
                 )}
-              </div>
+              </div> */}
+              <UserAvatar user={user} size="extralarge" />
               <button
                 onClick={handleProfilePictureClick}
                 title="Change Profile Picture"
