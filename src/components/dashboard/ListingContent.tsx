@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Search, Trash2, Gauge, Fuel, SlidersHorizontal } from "lucide-react";
+import { Search, Trash2, Gauge, Fuel, SlidersHorizontal, Plus } from "lucide-react";
 import { Car } from "@/types/car-listing";
 import { useUserCarList } from "@/hooks/use-car-list";
 import { useSearch } from "@/hooks/use-search";
 import { baseUrl } from "@/lib/api";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 
 const carsPerPage = 6;
 export default function ListingContent() {
@@ -37,7 +39,8 @@ export default function ListingContent() {
     setCurrentPage(1);
   }, [debouncedSearchTerm]);
 
-  const { data: userCars, isLoading: isLoadingUserCars, isError: isErrorUserCars, refetch: refetchUserCars } = useUserCarList(2, {
+  const loggedInUserId = 3; // Replace with actual logged-in user ID
+  const { data: userCars, isLoading: isLoadingUserCars, isError: isErrorUserCars, refetch: refetchUserCars } = useUserCarList(loggedInUserId, {
     search: fetchParams.search,
     limit: fetchParams.limit,
     skip: fetchParams.skip,
@@ -62,8 +65,7 @@ export default function ListingContent() {
   };
 
   const handleEdit = (carId: number) => {
-    console.log("Edit car:", carId);
-    // TODO: Implement edit functionality
+    router.push(`/dashboard/listing/${carId}/edit`);
   };
 
   const handleDelete = (carId: number) => {
@@ -76,33 +78,36 @@ export default function ListingContent() {
       <div className="max-w-7xl mx-auto">
         {/* Header with Add Listing Button */}
         <div className="flex justify-end items-center mb-6">
-          <button
+          <Button
             onClick={() => router.push("/dashboard/add-listing")}
             className="bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+            size={"xl"}
           >
+            <Plus />
             Add Listing
-          </button>
+          </Button>
         </div>
 
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="mb-8">
           <div className="flex gap-4">
             <div className="flex-1">
-              <input
+              <Input
                 type="text"
                 placeholder="Type make or model to search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               />
             </div>
-            <button
+            <Button
               type="submit"
               className="bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center gap-2"
+              size={"xl"}
             >
-              <Search className="w-5 h-5" />
+              <Search />
               Search
-            </button>
+            </Button>
           </div>
         </form>
 
@@ -124,6 +129,9 @@ export default function ListingContent() {
                 {/* Dark gradient overlay for text readability */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 {/* Car title overlay */}
+                <div className="absolute top-3 left-3 bg-black text-white px-2 py-1 text-xs font-medium z-10 rounded capitalize">
+                  {car.status}
+                </div>
                 <div className="absolute bottom-4 left-4">
                   <h3 className="text-white font-bold text-lg">
                     {car.make} {car.model} {car.year}

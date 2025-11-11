@@ -44,9 +44,9 @@ export default function HorizontalCarCard({
         {/* First Row: Image | Car Details | Price & Button */}
         <div className="flex">
           {/* Car Image */}
-          <div className="w-72 h-48 flex-shrink-0">
+          <div className="w-72 h-48 flex-shrink-0 relative">
             <Image
-              src={car.carImages && car.carImages.length > 0 ? `${baseUrl}${car.carImages[0]}`: `${baseUrl}${car.carImages[1]}`}
+              src={car.carImages && car.carImages.length > 0 ? `${baseUrl}${car.carImages[0]}` : `${baseUrl}${car.carImages[1]}`}
               objectFit="cover"
               width={500}
               height={500}

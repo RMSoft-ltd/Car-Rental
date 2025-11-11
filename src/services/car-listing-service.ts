@@ -28,23 +28,29 @@ export const getCarByUserId = async (
   return data;
 };
 
-export const createCarListing = async (carData: FormData) => {
-  const { data } = await apiClient.post<CarResponse>("/car-listing", carData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+export const createCarListing = async (userId: number, carData: FormData) => {
+  const { data } = await apiClient.post<CarResponse>(
+    `/car-listing/${userId}`,
+    carData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      timeout: 60000, // 60 seconds for file uploads
+    }
+  );
   return data;
 };
 
 export const updateCarListing = async (id: number, carData: FormData) => {
-  const { data } = await apiClient.put<CarResponse>(
+  const { data } = await apiClient.patch<CarResponse>(
     `/car-listing/${id}`,
     carData,
     {
       headers: {
         "Content-Type": "multipart/form-data",
       },
+      timeout: 60000, // 60 seconds for file uploads
     }
   );
   return data;
