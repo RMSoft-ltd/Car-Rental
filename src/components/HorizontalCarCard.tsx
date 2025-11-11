@@ -82,7 +82,7 @@ export default function HorizontalCarCard({
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
                     <Clock className="w-4 h-4 mr-2" />
-                    <span>{car.mileage} km per rental</span>
+                    <span>{car.mileage} mileage</span>
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
                     <Briefcase className="w-4 h-4 mr-2" />
