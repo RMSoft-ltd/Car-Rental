@@ -3,6 +3,7 @@
 import { Menu, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import NotificationDropdown from "./NotificationDropdown";
+import { UserAvatar } from "../Avator";
 
 interface DashboardHeaderProps {
   title: string;
@@ -57,9 +58,10 @@ export default function DashboardHeader({
                   </p>
                   <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                <UserAvatar user={user} size="default" />
+                {/* <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-200 rounded-full flex items-center justify-center">
                   <User className="w-4 h-4 lg:w-5 lg:h-5 text-gray-600" />
-                </div>
+                </div> */}
               </>
             ) : (
               <div className="flex items-center space-x-3">

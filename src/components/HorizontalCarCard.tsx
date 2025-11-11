@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Car } from "@/types/car-listing";
 import { baseUrl } from "@/lib/api";
 import Image from "next/image";
+import { UserAvatar } from "./Avator";
 
 interface HorizontalCarCardProps {
   car: Car;
@@ -118,10 +119,8 @@ export default function HorizontalCarCard({
           <div className="flex items-center justify-between">
             {/* Host Info */}
             <div className="flex items-center">
-              <div className="w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center mr-2">
-                <User className="w-3 h-3 text-gray-600" />
-              </div>
-              <div>
+              <UserAvatar user={car.owner} size="small" />
+              <div className="ml-2">
                 <p className="text-sm capitalize font-medium text-gray-900">{hostName}</p>
                 <p className="text-xs text-gray-500">Host</p>
               </div>
