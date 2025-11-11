@@ -1,13 +1,22 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+  useEffect,
+} from "react";
 import { MapPin, Calendar, Clock, Search, ArrowUpDown } from "lucide-react";
 import HorizontalCarCard from "@/components/HorizontalCarCard";
-import { CarQueryParams, Car } from "@/types/car-listing";
+import { CarQueryParams } from "@/types/car-listing";
 import { HorizontalCarCardSkeleton } from "@/components/skelton/HorizontalCarCardSkeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCarList } from "@/hooks/use-car-list";
 import { SelectInput } from "@/components/SelectInput";
+import { LuCar } from "react-icons/lu";
+import Button from "@/components/shared/Button";
+
 
 // ============================================
 // Constants
@@ -21,8 +30,8 @@ const HERO_FEATURES = [
 
 const SORT_OPTIONS = [
   { value: "recommended", label: "Recommended" },
-  { value: "price-low-high", label: "Price: Low to High" },
-  { value: "price-high-low", label: "Price: High to Low" },
+  { value: "pricePerDay-asc", label: "Price: Low to High" },
+  { value: "pricePerDay-desc", label: "Price: High to Low" },
   { value: "year", label: "Newest First" },
 ] as const;
 
@@ -57,7 +66,7 @@ const FILTER_SECTIONS = {
     { label: "Microcar", count: 0 },
   ],
   transmission: [
-    { label: "Automatic", count: 0, defaultChecked: true },
+    { label: "Automatic", count: 0 },
     { label: "Manual", count: 0 },
   ],
   priceRange: [
@@ -90,25 +99,25 @@ const DEFAULT_SEARCH_VALUES = {
   dropoffTime: "21:00",
 } as const;
 
-// Price range mapping
-const PRICE_RANGE_MAP: Record<string, { pricePerDayMin?: number; pricePerDayMax?: number }> = {
+const PRICE_RANGE_MAP: Record<
+  string,
+  { pricePerDayMin?: number; pricePerDayMax?: number }
+> = {
   "Under 50,000 RWF": { pricePerDayMax: 50000 },
   "50,000 - 80,000 RWF": { pricePerDayMin: 50000, pricePerDayMax: 80000 },
   "Above 80,000 RWF": { pricePerDayMin: 80000 },
 };
 
-// Year range mapping
 const YEAR_RANGE_MAP: Record<string, { yearMin?: number; yearMax?: number }> = {
   "2020 - 2024": { yearMin: 2020, yearMax: 2024 },
   "2018 - 2019": { yearMin: 2018, yearMax: 2019 },
   "Below 2018": { yearMax: 2018 },
 };
 
-// Feature mapping to API params
 const FEATURE_MAP: Record<string, string> = {
   "Air Conditioning": "isAirConditioner",
   "GPS Navigation": "isNavigation",
-  "Bluetooth": "isNavigation", // Adjust based on your API
+  Bluetooth: "isBluetooth",
 };
 
 // ============================================
@@ -123,7 +132,7 @@ interface FilterCheckboxProps {
 }
 
 // ============================================
-// Subcomponents (Memoized for performance)
+// Subcomponents
 // ============================================
 
 const FeatureItem = React.memo<{ label: string }>(({ label }) => (
@@ -159,25 +168,22 @@ const SearchInput = React.memo<{
 ));
 SearchInput.displayName = "SearchInput";
 
-const FilterCheckbox = React.memo<FilterCheckboxProps>(({
-  label,
-  count,
-  checked,
-  onChange,
-}) => (
-  <label className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors">
-    <div className="flex items-center">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black cursor-pointer"
-      />
-      <span className="ml-2 text-sm text-gray-600">{label}</span>
-    </div>
-    <span className="text-sm text-gray-500">({count})</span>
-  </label>
-));
+const FilterCheckbox = React.memo<FilterCheckboxProps>(
+  ({ label, count, checked, onChange }) => (
+    <label className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors">
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onChange}
+          className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black accent-black cursor-pointer"
+        />
+        <span className="ml-2 text-sm text-gray-600">{label}</span>
+      </div>
+      <span className="text-sm text-gray-500">({count})</span>
+    </label>
+  )
+);
 FilterCheckbox.displayName = "FilterCheckbox";
 
 const FilterSection = React.memo<{
@@ -204,6 +210,33 @@ const FilterSection = React.memo<{
 ));
 FilterSection.displayName = "FilterSection";
 
+const EmptyState = React.memo<{ refetch: () => void , reset : () => void }>(({ refetch , reset }) => (
+  <div className="text-center py-16 px-4">
+    <div className="max-w-md mx-auto">
+      <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+        <LuCar className="w-12 h-12 text-gray-400" />
+      </div>
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+        No cars available
+      </h3>
+      <p className="text-gray-600 mb-6">
+        We couldn't find any cars matching your current filters. Try adjusting your search criteria or clearing some filters to see more options.
+      </p>
+      <div className="space-x-3">
+
+        <Button variant="primary" type="reset" onClick={() => { refetch(); }} >
+         Refresh search
+        </Button>
+        <Button variant="secondary"  type="reset" onClick={() => { reset(); }} >
+         Reset search
+        </Button>
+
+      </div>
+    </div>
+  </div>
+));
+EmptyState.displayName = "EmptyState";
+
 // ============================================
 // Main Component
 // ============================================
@@ -211,40 +244,67 @@ FilterSection.displayName = "FilterSection";
 export default function Home() {
   // Filter state
   const [selectedCarTypes, setSelectedCarTypes] = useState<string[]>([]);
-  const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>([""]);
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
+  const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>(
+    []
+  );
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(
+    null
+  );
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [selectedFuelTypes, setSelectedFuelTypes] = useState<string[]>([]);
-  const [selectedYearRange, setSelectedYearRange] = useState<string | null>(null);
+  const [selectedYearRange, setSelectedYearRange] = useState<string | null>(
+    null
+  );
 
   // UI state
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSort, setSelectedSort] = useState<string>("recommended");
   const [page, setPage] = useState<number>(1);
-  const [allCars, setAllCars] = useState<Car[]>([]);
 
   // Refs
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Build query params from filters
+  // query params from filters
   const queryParams: CarQueryParams = useMemo(() => {
     const params: CarQueryParams = {
       page,
       limit: 25,
-      sortBy: selectedSort !== "recommended" ? selectedSort : undefined,
     };
 
-    // Car types -> body parameter
+    if (selectedCategory !== "all") {
+      params.size = selectedCategory;
+    }
+
+    if (
+      selectedSort && selectedSort !== "recommended" ? selectedSort : undefined
+    ) {
+      switch (selectedSort) {
+        case "pricePerDay-asc":
+          params.sortBy = "pricePerDay";
+          params.order = "ASC";
+          break;
+        case "pricePerDay-desc":
+          params.sortBy = "pricePerDay";
+          params.order = "DESC";
+          break;
+        case "year":
+          params.sortBy = "year";
+          params.order = "DESC";
+          break;
+        default:
+          params.sortBy = "recommended";
+          break;
+      }
+    }
+
     if (selectedCarTypes.length > 0) {
       params.body = selectedCarTypes.join(",");
     }
 
-    // Transmission -> transition parameter
     if (selectedTransmissions.length > 0) {
       params.transition = selectedTransmissions.join(",");
     }
 
-    // Price range
     if (selectedPriceRange && PRICE_RANGE_MAP[selectedPriceRange]) {
       const priceRange = PRICE_RANGE_MAP[selectedPriceRange];
       if (priceRange.pricePerDayMin !== undefined) {
@@ -255,12 +315,10 @@ export default function Home() {
       }
     }
 
-    // Fuel type
     if (selectedFuelTypes.length > 0) {
       params.fuelType = selectedFuelTypes.join(",");
     }
 
-    // Year range
     if (selectedYearRange && YEAR_RANGE_MAP[selectedYearRange]) {
       const yearRange = YEAR_RANGE_MAP[selectedYearRange];
       if (yearRange.yearMin !== undefined) {
@@ -271,7 +329,6 @@ export default function Home() {
       }
     }
 
-    // Features -> boolean flags
     selectedFeatures.forEach((feature) => {
       const apiParam = FEATURE_MAP[feature];
       if (apiParam) {
@@ -283,6 +340,7 @@ export default function Home() {
   }, [
     page,
     selectedSort,
+    selectedCategory,
     selectedCarTypes,
     selectedTransmissions,
     selectedPriceRange,
@@ -292,23 +350,16 @@ export default function Home() {
   ]);
 
   // Fetch data
-  const { data, isLoading, isError, error } = useCarList(queryParams);
+  const { data, isLoading, isError, error, refetch } = useCarList(queryParams);
 
-  // Accumulate cars for infinite scroll
-  useEffect(() => {
-    if (data?.rows && !isLoading) {
-      if (page === 1) {
-        setAllCars(data.rows);
-      } else {
-        setAllCars((prev) => [...prev, ...data.rows]);
-      }
-    }
-  }, [data, isLoading, page]);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
+  // Reset to page 1 when any filter changes (except page itself)
+  const resetPage = useCallback(() => {
     setPage(1);
-    setAllCars([]);
+  }, []);
+
+  // Watch for filter changes and reset page
+  useEffect(() => {
+    resetPage();
   }, [
     selectedSort,
     selectedCarTypes,
@@ -317,6 +368,7 @@ export default function Home() {
     selectedFeatures,
     selectedFuelTypes,
     selectedYearRange,
+    resetPage,
   ]);
 
   // Infinite scroll observer
@@ -326,8 +378,9 @@ export default function Home() {
         if (
           entries[0].isIntersecting &&
           !isLoading &&
-          allCars.length > 0 &&
-          allCars.length < (data?.total || 0)
+          data?.rows &&
+          data.rows.length > 0 &&
+          data.rows.length < (data.total || 0)
         ) {
           setPage((prev) => prev + 1);
         }
@@ -340,17 +393,24 @@ export default function Home() {
     }
 
     return () => observer.disconnect();
-  }, [isLoading, allCars.length, data?.total]);
+  }, [isLoading, data?.rows, data?.total]);
 
   // Filter toggle handlers
   const toggleArrayFilter = useCallback(
-    (setter: React.Dispatch<React.SetStateAction<string[]>>) => (item: string) => {
-      setter((prev) =>
-        prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
-      );
-    },
+    (setter: React.Dispatch<React.SetStateAction<string[]>>) =>
+      (item: string) => {
+        setter((prev) =>
+          prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+        );
+      },
     []
   );
+
+  const toggleTransmission = useCallback((transmission: string) => {
+    setSelectedTransmissions((prev) =>
+      prev.includes(transmission) ? [] : [transmission]
+    );
+  }, []);
 
   const togglePriceRange = useCallback((range: string) => {
     setSelectedPriceRange((prev) => (prev === range ? null : range));
@@ -362,23 +422,27 @@ export default function Home() {
 
   const clearAllFilters = useCallback(() => {
     setSelectedCarTypes([]);
-    setSelectedTransmissions([""]);
+    setSelectedTransmissions([]);
     setSelectedPriceRange(null);
     setSelectedFeatures([]);
     setSelectedFuelTypes([]);
     setSelectedYearRange(null);
-  }, []);
+    setSelectedCategory("all");
+    setPage(1);
+    // Trigger refetch after clearing filters
+    setTimeout(() => refetch(), 0);
+  }, [refetch]);
 
   // Computed values
   const carCount = data?.total ?? 0;
-  const hasNoCars = !isLoading && carCount === 0 && page === 1;
-  const hasCars = carCount > 0;
+  const cars = data?.rows ?? [];
+  const hasNoCars = !isLoading && carCount === 0;
+  const hasCars = cars.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="relative h-[80vh]">
-        {/* Background Images */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
@@ -395,7 +459,6 @@ export default function Home() {
           />
         </div>
 
-        {/* Hero Content */}
         <div className="relative z-10 h-full flex flex-col justify-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl">
@@ -412,7 +475,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Search Form */}
         <div className="absolute bottom-4 left-0 right-0 z-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
             <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6">
@@ -482,7 +544,7 @@ export default function Home() {
                     className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
                     aria-label="Clear all filters"
                   >
-                    Clear All Filters
+                    Clear All
                   </button>
                 </div>
 
@@ -492,12 +554,22 @@ export default function Home() {
                   selectedItems={selectedCarTypes}
                   onToggle={toggleArrayFilter(setSelectedCarTypes)}
                 />
-                <FilterSection
-                  title="Transmission"
-                  items={FILTER_SECTIONS.transmission}
-                  selectedItems={selectedTransmissions}
-                  onToggle={toggleArrayFilter(setSelectedTransmissions)}
-                />
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <h4 className="text-sm font-bold text-gray-900 mb-2">
+                    Transmission
+                  </h4>
+                  <div className="space-y-1">
+                    {FILTER_SECTIONS.transmission.map((item) => (
+                      <FilterCheckbox
+                        key={item.label}
+                        label={item.label}
+                        count={item.count}
+                        checked={selectedTransmissions.includes(item.label)}
+                        onChange={() => toggleTransmission(item.label)}
+                      />
+                    ))}
+                  </div>
+                </div>
                 <FilterSection
                   title="Price Range"
                   items={FILTER_SECTIONS.priceRange}
@@ -528,14 +600,10 @@ export default function Home() {
 
             {/* Main Content */}
             <main className="lg:col-span-3">
-              {/* Header and Filter Card */}
               <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6 mb-6">
-                {/* Header Section */}
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    {isLoading && page === 1
-                      ? "Loading..."
-                      : `${carCount} Cars Available`}
+                    {isLoading ? "Loading..." : `${carCount} Cars Available`}
                   </h2>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
@@ -551,7 +619,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Car Category Filter Tabs */}
                 <Tabs
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
@@ -583,30 +650,26 @@ export default function Home() {
               <div className="space-y-6">
                 {/* Loading State */}
                 {isLoading &&
-                  page === 1 &&
                   Array.from({ length: 3 }).map((_, i) => (
                     <HorizontalCarCardSkeleton key={i} />
                   ))}
 
-                {/* Empty State */}
-                {/* {hasNoCars && <EmptyState />} */}
-
-                {
-                  hasNoCars && <div> No Data Available </div>
-                }
+               {/* Empty State */}
+                {hasNoCars && (
+                  <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6">
+                    <EmptyState refetch={refetch} reset={clearAllFilters} />
+                  </div>
+                )}
 
                 {/* Cars List */}
                 {hasCars &&
-                  allCars.map((car, index) => (
+                  cars.map((car, index) => (
                     <HorizontalCarCard
-                      key={car.id}
+                      key={`${car.id}-${page}`}
                       car={car}
-                      isTopPick={index < 2}
+                      isTopPick={index < 2 && page === 1}
                     />
                   ))}
-
-                {/* Loading more indicator */}
-                {isLoading && page > 1 && <HorizontalCarCardSkeleton />}
 
                 {/* Infinite scroll trigger */}
                 <div ref={observerTarget} className="h-4" />

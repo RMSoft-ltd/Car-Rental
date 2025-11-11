@@ -103,6 +103,7 @@ export interface CarQueryParams {
   make?: string;
   model?: string;
   body?: string;
+  size?: string;
 
   mileageMin?: number;
   mileageMax?: number;
@@ -168,4 +169,5 @@ export interface CarQueryParams {
   search?: string;
   pickUpLocation?: string;
   sortBy?: string;
+  order?: string;
 }
