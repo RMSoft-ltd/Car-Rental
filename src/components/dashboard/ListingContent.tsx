@@ -135,108 +135,116 @@ export default function ListingContent() {
 
         {/* Car Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {currentCars.map((car: Car, index: number) => (
-            <div key={car.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              {/* Car Image */}
-              <div className="relative h-64 border-b border-gray-200">
-                <Image
-                  src={`${baseUrl}${car.carImages?.[0]}`}
-                  alt={`${car.make} ${car.model} ${car.year}`}
-                  fill
-                  className="object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
-                  }}
-                />
-                {/* Dark gradient overlay for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                {/* Car title overlay */}
-                <div className="absolute top-3 left-3 bg-black text-white px-2 py-1 text-xs font-medium z-10 rounded capitalize">
-                  {car.status}
+          {currentCars.map((car: Car, index: number) => {
+            // Construct image URL safely
+            const carImage = car.carImages?.[0];
+            const imageUrl = carImage
+              ? (carImage.startsWith('http') ? carImage : `${baseUrl}${carImage}`)
+              : "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
+
+            return (
+              <div key={car.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                {/* Car Image */}
+                <div className="relative h-64 border-b border-gray-200">
+                  <Image
+                    src={imageUrl}
+                    alt={`${car.make} ${car.model} ${car.year}`}
+                    fill
+                    className="object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
+                    }}
+                  />
+                  {/* Dark gradient overlay for text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  {/* Car title overlay */}
+                  <div className="absolute top-3 left-3 bg-black text-white px-2 py-1 text-xs font-medium z-10 rounded capitalize">
+                    {car.status}
+                  </div>
+                  <div className="absolute bottom-4 left-4">
+                    <h3 className="text-white font-bold text-lg">
+                      {car.make} {car.model} {car.year}
+                    </h3>
+                  </div>
                 </div>
-                <div className="absolute bottom-4 left-4">
-                  <h3 className="text-white font-bold text-lg">
-                    {car.make} {car.model} {car.year}
+
+                {/* Car Details */}
+                <div className="p-5">
+                  {/* Car Title */}
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    {car.title}
                   </h3>
-                </div>
-              </div>
 
-              {/* Car Details */}
-              <div className="p-5">
-                {/* Car Title */}
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {car.title}
-                </h3>
+                  {/* Car Description */}
+                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                    {car.description || `${car.body} • ${car.engineSize}L • ${car.doors} Doors`}
+                  </p>
 
-                {/* Car Description */}
-                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                  {car.description || `${car.body} • ${car.engineSize}L • ${car.doors} Doors`}
-                </p>
+                  {/* Divider */}
+                  <hr className="border-gray-200 mb-4" />
 
-                {/* Divider */}
-                <hr className="border-gray-200 mb-4" />
-
-                {/* Car Specs */}
-                <div className="flex items-center justify-around mb-6 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <Gauge className="w-4 h-4" />
-                    <span>{car.mileage}</span>
+                  {/* Car Specs */}
+                  <div className="flex items-center justify-around mb-6 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <Gauge className="w-4 h-4" />
+                      <span>{car.mileage}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Fuel className="w-4 h-4" />
+                      <span>{car.fuelType}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <SlidersHorizontal className="w-4 h-4" />
+                      <span>{car.transition}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Fuel className="w-4 h-4" />
-                    <span>{car.fuelType}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <SlidersHorizontal className="w-4 h-4" />
-                    <span>{car.transition}</span>
-                  </div>
-                </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3">
-                  <Button
-                    onClick={() => handleEdit(car.id)}
-                    size={`lg`}
-                    className="flex-grow-[2] bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
-                  >
-                    Edit
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        className="flex-grow-[1] bg-white text-red-600 hover:text-red-700 font-medium flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-3"
-                      >
-                        <Trash2 />
-                        Delete
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete listing?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action permanently removes {car.title}. You can&apos;t undo this.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel disabled={deleteCarListingLoading}>
-                          Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-destructive text-white hover:bg-destructive/90"
-                          disabled={deleteCarListingLoading}
-                          onClick={() => handleDelete(car.id)}
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-3">
+                    <Button
+                      onClick={() => handleEdit(car.id)}
+                      size={`lg`}
+                      className="flex-grow-[2] bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                    >
+                      Edit
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          className="flex-grow-[1] bg-white text-red-600 hover:text-red-700 font-medium flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-3"
                         >
+                          <Trash2 />
                           Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete listing?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action permanently removes {car.title}. You can&apos;t undo this.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={deleteCarListingLoading}>
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-white hover:bg-destructive/90"
+                            disabled={deleteCarListingLoading}
+                            onClick={() => handleDelete(car.id)}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Pagination */}
@@ -300,7 +308,7 @@ export default function ListingContent() {
           </div>
         )}
 
-        
+
 
       </div>
     </div>

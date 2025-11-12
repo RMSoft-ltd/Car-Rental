@@ -6,25 +6,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-    listingInformationSchema,
-    featuresSchema,
-    priceSchema,
-    infoSchema,
-    imagesSchema,
-    defaultListingInformation,
-    defaultFeatures,
-    defaultPrice,
-    defaultInfo,
-    defaultImages,
-    type ListingInformationFormData,
-    type FeaturesFormData,
-    type PriceFormData,
-    type InfoFormData,
-    type ImagesFormData,
+    carListingSchema,
+    defaultCarListingData,
     type CarListingFormData,
 } from '@/schemas/car-listing.schema';
 import {
@@ -38,7 +25,6 @@ import {
 } from './FormComponents';
 import { CAR_MAKES, CAR_MODELS, FUEL_TYPES, TRANSMISSION_TYPES, DRIVER_TYPES, CAR_COLORS, BODY_TYPES, FUEL_POLICIES, CUSTOM_DAYS } from '@/constants/car-listing';
 import Button from '../shared/Button';
-import { X } from 'lucide-react';
 
 // ============================================
 // Types
@@ -54,8 +40,6 @@ interface CarListingFormProps {
     isSubmitting?: boolean;
 }
 
-type StepData = any; // Union of all step types
-
 // ============================================
 // Form Steps Configuration
 // ============================================
@@ -66,7 +50,68 @@ const STEPS = [
     { id: 2, title: 'Pricing', description: 'Set your rental price' },
     { id: 3, title: 'Important Info', description: 'Requirements and policies' },
     { id: 4, title: 'Images', description: 'Upload car photos' },
-];
+] as const;
+
+// Day labels mapping
+const DAY_LABELS: Record<string, string> = {
+    Mon: 'Monday',
+    Tue: 'Tuesday',
+    Wen: 'Wednesday',
+    Thur: 'Thursday',
+    Fri: 'Friday',
+    Sat: 'Saturday',
+    Sun: 'Sunday',
+};
+
+// Helper function to transform customDays array to checkbox fields
+const transformCustomDaysToCheckboxes = (data: Partial<CarListingFormData>) => {
+    const transformed = { ...data };
+
+    if (data.customDays && Array.isArray(data.customDays)) {
+        CUSTOM_DAYS.forEach((day) => {
+            (transformed as any)[`customDay_${day}`] = data.customDays!.includes(day);
+        });
+    }
+
+    return transformed;
+};
+
+// Helper function to transform checkbox fields back to customDays array
+const transformCheckboxesToCustomDays = (data: any): string[] => {
+    const customDays: string[] = [];
+    CUSTOM_DAYS.forEach((day) => {
+        if (data[`customDay_${day}`]) {
+            customDays.push(day);
+        }
+    });
+    return customDays;
+};
+
+// Fields to validate for each step
+const getStepFields = (step: number): (keyof CarListingFormData)[] => {
+    switch (step) {
+        case 0:
+            return ['title', 'make', 'model', 'plateNumber', 'body', 'seats', 'year', 'mileage',
+                'fuelType', 'transition', 'driverType', 'engineSize', 'doors', 'smallBags',
+                'color', 'largeBags', 'inTerminal', 'description'];
+        case 1:
+            return ['isPowerSteering', 'isCruiseControl', 'isNavigation', 'isPowerLocks',
+                'isVanityMirror', 'isTrunkLight', 'isAirConditioner', 'Techometer',
+                'isDigitalOdometer', 'isLeatherSeats', 'isHeater', 'isMemorySeats',
+                'isFogLightsFront', 'isRainSensingWipe', 'isRearSpoiler', 'isSunRoof',
+                'isRearWindow', 'isWindowDefroster', 'isBreakeAssist', 'isChildSafetyLocks',
+                'isTractionControl', 'isPowerDoorLocks', 'isDriverAirBag', 'isAntiLockBreaks'];
+        case 2:
+            return ['pricePerDay', 'currency'];
+        case 3:
+            return ['requiredDocs', 'securityDeposit', 'securityDepositAmount', 'damageExcess',
+                'fuelPolicy', 'insuranceExpirationDate', 'insuranceFile', 'availabilityType', 'customDays'];
+        case 4:
+            return ['carImages'];
+        default:
+            return [];
+    }
+};
 
 // ============================================
 // CarListingForm Component
@@ -80,179 +125,62 @@ export function CarListingForm({
     isSubmitting = false,
 }: CarListingFormProps) {
     const [currentStep, setCurrentStep] = useState(0);
-    const [formData, setFormData] = useState<Partial<CarListingFormData>>({
-        ...defaultListingInformation,
-        ...defaultFeatures,
-        ...defaultPrice,
-        ...defaultInfo,
-        ...defaultImages,
-        ...initialData,
+
+    // Initialize form with complete schema and all default values
+    // Transform customDays array to individual checkbox fields
+    const defaultValues = useMemo(() => {
+        const baseData = {
+            ...defaultCarListingData,
+            ...initialData,
+        };
+        return transformCustomDaysToCheckboxes(baseData);
+    }, [initialData]);
+
+    const form = useForm<CarListingFormData>({
+        resolver: zodResolver(carListingSchema) as any,
+        defaultValues,
+        mode: 'onChange',
     });
 
-    console.log(`Initial data: ${JSON.stringify(initialData)}`);
-
-    // Get the current step's schema
-    const getStepSchema = (step: number) => {
-        switch (step) {
-            case 0:
-                return listingInformationSchema;
-            case 1:
-                return featuresSchema;
-            case 2:
-                return priceSchema;
-            case 3:
-                return infoSchema;
-            case 4:
-                return imagesSchema;
-            default:
-                return listingInformationSchema;
-        }
-    };
-
-    // Get the current step's default values
-    const getStepDefaultValues = (step: number): StepData => {
-        const allData = {
-            ...defaultListingInformation,
-            ...defaultFeatures,
-            ...defaultPrice,
-            ...defaultInfo,
-            ...defaultImages,
-            ...formData,
-        };
-
-        switch (step) {
-            case 0:
-                return {
-                    title: allData.title,
-                    make: allData.make,
-                    model: allData.model,
-                    plateNumber: allData.plateNumber,
-                    body: allData.body,
-                    seats: allData.seats,
-                    year: allData.year,
-                    mileage: allData.mileage,
-                    fuelType: allData.fuelType,
-                    transition: allData.transition,
-                    driverType: allData.driverType,
-                    engineSize: allData.engineSize,
-                    doors: allData.doors,
-                    smallBags: allData.smallBags,
-                    color: allData.color,
-                    largeBags: allData.largeBags,
-                    inTerminal: allData.inTerminal,
-                    description: allData.description,
-                } as ListingInformationFormData;
-            case 1:
-                return {
-                    isPowerSteering: allData.isPowerSteering,
-                    isCruiseControl: allData.isCruiseControl,
-                    isNavigation: allData.isNavigation,
-                    isPowerLocks: allData.isPowerLocks,
-                    isVanityMirror: allData.isVanityMirror,
-                    isTrunkLight: allData.isTrunkLight,
-                    isAirConditioner: allData.isAirConditioner,
-                    Techometer: allData.Techometer,
-                    isDigitalOdometer: allData.isDigitalOdometer,
-                    isLeatherSeats: allData.isLeatherSeats,
-                    isHeater: allData.isHeater,
-                    isMemorySeats: allData.isMemorySeats,
-                    isFogLightsFront: allData.isFogLightsFront,
-                    isRainSensingWipe: allData.isRainSensingWipe,
-                    isRearSpoiler: allData.isRearSpoiler,
-                    isSunRoof: allData.isSunRoof,
-                    isRearWindow: allData.isRearWindow,
-                    isWindowDefroster: allData.isWindowDefroster,
-                    isBreakeAssist: allData.isBreakeAssist,
-                    isChildSafetyLocks: allData.isChildSafetyLocks,
-                    isTractionControl: allData.isTractionControl,
-                    isPowerDoorLocks: allData.isPowerDoorLocks,
-                    isDriverAirBag: allData.isDriverAirBag,
-                    isAntiLockBreaks: allData.isAntiLockBreaks,
-                } as FeaturesFormData;
-            case 2:
-                return {
-                    pricePerDay: allData.pricePerDay,
-                    currency: allData.currency,
-                } as PriceFormData;
-            case 3:
-                const step3Data: any = {
-                    requiredDocs: allData.requiredDocs,
-                    securityDeposit: allData.securityDeposit,
-                    securityDepositAmount: allData.securityDepositAmount,
-                    damageExcess: allData.damageExcess,
-                    fuelPolicy: allData.fuelPolicy,
-                    insuranceExpirationDate: allData.insuranceExpirationDate,
-                    insuranceFile: allData.insuranceFile,
-                    availabilityType: allData.availabilityType,
-                    customDays: allData.customDays,
-                };
-                
-                // Populate individual checkboxes from customDays array
-                if (Array.isArray(allData.customDays) && allData.customDays.length > 0) {
-                    CUSTOM_DAYS.forEach((day) => {
-                        step3Data[`customDay_${day}`] = allData.customDays!.includes(day);
-                    });
-                }
-                
-                return step3Data as InfoFormData;
-            case 4:
-                return {
-                    carImages: allData.carImages,
-                } as ImagesFormData;
-            default:
-                return {} as StepData;
-        }
-    };
-
-    // Initialize form with current step's schema and data
     const {
         control,
         handleSubmit,
         formState: { errors },
         trigger,
+        setValue,
         getValues,
-    } = useForm<StepData>({
-        resolver: zodResolver(getStepSchema(currentStep)),
-        defaultValues: getStepDefaultValues(currentStep),
-        mode: 'onChange',
-    });
+    } = form;
+
+    // Validate current step fields
+    const validateStep = async (): Promise<boolean> => {
+        const stepFields = getStepFields(currentStep);
+
+        // Before validation, sync customDays from checkboxes if on step 3
+        if (currentStep === 3) {
+            const formValues = getValues();
+            if ((formValues as any).availabilityType === 'CUSTOM') {
+                const customDays = transformCheckboxesToCustomDays(formValues);
+                setValue('customDays', customDays as any);
+            } else {
+                setValue('customDays', [] as any);
+            }
+        }
+
+        return await trigger(stepFields as any);
+    };
 
     // Handle next step
-    const handleNext = async () => {
-        const isValid = await trigger();
+    const handleNext = async (e?: React.MouseEvent) => {
+        e?.preventDefault();
 
-        if (isValid) {
-            // Save current step data
-            const stepData = getValues();
-            
-            // Collect custom days if we're on the Important Info step
-            if (currentStep === 3 && stepData.availabilityType === 'CUSTOM') {
-                const customDays: string[] = [];
-                CUSTOM_DAYS.forEach((day) => {
-                    const checkboxKey = `customDay_${day}`;
-                    if (stepData[checkboxKey]) {
-                        customDays.push(day);
-                    }
-                });
-                stepData.customDays = customDays;
-            }
-            
-            setFormData((prev) => ({ ...prev, ...stepData }));
-
-            // Move to next step
-            if (currentStep < STEPS.length - 1) {
-                setCurrentStep((prev) => prev + 1);
-            }
+        const isValid = await validateStep();
+        if (isValid && currentStep < STEPS.length - 1) {
+            setCurrentStep((prev) => prev + 1);
         }
     };
 
     // Handle previous step
     const handlePrevious = () => {
-        // Save current step data
-        const stepData = getValues();
-        setFormData((prev) => ({ ...prev, ...stepData }));
-
-        // Move to previous step
         if (currentStep > 0) {
             setCurrentStep((prev) => prev - 1);
         }
@@ -260,30 +188,21 @@ export function CarListingForm({
 
     // Handle final form submission
     const handleFormSubmit = handleSubmit(async (data) => {
-        // Combine all step data
-        const completeData = {
-            ...formData,
-            ...data,
-        } as any;
+        const submitData = { ...data } as any;
 
-        // Collect custom days from individual checkboxes
-        if (completeData.availabilityType === 'CUSTOM') {
-            const customDays: string[] = [];
+        // Transform checkbox fields back to customDays array
+        if (submitData.availabilityType === 'CUSTOM') {
+            submitData.customDays = transformCheckboxesToCustomDays(submitData);
+
+            // Remove individual checkbox fields from submission
             CUSTOM_DAYS.forEach((day) => {
-                const checkboxKey = `customDay_${day}`;
-                if (completeData[checkboxKey]) {
-                    customDays.push(day);
-                }
-                // Remove the individual checkbox field
-                delete completeData[checkboxKey];
+                delete submitData[`customDay_${day}`];
             });
-            completeData.customDays = customDays;
         } else {
-            // Clear customDays if not CUSTOM availability type
-            completeData.customDays = undefined;
+            submitData.customDays = undefined;
         }
 
-        await onSubmit(completeData as CarListingFormData);
+        await onSubmit(submitData as CarListingFormData);
     });
 
     const isFirstStep = currentStep === 0;
@@ -291,54 +210,7 @@ export function CarListingForm({
 
     return (
         <div className="max-w-5xl mx-auto">
-            {/* Progress Stepper */}
-            <div className="mb-8">
-                <div className="flex items-center justify-between">
-                    {STEPS.map((step, index) => (
-                        <div key={step.id} className="flex-1 flex items-center">
-                            <div className="flex flex-col items-center flex-1">
-                                {/* Step Circle */}
-                                <div
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-medium transition-colors ${index < currentStep
-                                        ? 'bg-green-500 text-white text-xs'
-                                        : index === currentStep
-                                            ? 'bg-black text-white'
-                                            : 'bg-gray-200 text-gray-600'
-                                        }`}
-                                >
-                                    {index < currentStep ? (
-                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    ) : (
-                                        <span>{index + 1}</span>
-                                    )}
-                                </div>
-                                {/* Step Title */}
-                                <div className="mt-2 text-center">
-                                    <p
-                                        className={`text-xs font-medium ${index === currentStep ? 'text-black' : 'text-gray-600'
-                                            }`}
-                                    >
-                                        {step.title}
-                                    </p>
-                                </div>
-                            </div>
-                            {/* Connector Line */}
-                            {index < STEPS.length - 1 && (
-                                <div
-                                    className={`h-1 flex-1 mx-2 -mt-5 transition-colors ${index < currentStep ? 'bg-green-500' : 'bg-gray-200'
-                                        }`}
-                                />
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
+            <ProgressStepper steps={STEPS} currentStep={currentStep} />
 
             {/* Form Content */}
             <div className="bg-white rounded-lg shadow-md p-8">
@@ -373,6 +245,7 @@ export function CarListingForm({
                                 <Button
                                     variant="outline"
                                     size="sm"
+                                    type='button'
                                     onClick={handlePrevious}
                                     disabled={isSubmitting}
                                 >
@@ -385,6 +258,7 @@ export function CarListingForm({
                                 <Button
                                     variant="outline"
                                     size="sm"
+                                    type='button'
                                     onClick={onCancel}
                                     disabled={isSubmitting}
                                 >
@@ -395,6 +269,7 @@ export function CarListingForm({
                                 <Button
                                     variant="primary"
                                     size="sm"
+                                    type='button'
                                     onClick={handleNext}
                                     disabled={isSubmitting}
                                     className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
@@ -415,6 +290,67 @@ export function CarListingForm({
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    );
+}
+
+// ============================================
+// Progress Stepper Component
+// ============================================
+
+interface ProgressStepperProps {
+    steps: typeof STEPS;
+    currentStep: number;
+}
+
+function ProgressStepper({ steps, currentStep }: ProgressStepperProps) {
+    return (
+        <div className="mb-8">
+            <div className="flex items-center justify-between">
+                {steps.map((step, index) => (
+                    <div key={step.id} className="flex-1 flex items-center">
+                        <div className="flex flex-col items-center flex-1">
+                            {/* Step Circle */}
+                            <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center font-medium transition-colors ${index < currentStep
+                                    ? 'bg-green-500 text-white text-xs'
+                                    : index === currentStep
+                                        ? 'bg-black text-white'
+                                        : 'bg-gray-200 text-gray-600'
+                                    }`}
+                            >
+                                {index < currentStep ? (
+                                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                ) : (
+                                    <span>{index + 1}</span>
+                                )}
+                            </div>
+                            {/* Step Title */}
+                            <div className="mt-2 text-center">
+                                <p
+                                    className={`text-xs font-medium ${index === currentStep ? 'text-black' : 'text-gray-600'
+                                        }`}
+                                >
+                                    {step.title}
+                                </p>
+                            </div>
+                        </div>
+                        {/* Connector Line */}
+                        {index < steps.length - 1 && (
+                            <div
+                                className={`h-1 flex-1 mx-2 -mt-5 transition-colors ${index < currentStep ? 'bg-green-500' : 'bg-gray-200'
+                                    }`}
+                            />
+                        )}
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -730,13 +666,7 @@ function ImportantInfoStep({ control }: { control: any }) {
                                         key={day}
                                         name={`customDay_${day}`}
                                         control={control}
-                                        label={day === 'Mon' ? 'Monday' :
-                                            day === 'Tue' ? 'Tuesday' :
-                                                day === 'Wen' ? 'Wednesday' :
-                                                    day === 'Thur' ? 'Thursday' :
-                                                        day === 'Fri' ? 'Friday' :
-                                                            day === 'Sat' ? 'Saturday' :
-                                                                'Sunday'}
+                                        label={DAY_LABELS[day] || day}
                                     />
                                 ))}
                             </div>

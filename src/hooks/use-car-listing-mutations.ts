@@ -19,7 +19,16 @@ function convertToFormData(data: CarListingFormData): FormData {
   const formData = new FormData();
 
   // Fields to exclude from submission (not expected by backend)
-  const excludedFields = ["pickUpLocation"];
+  const excludedFields = [
+    "pickUpLocation",
+    "existingImages",
+    "id",
+    "createdAt",
+    "updatedAt",
+    "userId",
+    "user",
+    "bookings",
+  ];
 
   // Add all fields to FormData
   Object.entries(data).forEach(([key, value]) => {
@@ -29,21 +38,14 @@ function convertToFormData(data: CarListingFormData): FormData {
     }
 
     if (key === "carImages" && Array.isArray(value)) {
-      // Handle array of File objects and string URLs
       value.forEach((item) => {
         if (item instanceof File) {
-          // Append new files
           formData.append("carImages", item);
-        } else if (typeof item === "string") {
-          // Append existing image URLs
-          formData.append("existingImages", item);
         }
       });
     } else if (key === "insuranceFile" && value instanceof File) {
-      // Handle File object for insurance file
       formData.append("insuranceFile", value);
     } else if (key === "customDays" && Array.isArray(value)) {
-      // Handle customDays as array of strings: ["Mon", "Tue"]
       formData.append(key, JSON.stringify(value));
     } else if (Array.isArray(value)) {
       // Handle other arrays

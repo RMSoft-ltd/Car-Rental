@@ -1,15 +1,16 @@
 import { z } from "zod";
 
 /**
- * Zod validation schemas for car listing forms
- * These schemas provide type-safe validation for creating and updating car listings
+ * Zod validation schema for car listing forms
+ * Provides type-safe validation for creating and updating car listings
  */
 
 // ============================================
-// Step 1: Listing Information Schema
+// Car Listing Schema
 // ============================================
 
-export const listingInformationSchema = z.object({
+export const carListingSchema = z.object({
+  // Listing Information
   title: z
     .string()
     .min(5, "Title must be at least 5 characters")
@@ -37,9 +38,7 @@ export const listingInformationSchema = z.object({
   body: z
     .string()
     .min(2, "Body type is required")
-    .max(50, "Body type must not exceed 50 characters")
-    .optional(),
-
+    .max(50, "Body type must not exceed 50 characters"),
   seats: z
     .string()
     .or(z.number())
@@ -50,10 +49,8 @@ export const listingInformationSchema = z.object({
     .string()
     .or(z.number())
     .transform((val) => (typeof val === "string" ? parseFloat(val) : val))
-    .refine((val) => val >= 0, "Mileage must be a positive number")
-    .optional(),
-
-  fuelType: z.string().min(2, "Fuel type is required").optional(),
+    .refine((val) => val >= 0, "Mileage must be a positive number"),
+  fuelType: z.string().min(2, "Fuel type is required"),
 
   year: z
     .string()
@@ -63,14 +60,12 @@ export const listingInformationSchema = z.object({
       message: "Please enter a valid year",
     }),
 
-  transition: z.string().min(2, "Transmission type is required").optional(),
+  transition: z.string().min(2, "Transmission type is required"),
 
   driverType: z
     .string()
     .min(2, "Driver type is required")
-    .max(50, "Driver type must not exceed 50 characters")
-    .optional(),
-
+    .max(50, "Driver type must not exceed 50 characters"),
   engineSize: z
     .string()
     .or(z.number())
@@ -78,16 +73,12 @@ export const listingInformationSchema = z.object({
     .refine(
       (val) => val > 0 && val <= 10,
       "Engine size must be between 0 and 10 liters"
-    )
-    .optional(),
-
+    ),
   doors: z
     .string()
     .or(z.number())
     .transform((val) => (typeof val === "string" ? parseInt(val) : val))
-    .refine((val) => val >= 2 && val <= 6, "Doors must be between 2 and 6")
-    .optional(),
-
+    .refine((val) => val >= 2 && val <= 6, "Doors must be between 2 and 6"),
   smallBags: z
     .string()
     .or(z.number())
@@ -125,14 +116,8 @@ export const listingInformationSchema = z.object({
     .min(20, "Description must be at least 20 characters")
     .max(1000, "Description must not exceed 1000 characters")
     .optional(),
-});
 
-// ============================================
-// Step 2: Features Schema
-// ============================================
-
-export const featuresSchema = z.object({
-  // Comfort
+  // Features - Comfort
   isPowerSteering: z.boolean().default(false),
   isCruiseControl: z.boolean().default(false),
   isNavigation: z.boolean().default(false),
@@ -140,7 +125,7 @@ export const featuresSchema = z.object({
   isVanityMirror: z.boolean().default(false),
   isTrunkLight: z.boolean().default(false),
 
-  // Interior
+  // Features - Interior
   isAirConditioner: z.boolean().default(false),
   Techometer: z.boolean().default(false),
   isDigitalOdometer: z.boolean().default(false),
@@ -148,7 +133,7 @@ export const featuresSchema = z.object({
   isHeater: z.boolean().default(false),
   isMemorySeats: z.boolean().default(false),
 
-  // Exterior
+  // Features - Exterior
   isFogLightsFront: z.boolean().default(false),
   isRainSensingWipe: z.boolean().default(false),
   isRearSpoiler: z.boolean().default(false),
@@ -156,20 +141,15 @@ export const featuresSchema = z.object({
   isRearWindow: z.boolean().default(false),
   isWindowDefroster: z.boolean().default(false),
 
-  // Safety
+  // Features - Safety
   isBreakeAssist: z.boolean().default(false),
   isChildSafetyLocks: z.boolean().default(false),
   isTractionControl: z.boolean().default(false),
   isPowerDoorLocks: z.boolean().default(false),
   isDriverAirBag: z.boolean().default(false),
   isAntiLockBreaks: z.boolean().default(false),
-});
 
-// ============================================
-// Step 3: Price Schema
-// ============================================
-
-export const priceSchema = z.object({
+  // Pricing
   pricePerDay: z
     .string()
     .or(z.number())
@@ -185,13 +165,8 @@ export const priceSchema = z.object({
   currency: z.enum(["RWF", "USD", "EUR", "NGN"], {
     message: "Please select a valid currency",
   }),
-});
 
-// ============================================
-// Step 4: Info Schema
-// ============================================
-
-export const infoSchema = z.object({
+  // Important Information
   requiredDocs: z
     .string()
     .min(10, "Required documents must be specified")
@@ -201,9 +176,7 @@ export const infoSchema = z.object({
   securityDeposit: z
     .string()
     .min(2, "Security deposit information is required")
-    .max(500, "Security deposit must not exceed 500 characters")
-    .optional(),
-
+    .max(500, "Security deposit must not exceed 500 characters"),
   securityDepositAmount: z
     .string()
     .or(z.number())
@@ -213,49 +186,33 @@ export const infoSchema = z.object({
       }
       return val;
     })
-    .refine((val) => val >= 0, "Security deposit must be a positive number")
-    .optional(),
-
+    .refine((val) => val >= 0, "Security deposit must be a positive number"),
   damageExcess: z
     .string()
     .min(5, "Damage excess information is required")
-    .max(500, "Damage excess must not exceed 500 characters")
-    .optional(),
-
+    .max(500, "Damage excess must not exceed 500 characters"),
   fuelPolicy: z
     .string()
     .min(5, "Fuel policy is required")
-    .max(500, "Fuel policy must not exceed 500 characters")
-    .optional(),
-
+    .max(500, "Fuel policy must not exceed 500 characters"),
   insuranceExpirationDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
     .refine(
       (val) => new Date(val) > new Date(),
       "Insurance must not be expired"
-    )
-    .optional(),
-
+    ),
   insuranceFile: z
     .union([z.instanceof(File), z.string()])
     .optional()
     .nullable(),
 
-  availabilityType: z
-    .enum(["FULL", "WEEKDAYS", "WEEKENDS", "CUSTOM"], {
-      message: "Please select availability type",
-    })
-    .optional(),
-
+  availabilityType: z.enum(["FULL", "WEEKDAYS", "WEEKENDS", "CUSTOM"], {
+    message: "Please select availability type",
+  }),
   customDays: z.array(z.string()).optional(),
-});
 
-// ============================================
-// Step 5: Images Schema
-// ============================================
-
-export const imagesSchema = z.object({
+  // Images
   carImages: z
     .array(z.union([z.instanceof(File), z.string()]))
     .min(1, "At least one car image is required")
@@ -263,33 +220,17 @@ export const imagesSchema = z.object({
 });
 
 // ============================================
-// Complete Car Listing Schema (All Steps Combined)
+// TypeScript Type
 // ============================================
 
-export const carListingSchema = listingInformationSchema
-  .merge(featuresSchema)
-  .merge(priceSchema)
-  .merge(infoSchema)
-  .merge(imagesSchema);
-
-// ============================================
-// TypeScript Types (Inferred from Schemas)
-// ============================================
-
-export type ListingInformationFormData = z.infer<
-  typeof listingInformationSchema
->;
-export type FeaturesFormData = z.infer<typeof featuresSchema>;
-export type PriceFormData = z.infer<typeof priceSchema>;
-export type InfoFormData = z.infer<typeof infoSchema>;
-export type ImagesFormData = z.infer<typeof imagesSchema>;
 export type CarListingFormData = z.infer<typeof carListingSchema>;
 
 // ============================================
-// Default Values for Forms
+// Default Values
 // ============================================
 
-export const defaultListingInformation: Partial<ListingInformationFormData> = {
+export const defaultCarListingData: Partial<CarListingFormData> = {
+  // Listing Information
   title: "",
   make: "",
   model: "",
@@ -308,9 +249,8 @@ export const defaultListingInformation: Partial<ListingInformationFormData> = {
   largeBags: "" as any,
   inTerminal: "",
   description: "",
-};
 
-export const defaultFeatures: FeaturesFormData = {
+  // Features
   isPowerSteering: false,
   isCruiseControl: false,
   isNavigation: false,
@@ -335,14 +275,12 @@ export const defaultFeatures: FeaturesFormData = {
   isPowerDoorLocks: false,
   isDriverAirBag: false,
   isAntiLockBreaks: false,
-};
 
-export const defaultPrice: Partial<PriceFormData> = {
+  // Pricing
   pricePerDay: "" as any,
   currency: undefined,
-};
 
-export const defaultInfo: Partial<InfoFormData> = {
+  // Important Information
   requiredDocs: "",
   securityDeposit: "",
   securityDepositAmount: "" as any,
@@ -352,16 +290,7 @@ export const defaultInfo: Partial<InfoFormData> = {
   insuranceExpirationDate: "",
   insuranceFile: null,
   customDays: [],
-};
 
-export const defaultImages: ImagesFormData = {
+  // Images
   carImages: [],
-};
-
-export const defaultCarListingData: Partial<CarListingFormData> = {
-  ...defaultListingInformation,
-  ...defaultFeatures,
-  ...defaultPrice,
-  ...defaultInfo,
-  ...defaultImages,
 };

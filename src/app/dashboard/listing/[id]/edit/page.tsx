@@ -75,9 +75,20 @@ function carToFormData(car: Car): Partial<CarListingFormData> {
         availabilityType: car.availabilityType as "FULL" | "WEEKDAYS" | "WEEKENDS" | "CUSTOM",
         insuranceExpirationDate: car.insuranceExpirationDate,
         insuranceFile: car.insuranceFile || null,
-        customDays: car.customDays || [],
 
-        // Images - keep as string URLs from server
+        customDays: (() => {
+            try {
+                if (typeof car.customDays === 'string') {
+                    return JSON.parse(car.customDays);
+                }
+                return Array.isArray(car.customDays) ? car.customDays : [];
+            } catch (error) {
+                console.error('Failed to parse customDays:', car.customDays);
+                return [];
+            }
+        })(),
+
+
         carImages: car.carImages || [],
     };
 }
