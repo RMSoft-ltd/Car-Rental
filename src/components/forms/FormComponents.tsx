@@ -58,23 +58,48 @@ export function FormInput({
             render={({ field: { value, onChange, ...field }, fieldState: { error } }) => {
                 // For file inputs, we need to handle them differently
                 if (type === 'file') {
+                    const existingFile = typeof value === 'string' ? value : null;
+                    const hasFile = value instanceof File || existingFile;
+
                     return (
                         <div className={className}>
                             <Label htmlFor={name} className="block mb-2">
                                 {label}
                             </Label>
+
+                            {/* Show existing file info */}
+                            {existingFile && (
+                                <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+                                    Current file: {existingFile.split('/').pop()}
+                                </div>
+                            )}
+
                             <Input
                                 {...field}
+                                value={undefined}
                                 id={name}
                                 type={type}
                                 onChange={(e) => {
-                                    // For file inputs, pass the FileList or file path
+                                    // For file inputs, pass the File object or keep existing value
                                     const files = e.target.files;
-                                    onChange(files && files.length > 0 ? files[0] : null);
+                                    if (files && files.length > 0) {
+                                        onChange(files[0]);
+                                    } else if (!existingFile) {
+                                        onChange(null);
+                                    }
                                 }}
                                 disabled={disabled}
                                 className={`h-12 ${error ? 'border-destructive' : ''}`}
                             />
+
+                            {hasFile && (
+                                <p className="mt-1.5 text-sm text-gray-600">
+                                    {value instanceof File
+                                        ? `New file selected: ${value.name}`
+                                        : 'Using existing file (upload a new file to replace)'}
+                                </p>
+                            )}
+
                             {error && (
                                 <p className="mt-1.5 text-sm text-destructive">{error.message}</p>
                             )}
@@ -401,8 +426,9 @@ export function FormFileUpload({
             return true;
         });
 
-        // Add new files to existing files
-        const newFiles = [...currentValue, ...validFiles];
+        // Merge new files with existing files (preserve both new Files and existing URLs)
+        const existingFiles = Array.isArray(currentValue) ? currentValue : [];
+        const newFiles = [...existingFiles, ...validFiles];
         onChange(newFiles);
     };
 

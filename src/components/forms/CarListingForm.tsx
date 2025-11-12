@@ -7,7 +7,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
     carListingSchema,
@@ -23,6 +23,8 @@ import {
     FormFileUpload,
     FormError,
 } from './FormComponents';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { CAR_MAKES, CAR_MODELS, FUEL_TYPES, TRANSMISSION_TYPES, DRIVER_TYPES, CAR_COLORS, BODY_TYPES, FUEL_POLICIES, CUSTOM_DAYS } from '@/constants/car-listing';
 import Button from '../shared/Button';
 
@@ -64,27 +66,15 @@ const DAY_LABELS: Record<string, string> = {
 };
 
 // Helper function to transform customDays array to checkbox fields
+// NOTE: We keep this for backward compatibility but won't use checkbox fields in form state
 const transformCustomDaysToCheckboxes = (data: Partial<CarListingFormData>) => {
-    const transformed = { ...data };
-
-    if (data.customDays && Array.isArray(data.customDays)) {
-        CUSTOM_DAYS.forEach((day) => {
-            (transformed as any)[`customDay_${day}`] = data.customDays!.includes(day);
-        });
-    }
-
-    return transformed;
+    // Just return data as-is, we'll handle checkboxes differently
+    return { ...data };
 };
 
-// Helper function to transform checkbox fields back to customDays array
-const transformCheckboxesToCustomDays = (data: any): string[] => {
-    const customDays: string[] = [];
-    CUSTOM_DAYS.forEach((day) => {
-        if (data[`customDay_${day}`]) {
-            customDays.push(day);
-        }
-    });
-    return customDays;
+// Helper function to check if a day is selected
+const isDaySelected = (customDays: string[] | undefined, day: string): boolean => {
+    return Array.isArray(customDays) && customDays.includes(day);
 };
 
 // Fields to validate for each step
@@ -127,7 +117,6 @@ export function CarListingForm({
     const [currentStep, setCurrentStep] = useState(0);
 
     // Initialize form with complete schema and all default values
-    // Transform customDays array to individual checkbox fields
     const defaultValues = useMemo(() => {
         const baseData = {
             ...defaultCarListingData,
@@ -149,22 +138,23 @@ export function CarListingForm({
         trigger,
         setValue,
         getValues,
+        reset,
     } = form;
+
+    // Reset form when initialData changes (important for edit mode)
+    useEffect(() => {
+        if (initialData) {
+            const transformedData = transformCustomDaysToCheckboxes({
+                ...defaultCarListingData,
+                ...initialData,
+            });
+            reset(transformedData);
+        }
+    }, [initialData, reset]);
 
     // Validate current step fields
     const validateStep = async (): Promise<boolean> => {
         const stepFields = getStepFields(currentStep);
-
-        // Before validation, sync customDays from checkboxes if on step 3
-        if (currentStep === 3) {
-            const formValues = getValues();
-            if ((formValues as any).availabilityType === 'CUSTOM') {
-                const customDays = transformCheckboxesToCustomDays(formValues);
-                setValue('customDays', customDays as any);
-            } else {
-                setValue('customDays', [] as any);
-            }
-        }
 
         return await trigger(stepFields as any);
     };
@@ -190,17 +180,18 @@ export function CarListingForm({
     const handleFormSubmit = handleSubmit(async (data) => {
         const submitData = { ...data } as any;
 
-        // Transform checkbox fields back to customDays array
-        if (submitData.availabilityType === 'CUSTOM') {
-            submitData.customDays = transformCheckboxesToCustomDays(submitData);
+        // Debug: Log the data before transformation
+        console.log('Form data before submission:', data);
+        console.log('availabilityType:', submitData.availabilityType);
+        console.log('customDays from form:', submitData.customDays);
 
-            // Remove individual checkbox fields from submission
-            CUSTOM_DAYS.forEach((day) => {
-                delete submitData[`customDay_${day}`];
-            });
-        } else {
-            submitData.customDays = undefined;
+        // Ensure customDays is an empty array if not CUSTOM
+        if (submitData.availabilityType !== 'CUSTOM') {
+            submitData.customDays = [];
         }
+
+        console.log('Final submit data:', submitData);
+        console.log('customDays in final data:', submitData.customDays);
 
         await onSubmit(submitData as CarListingFormData);
     });
@@ -575,6 +566,11 @@ function ImportantInfoStep({ control }: { control: any }) {
         name: 'availabilityType',
     });
 
+    const customDays = useWatch({
+        control,
+        name: 'customDays',
+    });
+
     return (
         <div className="space-y-6">
             <FormTextarea
@@ -656,21 +652,52 @@ function ImportantInfoStep({ control }: { control: any }) {
                     />
 
                     {availabilityType === 'CUSTOM' && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                                Select Available Days
-                            </label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {CUSTOM_DAYS.map((day) => (
-                                    <FormCheckbox
-                                        key={day}
-                                        name={`customDay_${day}`}
-                                        control={control}
-                                        label={DAY_LABELS[day] || day}
-                                    />
-                                ))}
-                            </div>
-                        </div>
+                        <Controller
+                            name="customDays"
+                            control={control}
+                            render={({ field: { value = [], onChange }, fieldState: { error } }) => (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                        Select Available Days
+                                    </label>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        {CUSTOM_DAYS.map((day) => {
+                                            const isChecked = isDaySelected(value as string[], day);
+
+                                            return (
+                                                <div key={day} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={`customDay_${day}`}
+                                                        checked={isChecked}
+                                                        onCheckedChange={(checked) => {
+                                                            const currentDays = Array.isArray(value) ? value : [];
+                                                            if (checked) {
+                                                                // Add day if not already present
+                                                                if (!currentDays.includes(day)) {
+                                                                    onChange([...currentDays, day]);
+                                                                }
+                                                            } else {
+                                                                // Remove day
+                                                                onChange(currentDays.filter((d: string) => d !== day));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <Label
+                                                        htmlFor={`customDay_${day}`}
+                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                    >
+                                                        {DAY_LABELS[day] || day}
+                                                    </Label>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    {error && (
+                                        <p className="mt-2 text-sm text-destructive">{error.message}</p>
+                                    )}
+                                </div>
+                            )}
+                        />
                     )}
 
 

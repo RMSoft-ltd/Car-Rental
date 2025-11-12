@@ -43,8 +43,22 @@ function convertToFormData(data: CarListingFormData): FormData {
           formData.append("carImages", item);
         }
       });
-    } else if (key === "insuranceFile" && value instanceof File) {
-      formData.append("insuranceFile", value);
+
+      const existingUrls = value.filter((item) => typeof item === "string");
+      if (existingUrls.length > 0) {
+        existingUrls.forEach((url) => {
+          formData.append("carImages", url);
+        });
+      }
+    } else if (key === "insuranceFile") {
+      if (value instanceof File) {
+        // New file uploaded
+        formData.append("insuranceFile", value);
+      } else if (typeof value === "string" && value) {
+        // Existing file URL - send it as is
+        formData.append("insuranceFile", value);
+      }
+      // If value is null/undefined, don't send anything
     } else if (key === "customDays" && Array.isArray(value)) {
       formData.append(key, JSON.stringify(value));
     } else if (Array.isArray(value)) {

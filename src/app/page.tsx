@@ -99,7 +99,7 @@ const FilterSection = React.memo<{
 ));
 FilterSection.displayName = "FilterSection";
 
-const EmptyState = React.memo<{ refetch: () => void , reset : () => void }>(({ refetch , reset }) => (
+const EmptyState = React.memo<{ refetch: () => void, reset: () => void }>(({ refetch, reset }) => (
   <div className="text-center py-16 px-4">
     <div className="max-w-md mx-auto">
       <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
@@ -114,10 +114,10 @@ const EmptyState = React.memo<{ refetch: () => void , reset : () => void }>(({ r
       <div className="space-x-3">
 
         <Button variant="primary" type="reset" onClick={() => { refetch(); }} >
-         Refresh search
+          Refresh search
         </Button>
-        <Button variant="secondary"  type="reset" onClick={() => { reset(); }} >
-         Reset search
+        <Button variant="secondary" type="reset" onClick={() => { reset(); }} >
+          Reset search
         </Button>
 
       </div>
@@ -349,7 +349,7 @@ export default function Home() {
         </div>
 
         <div className="relative z-10 h-full flex flex-col justify-center">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
                 Car & Driver Rental - Search, Compare & Save
@@ -365,7 +365,7 @@ export default function Home() {
         </div>
 
         <div className="absolute bottom-4 left-0 right-0 z-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
             <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6">
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                 <SearchInput
@@ -421,7 +421,7 @@ export default function Home() {
 
       {/* Content Below Hero */}
       <div className="bg-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Filter Sidebar */}
             <aside className="lg:col-span-1">
@@ -544,7 +544,7 @@ export default function Home() {
                     <HorizontalCarCardSkeleton key={i} />
                   ))}
 
-               {/* Empty State */}
+                {/* Empty State */}
                 {hasNoCars && (
                   <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6">
                     <EmptyState refetch={refetch} reset={clearAllFilters} />
