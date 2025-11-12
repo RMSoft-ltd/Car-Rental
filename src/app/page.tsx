@@ -99,7 +99,7 @@ const FilterSection = React.memo<{
 ));
 FilterSection.displayName = "FilterSection";
 
-const EmptyState = React.memo<{ refetch: () => void , reset : () => void }>(({ refetch , reset }) => (
+const EmptyState = React.memo<{ refetch: () => void, reset: () => void }>(({ refetch, reset }) => (
   <div className="text-center py-16 px-4">
     <div className="max-w-md mx-auto">
       <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
@@ -114,10 +114,10 @@ const EmptyState = React.memo<{ refetch: () => void , reset : () => void }>(({ r
       <div className="space-x-3">
 
         <Button variant="primary" type="reset" onClick={() => { refetch(); }} >
-         Refresh search
+          Refresh search
         </Button>
-        <Button variant="secondary"  type="reset" onClick={() => { reset(); }} >
-         Reset search
+        <Button variant="secondary" type="reset" onClick={() => { reset(); }} >
+          Reset search
         </Button>
 
       </div>
@@ -544,7 +544,7 @@ export default function Home() {
                     <HorizontalCarCardSkeleton key={i} />
                   ))}
 
-               {/* Empty State */}
+                {/* Empty State */}
                 {hasNoCars && (
                   <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6">
                     <EmptyState refetch={refetch} reset={clearAllFilters} />

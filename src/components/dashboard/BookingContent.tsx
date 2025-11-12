@@ -138,14 +138,14 @@ export default function BookingContent() {
     const month = startDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    
+
     // Get the first day of the week (Sunday = 0)
     const startDay = firstDay.getDay();
-    
+
     // Calculate how many days to show (including previous month's trailing days)
     const daysInMonth = lastDay.getDate();
     const totalDays = Math.ceil((startDay + daysInMonth) / 7) * 7;
-    
+
     const dates = [];
     for (let i = 0; i < totalDays; i++) {
       const date = new Date(year, month, i - startDay + 1);
@@ -202,8 +202,8 @@ export default function BookingContent() {
   const isBookingInMonth = (booking: typeof mockBookings[0], monthDates: Date[]) => {
     const startDate = new Date(booking.startDate);
     const endDate = new Date(booking.endDate);
-    
-    return monthDates.some(date => 
+
+    return monthDates.some(date =>
       date >= startDate && date <= endDate
     );
   };
@@ -217,7 +217,7 @@ export default function BookingContent() {
   // const getBookingPosition = (booking: typeof mockBookings[0], monthDates: Date[]) => {
   //   const startDate = new Date(booking.startDate);
   //   const endDate = new Date(booking.endDate);
-    
+
   //   const startIndex = monthDates.findIndex(date => 
   //     date.toDateString() === startDate.toDateString()
   //   );
@@ -243,7 +243,7 @@ export default function BookingContent() {
     <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
       <div className="container mx-auto h-full">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-          
+
           {/* Calendar Section */}
           <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             {/* Date Navigation */}
@@ -254,36 +254,33 @@ export default function BookingContent() {
                   {formatDateRange()}
                 </span>
               </div>
-              
+
               {/* View Mode Toggle */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewMode('single')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    viewMode === 'single' 
-                      ? 'bg-black text-white' 
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'single'
+                      ? 'bg-black text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   1 Month
                 </button>
                 <button
                   onClick={() => setViewMode('double')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    viewMode === 'double' 
-                      ? 'bg-black text-white' 
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'double'
+                      ? 'bg-black text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   2 Months
                 </button>
                 <button
                   onClick={() => setViewMode('triple')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    viewMode === 'triple' 
-                      ? 'bg-black text-white' 
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'triple'
+                      ? 'bg-black text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   3 Months
                 </button>
@@ -333,22 +330,20 @@ export default function BookingContent() {
                       const isCurrentMonth = date.getMonth() === month.date.getMonth();
                       const isToday = date.toDateString() === new Date().toDateString();
                       const dayBookings = getBookingsForMonth([date]);
-                      
+
                       return (
                         <div
                           key={dayIndex}
-                          className={`min-h-[40px] p-1 border border-gray-200 ${
-                            isCurrentMonth 
-                              ? 'bg-white' 
+                          className={`min-h-[40px] p-1 border border-gray-200 ${isCurrentMonth
+                              ? 'bg-white'
                               : 'bg-gray-100 text-gray-400'
-                          } ${isToday ? 'bg-blue-50 border-blue-300' : ''}`}
+                            } ${isToday ? 'bg-blue-50 border-blue-300' : ''}`}
                         >
-                          <div className={`text-xs font-medium ${
-                            isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-                          } ${isToday ? 'text-blue-600 font-bold' : ''}`}>
+                          <div className={`text-xs font-medium ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                            } ${isToday ? 'text-blue-600 font-bold' : ''}`}>
                             {date.getDate()}
                           </div>
-                          
+
                           {/* Booking indicators */}
                           {dayBookings.length > 0 && (
                             <div className="mt-1 space-y-1">
@@ -400,49 +395,49 @@ export default function BookingContent() {
                     {selectedBooking.mobileNumber}
                   </span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Email</span>
                   <span className="text-sm font-semibold text-gray-900">
                     {selectedBooking.email}
                   </span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Location</span>
                   <span className="text-sm font-semibold text-gray-900">
                     {selectedBooking.location}
                   </span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Booked Vehicle</span>
                   <span className="text-sm font-semibold text-gray-900">
                     {selectedBooking.vehicle}
                   </span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Pick-up Time</span>
                   <span className="text-sm font-semibold text-gray-900">
                     {selectedBooking.pickupTime}
                   </span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Pick-up Location</span>
                   <span className="text-sm font-semibold text-gray-900">
                     {selectedBooking.pickupLocation}
                   </span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Return Time</span>
                   <span className="text-sm font-semibold text-gray-900">
                     {selectedBooking.returnTime}
                   </span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Return Location</span>
                   <span className="text-sm font-semibold text-gray-900">

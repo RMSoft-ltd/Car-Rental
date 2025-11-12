@@ -19,7 +19,16 @@ function convertToFormData(data: CarListingFormData): FormData {
   const formData = new FormData();
 
   // Fields to exclude from submission (not expected by backend)
-  const excludedFields = ["pickUpLocation", "customDays"];
+  const excludedFields = [
+    "pickUpLocation",
+    "existingImages",
+    "id",
+    "createdAt",
+    "updatedAt",
+    "userId",
+    "user",
+    "bookings",
+  ];
 
   // Add all fields to FormData
   Object.entries(data).forEach(([key, value]) => {
@@ -29,19 +38,29 @@ function convertToFormData(data: CarListingFormData): FormData {
     }
 
     if (key === "carImages" && Array.isArray(value)) {
-      // Handle array of File objects and string URLs
       value.forEach((item) => {
         if (item instanceof File) {
-          // Append new files
           formData.append("carImages", item);
-        } else if (typeof item === "string") {
-          // Append existing image URLs
-          formData.append("existingImages", item);
         }
       });
-    } else if (key === "insuranceFile" && value instanceof File) {
-      // Handle File object for insurance file
-      formData.append("insuranceFile", value);
+
+      const existingUrls = value.filter((item) => typeof item === "string");
+      if (existingUrls.length > 0) {
+        existingUrls.forEach((url) => {
+          formData.append("carImages", url);
+        });
+      }
+    } else if (key === "insuranceFile") {
+      if (value instanceof File) {
+        // New file uploaded
+        formData.append("insuranceFile", value);
+      } else if (typeof value === "string" && value) {
+        // Existing file URL - send it as is
+        formData.append("insuranceFile", value);
+      }
+      // If value is null/undefined, don't send anything
+    } else if (key === "customDays" && Array.isArray(value)) {
+      formData.append(key, JSON.stringify(value));
     } else if (Array.isArray(value)) {
       // Handle other arrays
       formData.append(key, JSON.stringify(value));
@@ -129,86 +148,3 @@ export function useDeleteCarListing() {
     },
   });
 }
-
-// ============================================
-// Usage Examples
-// ============================================
-
-/**
- * Example: Create car listing
- *
- * ```tsx
- * const { user } = useAuth(); // Get current user
- * const createMutation = useCreateCarListing();
- *
- * const handleSubmit = async (data: CarListingFormData) => {
- *   try {
- *     await createMutation.mutateAsync({
- *       userId: user.id,
- *       data,
- *     });
- *     toast.success('Car listing created successfully!');
- *     router.push('/dashboard/listing');
- *   } catch (error) {
- *     toast.error('Failed to create listing');
- *   }
- * };
- *
- * return (
- *   <CarListingForm
- *     mode="create"
- *     onSubmit={handleSubmit}
- *     isSubmitting={createMutation.isPending}
- *   />
- * );
- * ```
- */
-
-/**
- * Example: Update car listing
- *
- * ```tsx
- * const updateMutation = useUpdateCarListing();
- *
- * const handleSubmit = async (data: CarListingFormData) => {
- *   try {
- *     await updateMutation.mutateAsync({
- *       id: carId,
- *       data,
- *     });
- *     toast.success('Car listing updated successfully!');
- *     router.push('/dashboard/listing');
- *   } catch (error) {
- *     toast.error('Failed to update listing');
- *   }
- * };
- *
- * return (
- *   <CarListingForm
- *     mode="update"
- *     initialData={existingData}
- *     onSubmit={handleSubmit}
- *     isSubmitting={updateMutation.isPending}
- *   />
- * );
- * ```
- */
-
-/**
- * Example: Delete car listing
- *
- * ```tsx
- * const deleteMutation = useDeleteCarListing();
- *
- * const handleDelete = async (id: number) => {
- *   if (confirm('Are you sure you want to delete this listing?')) {
- *     try {
- *       await deleteMutation.mutateAsync(id);
- *       toast.success('Car listing deleted successfully!');
- *     } catch (error) {
- *       toast.error('Failed to delete listing');
- *     }
- *   }
- * };
- * ```
- */

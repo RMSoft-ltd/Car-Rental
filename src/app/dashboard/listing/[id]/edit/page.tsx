@@ -37,30 +37,30 @@ function carToFormData(car: Car): Partial<CarListingFormData> {
         description: car.description,
 
         // Features
-        isPowerSteering: car.isPowerSteering,
-        isCruiseControl: car.isCruiseControl,
-        isNavigation: car.isNavigation,
-        isPowerLocks: car.isPowerLocks,
-        isVanityMirror: car.isVanityMirror,
-        isTrunkLight: car.isTrunkLight,
-        isAirConditioner: car.isAirConditioner,
-        Techometer: car.Techometer,
-        isDigitalOdometer: car.isDigitalOdometer,
-        isLeatherSeats: car.isLeatherSeats,
-        isHeater: car.isHeater,
-        isMemorySeats: car.isMemorySeats,
-        isFogLightsFront: car.isFogLightsFront,
-        isRainSensingWipe: car.isRainSensingWipe,
-        isRearSpoiler: car.isRearSpoiler,
-        isSunRoof: car.isSunRoof,
-        isRearWindow: car.isRearWindow,
-        isWindowDefroster: car.isWindowDefroster,
-        isBreakeAssist: car.isBreakeAssist,
-        isChildSafetyLocks: car.isChildSafetyLocks,
-        isTractionControl: car.isTractionControl,
-        isPowerDoorLocks: car.isPowerDoorLocks,
-        isDriverAirBag: car.isDriverAirBag,
-        isAntiLockBreaks: car.isAntiLockBreaks,
+        isPowerSteering: Boolean(car.isPowerSteering),
+        isCruiseControl: Boolean(car.isCruiseControl),
+        isNavigation: Boolean(car.isNavigation),
+        isPowerLocks: Boolean(car.isPowerLocks),
+        isVanityMirror: Boolean(car.isVanityMirror),
+        isTrunkLight: Boolean(car.isTrunkLight),
+        isAirConditioner: Boolean(car.isAirConditioner),
+        Techometer: Boolean(car.Techometer),
+        isDigitalOdometer: Boolean(car.isDigitalOdometer),
+        isLeatherSeats: Boolean(car.isLeatherSeats),
+        isHeater: Boolean(car.isHeater),
+        isMemorySeats: Boolean(car.isMemorySeats),
+        isFogLightsFront: Boolean(car.isFogLightsFront),
+        isRainSensingWipe: Boolean(car.isRainSensingWipe),
+        isRearSpoiler: Boolean(car.isRearSpoiler),
+        isSunRoof: Boolean(car.isSunRoof),
+        isRearWindow: Boolean(car.isRearWindow),
+        isWindowDefroster: Boolean(car.isWindowDefroster),
+        isBreakeAssist: Boolean(car.isBreakeAssist),
+        isChildSafetyLocks: Boolean(car.isChildSafetyLocks),
+        isTractionControl: Boolean(car.isTractionControl),
+        isPowerDoorLocks: Boolean(car.isPowerDoorLocks),
+        isDriverAirBag: Boolean(car.isDriverAirBag),
+        isAntiLockBreaks: Boolean(car.isAntiLockBreaks),
 
         // Pricing
         pricePerDay: car.pricePerDay,
@@ -75,10 +75,20 @@ function carToFormData(car: Car): Partial<CarListingFormData> {
         availabilityType: car.availabilityType as "FULL" | "WEEKDAYS" | "WEEKENDS" | "CUSTOM",
         insuranceExpirationDate: car.insuranceExpirationDate,
         insuranceFile: car.insuranceFile || null,
-        customDays: car.customDays || [],
-        pickUpLocation: car.pickUpLocation || "",
 
-        // Images - keep as string URLs from server
+        customDays: (() => {
+            try {
+                if (typeof car.customDays === 'string') {
+                    return JSON.parse(car.customDays);
+                }
+                return Array.isArray(car.customDays) ? car.customDays : [];
+            } catch (error) {
+                console.error('Failed to parse customDays:', car.customDays);
+                return [];
+            }
+        })(),
+
+
         carImages: car.carImages || [],
     };
 }
@@ -97,14 +107,6 @@ export default function EditListingPage() {
         isLoading,
         isError,
     } = useCarListing(carId);
-
-    useEffect(() => {
-        if (!user?.id) {
-            toast.error("Authentication Required", "Please log in to edit a listing");
-            router.push("/auth/signin");
-        }
-    }, [user, router, toast]);
-
     // Convert car data to form format
     const formInitialData = useMemo(() => {
         if (!carListing) return undefined;
@@ -112,7 +114,11 @@ export default function EditListingPage() {
     }, [carListing]);
 
     const handleSubmit = async (data: CarListingFormData) => {
-        console.log(`Updating car listing ${carId}: ${JSON.stringify(data)}`);
+
+        if (!user?.id) {
+            toast.error("Authentication Required", "Please log in to edit a listing");
+            router.push("/auth/signin");
+        }
 
         try {
             await updateMutation.mutateAsync({

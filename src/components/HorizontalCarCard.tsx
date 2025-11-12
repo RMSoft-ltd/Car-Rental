@@ -46,18 +46,21 @@ export default function HorizontalCarCard({
         <div className="flex flex-col md:flex-row">
           {/* Car Image - Fixed aspect ratio */}
           {/* <div className="w-full md:w-80  h-64 md:h-56 lg:h-64 flex-shrink-0 relative"> */}
-           <div className="w-full md:w-72 h-48 flex-shrink-0 relative">
+          <div className="w-full md:w-72 h-48 flex-shrink-0 relative">
             <Image
-              src={
-                car.carImages && car.carImages.length > 0
-                  ? `${baseUrl}${car.carImages[0]}`
-                  : `${baseUrl}${car.carImages[1]}`
-              }
-              fill
-              className="object-cover"
+              src={(() => {
+                const carImage = car.carImages?.[0];
+                if (!carImage) {
+                  return "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
+                }
+                return carImage.startsWith('http') ? carImage : `${baseUrl}${carImage}`;
+              })()}
+              objectFit="cover"
+              width={500}
+              height={500}
               alt={`${car.make} ${car.model}`}
               onError={(e) => {
-                e.currentTarget.src = `${baseUrl}/${car.carImages[0]}`;
+                e.currentTarget.src = "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
               }}
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 320px, 384px"
             />

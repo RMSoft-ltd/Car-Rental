@@ -6,25 +6,12 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useState, useEffect, useMemo } from 'react';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-    listingInformationSchema,
-    featuresSchema,
-    priceSchema,
-    infoSchema,
-    imagesSchema,
-    defaultListingInformation,
-    defaultFeatures,
-    defaultPrice,
-    defaultInfo,
-    defaultImages,
-    type ListingInformationFormData,
-    type FeaturesFormData,
-    type PriceFormData,
-    type InfoFormData,
-    type ImagesFormData,
+    carListingSchema,
+    defaultCarListingData,
     type CarListingFormData,
 } from '@/schemas/car-listing.schema';
 import {
@@ -36,7 +23,10 @@ import {
     FormFileUpload,
     FormError,
 } from './FormComponents';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { CAR_MAKES, CAR_MODELS, FUEL_TYPES, TRANSMISSION_TYPES, DRIVER_TYPES, CAR_COLORS, BODY_TYPES, FUEL_POLICIES, CUSTOM_DAYS } from '@/constants/car-listing';
+import Button from '../shared/Button';
 
 // ============================================
 // Types
@@ -52,8 +42,6 @@ interface CarListingFormProps {
     isSubmitting?: boolean;
 }
 
-type StepData = any; // Union of all step types
-
 // ============================================
 // Form Steps Configuration
 // ============================================
@@ -64,7 +52,56 @@ const STEPS = [
     { id: 2, title: 'Pricing', description: 'Set your rental price' },
     { id: 3, title: 'Important Info', description: 'Requirements and policies' },
     { id: 4, title: 'Images', description: 'Upload car photos' },
-];
+] as const;
+
+// Day labels mapping
+const DAY_LABELS: Record<string, string> = {
+    Mon: 'Monday',
+    Tue: 'Tuesday',
+    Wen: 'Wednesday',
+    Thur: 'Thursday',
+    Fri: 'Friday',
+    Sat: 'Saturday',
+    Sun: 'Sunday',
+};
+
+// Helper function to transform customDays array to checkbox fields
+// NOTE: We keep this for backward compatibility but won't use checkbox fields in form state
+const transformCustomDaysToCheckboxes = (data: Partial<CarListingFormData>) => {
+    // Just return data as-is, we'll handle checkboxes differently
+    return { ...data };
+};
+
+// Helper function to check if a day is selected
+const isDaySelected = (customDays: string[] | undefined, day: string): boolean => {
+    return Array.isArray(customDays) && customDays.includes(day);
+};
+
+// Fields to validate for each step
+const getStepFields = (step: number): (keyof CarListingFormData)[] => {
+    switch (step) {
+        case 0:
+            return ['title', 'make', 'model', 'plateNumber', 'body', 'seats', 'year', 'mileage',
+                'fuelType', 'transition', 'driverType', 'engineSize', 'doors', 'smallBags',
+                'color', 'largeBags', 'inTerminal', 'description'];
+        case 1:
+            return ['isPowerSteering', 'isCruiseControl', 'isNavigation', 'isPowerLocks',
+                'isVanityMirror', 'isTrunkLight', 'isAirConditioner', 'Techometer',
+                'isDigitalOdometer', 'isLeatherSeats', 'isHeater', 'isMemorySeats',
+                'isFogLightsFront', 'isRainSensingWipe', 'isRearSpoiler', 'isSunRoof',
+                'isRearWindow', 'isWindowDefroster', 'isBreakeAssist', 'isChildSafetyLocks',
+                'isTractionControl', 'isPowerDoorLocks', 'isDriverAirBag', 'isAntiLockBreaks'];
+        case 2:
+            return ['pricePerDay', 'currency'];
+        case 3:
+            return ['requiredDocs', 'securityDeposit', 'securityDepositAmount', 'damageExcess',
+                'fuelPolicy', 'insuranceExpirationDate', 'insuranceFile', 'availabilityType', 'customDays'];
+        case 4:
+            return ['carImages'];
+        default:
+            return [];
+    }
+};
 
 // ============================================
 // CarListingForm Component
@@ -78,158 +115,62 @@ export function CarListingForm({
     isSubmitting = false,
 }: CarListingFormProps) {
     const [currentStep, setCurrentStep] = useState(0);
-    const [formData, setFormData] = useState<Partial<CarListingFormData>>({
-        ...defaultListingInformation,
-        ...defaultFeatures,
-        ...defaultPrice,
-        ...defaultInfo,
-        ...defaultImages,
-        ...initialData,
+
+    // Initialize form with complete schema and all default values
+    const defaultValues = useMemo(() => {
+        const baseData = {
+            ...defaultCarListingData,
+            ...initialData,
+        };
+        return transformCustomDaysToCheckboxes(baseData);
+    }, [initialData]);
+
+    const form = useForm<CarListingFormData>({
+        resolver: zodResolver(carListingSchema) as any,
+        defaultValues,
+        mode: 'onChange',
     });
 
-    // Get the current step's schema
-    const getStepSchema = (step: number) => {
-        switch (step) {
-            case 0:
-                return listingInformationSchema;
-            case 1:
-                return featuresSchema;
-            case 2:
-                return priceSchema;
-            case 3:
-                return infoSchema;
-            case 4:
-                return imagesSchema;
-            default:
-                return listingInformationSchema;
-        }
-    };
-
-    // Get the current step's default values
-    const getStepDefaultValues = (step: number): StepData => {
-        const allData = {
-            ...defaultListingInformation,
-            ...defaultFeatures,
-            ...defaultPrice,
-            ...defaultInfo,
-            ...defaultImages,
-            ...formData,
-        };
-
-        switch (step) {
-            case 0:
-                return {
-                    title: allData.title,
-                    make: allData.make,
-                    model: allData.model,
-                    plateNumber: allData.plateNumber,
-                    body: allData.body,
-                    seats: allData.seats,
-                    year: allData.year,
-                    mileage: allData.mileage,
-                    fuelType: allData.fuelType,
-                    transition: allData.transition,
-                    driverType: allData.driverType,
-                    engineSize: allData.engineSize,
-                    doors: allData.doors,
-                    smallBags: allData.smallBags,
-                    color: allData.color,
-                    largeBags: allData.largeBags,
-                    inTerminal: allData.inTerminal,
-                    description: allData.description,
-                } as ListingInformationFormData;
-            case 1:
-                return {
-                    isPowerSteering: allData.isPowerSteering,
-                    isCruiseControl: allData.isCruiseControl,
-                    isNavigation: allData.isNavigation,
-                    isPowerLocks: allData.isPowerLocks,
-                    isVanityMirror: allData.isVanityMirror,
-                    isTrunkLight: allData.isTrunkLight,
-                    isAirConditioner: allData.isAirConditioner,
-                    Techometer: allData.Techometer,
-                    isDigitalOdometer: allData.isDigitalOdometer,
-                    isLeatherSeats: allData.isLeatherSeats,
-                    isHeater: allData.isHeater,
-                    isMemorySeats: allData.isMemorySeats,
-                    isFogLightsFront: allData.isFogLightsFront,
-                    isRainSensingWipe: allData.isRainSensingWipe,
-                    isRearSpoiler: allData.isRearSpoiler,
-                    isSunRoof: allData.isSunRoof,
-                    isRearWindow: allData.isRearWindow,
-                    isWindowDefroster: allData.isWindowDefroster,
-                    isBreakeAssist: allData.isBreakeAssist,
-                    isChildSafetyLocks: allData.isChildSafetyLocks,
-                    isTractionControl: allData.isTractionControl,
-                    isPowerDoorLocks: allData.isPowerDoorLocks,
-                    isDriverAirBag: allData.isDriverAirBag,
-                    isAntiLockBreaks: allData.isAntiLockBreaks,
-                } as FeaturesFormData;
-            case 2:
-                return {
-                    pricePerDay: allData.pricePerDay,
-                    currency: allData.currency,
-                } as PriceFormData;
-            case 3:
-                return {
-                    requiredDocs: allData.requiredDocs,
-                    securityDeposit: allData.securityDeposit,
-                    securityDepositAmount: allData.securityDepositAmount,
-                    damageExcess: allData.damageExcess,
-                    fuelPolicy: allData.fuelPolicy,
-                    insuranceExpirationDate: allData.insuranceExpirationDate,
-                    insuranceFile: allData.insuranceFile,
-                    availabilityType: allData.availabilityType,
-                    customDays: allData.customDays,
-                    startDate: allData.startDate,
-                    endDate: allData.endDate,
-                    pickUpLocation: allData.pickUpLocation,
-                } as InfoFormData;
-            case 4:
-                return {
-                    carImages: allData.carImages,
-                } as ImagesFormData;
-            default:
-                return {} as StepData;
-        }
-    };
-
-    // Initialize form with current step's schema and data
     const {
         control,
         handleSubmit,
         formState: { errors },
         trigger,
+        setValue,
         getValues,
-    } = useForm<StepData>({
-        resolver: zodResolver(getStepSchema(currentStep)),
-        defaultValues: getStepDefaultValues(currentStep),
-        mode: 'onChange',
-    });
+        reset,
+    } = form;
+
+    // Reset form when initialData changes (important for edit mode)
+    useEffect(() => {
+        if (initialData) {
+            const transformedData = transformCustomDaysToCheckboxes({
+                ...defaultCarListingData,
+                ...initialData,
+            });
+            reset(transformedData);
+        }
+    }, [initialData, reset]);
+
+    // Validate current step fields
+    const validateStep = async (): Promise<boolean> => {
+        const stepFields = getStepFields(currentStep);
+
+        return await trigger(stepFields as any);
+    };
 
     // Handle next step
-    const handleNext = async () => {
-        const isValid = await trigger();
+    const handleNext = async (e?: React.MouseEvent) => {
+        e?.preventDefault();
 
-        if (isValid) {
-            // Save current step data
-            const stepData = getValues();
-            setFormData((prev) => ({ ...prev, ...stepData }));
-
-            // Move to next step
-            if (currentStep < STEPS.length - 1) {
-                setCurrentStep((prev) => prev + 1);
-            }
+        const isValid = await validateStep();
+        if (isValid && currentStep < STEPS.length - 1) {
+            setCurrentStep((prev) => prev + 1);
         }
     };
 
     // Handle previous step
     const handlePrevious = () => {
-        // Save current step data
-        const stepData = getValues();
-        setFormData((prev) => ({ ...prev, ...stepData }));
-
-        // Move to previous step
         if (currentStep > 0) {
             setCurrentStep((prev) => prev - 1);
         }
@@ -237,13 +178,22 @@ export function CarListingForm({
 
     // Handle final form submission
     const handleFormSubmit = handleSubmit(async (data) => {
-        // Combine all step data
-        const completeData = {
-            ...formData,
-            ...data,
-        } as CarListingFormData;
+        const submitData = { ...data } as any;
 
-        await onSubmit(completeData);
+        // Debug: Log the data before transformation
+        console.log('Form data before submission:', data);
+        console.log('availabilityType:', submitData.availabilityType);
+        console.log('customDays from form:', submitData.customDays);
+
+        // Ensure customDays is an empty array if not CUSTOM
+        if (submitData.availabilityType !== 'CUSTOM') {
+            submitData.customDays = [];
+        }
+
+        console.log('Final submit data:', submitData);
+        console.log('customDays in final data:', submitData.customDays);
+
+        await onSubmit(submitData as CarListingFormData);
     });
 
     const isFirstStep = currentStep === 0;
@@ -251,54 +201,7 @@ export function CarListingForm({
 
     return (
         <div className="container mx-auto">
-            {/* Progress Stepper */}
-            <div className="mb-8">
-                <div className="flex items-center justify-between">
-                    {STEPS.map((step, index) => (
-                        <div key={step.id} className="flex-1 flex items-center">
-                            <div className="flex flex-col items-center flex-1">
-                                {/* Step Circle */}
-                                <div
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${index < currentStep
-                                        ? 'bg-green-500 text-white'
-                                        : index === currentStep
-                                            ? 'bg-black text-white'
-                                            : 'bg-gray-200 text-gray-600'
-                                        }`}
-                                >
-                                    {index < currentStep ? (
-                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    ) : (
-                                        <span>{index + 1}</span>
-                                    )}
-                                </div>
-                                {/* Step Title */}
-                                <div className="mt-2 text-center">
-                                    <p
-                                        className={`text-sm font-medium ${index === currentStep ? 'text-black' : 'text-gray-600'
-                                            }`}
-                                    >
-                                        {step.title}
-                                    </p>
-                                </div>
-                            </div>
-                            {/* Connector Line */}
-                            {index < STEPS.length - 1 && (
-                                <div
-                                    className={`h-1 flex-1 mx-2 -mt-5 transition-colors ${index < currentStep ? 'bg-green-500' : 'bg-gray-200'
-                                        }`}
-                                />
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
+            <ProgressStepper steps={STEPS} currentStep={currentStep} />
 
             {/* Form Content */}
             <div className="bg-white rounded-lg shadow-md p-8">
@@ -330,48 +233,115 @@ export function CarListingForm({
                     <div className="flex justify-between mt-8 pt-6 border-t">
                         <div>
                             {!isFirstStep && (
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    type='button'
                                     onClick={handlePrevious}
                                     disabled={isSubmitting}
-                                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Previous
-                                </button>
+                                </Button>
                             )}
                         </div>
                         <div className="flex space-x-4">
                             {onCancel && (
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    type='button'
                                     onClick={onCancel}
                                     disabled={isSubmitting}
-                                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Cancel
-                                </button>
+                                </Button>
                             )}
                             {!isLastStep ? (
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    type='button'
                                     onClick={handleNext}
                                     disabled={isSubmitting}
                                     className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Next
-                                </button>
+                                </Button>
                             ) : (
-                                <button
-                                    type="submit"
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    type='submit'
                                     disabled={isSubmitting}
                                     className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Listing' : 'Update Listing'}
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    );
+}
+
+// ============================================
+// Progress Stepper Component
+// ============================================
+
+interface ProgressStepperProps {
+    steps: typeof STEPS;
+    currentStep: number;
+}
+
+function ProgressStepper({ steps, currentStep }: ProgressStepperProps) {
+    return (
+        <div className="mb-8">
+            <div className="flex items-center justify-between">
+                {steps.map((step, index) => (
+                    <div key={step.id} className="flex-1 flex items-center">
+                        <div className="flex flex-col items-center flex-1">
+                            {/* Step Circle */}
+                            <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center font-medium transition-colors ${index < currentStep
+                                    ? 'bg-green-500 text-white text-xs'
+                                    : index === currentStep
+                                        ? 'bg-black text-white'
+                                        : 'bg-gray-200 text-gray-600'
+                                    }`}
+                            >
+                                {index < currentStep ? (
+                                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                ) : (
+                                    <span>{index + 1}</span>
+                                )}
+                            </div>
+                            {/* Step Title */}
+                            <div className="mt-2 text-center">
+                                <p
+                                    className={`text-xs font-medium ${index === currentStep ? 'text-black' : 'text-gray-600'
+                                        }`}
+                                >
+                                    {step.title}
+                                </p>
+                            </div>
+                        </div>
+                        {/* Connector Line */}
+                        {index < steps.length - 1 && (
+                            <div
+                                className={`h-1 flex-1 mx-2 -mt-5 transition-colors ${index < currentStep ? 'bg-green-500' : 'bg-gray-200'
+                                    }`}
+                            />
+                        )}
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -596,6 +566,11 @@ function ImportantInfoStep({ control }: { control: any }) {
         name: 'availabilityType',
     });
 
+    const customDays = useWatch({
+        control,
+        name: 'customDays',
+    });
+
     return (
         <div className="space-y-6">
             <FormTextarea
@@ -677,27 +652,52 @@ function ImportantInfoStep({ control }: { control: any }) {
                     />
 
                     {availabilityType === 'CUSTOM' && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                                Select Available Days
-                            </label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {CUSTOM_DAYS.map((day) => (
-                                    <FormCheckbox
-                                        key={day}
-                                        name={`customDay_${day}`}
-                                        control={control}
-                                        label={day === 'Mon' ? 'Monday' :
-                                            day === 'Tue' ? 'Tuesday' :
-                                                day === 'Wen' ? 'Wednesday' :
-                                                    day === 'Thur' ? 'Thursday' :
-                                                        day === 'Fri' ? 'Friday' :
-                                                            day === 'Sat' ? 'Saturday' :
-                                                                'Sunday'}
-                                    />
-                                ))}
-                            </div>
-                        </div>
+                        <Controller
+                            name="customDays"
+                            control={control}
+                            render={({ field: { value = [], onChange }, fieldState: { error } }) => (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                        Select Available Days
+                                    </label>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        {CUSTOM_DAYS.map((day) => {
+                                            const isChecked = isDaySelected(value as string[], day);
+
+                                            return (
+                                                <div key={day} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={`customDay_${day}`}
+                                                        checked={isChecked}
+                                                        onCheckedChange={(checked) => {
+                                                            const currentDays = Array.isArray(value) ? value : [];
+                                                            if (checked) {
+                                                                // Add day if not already present
+                                                                if (!currentDays.includes(day)) {
+                                                                    onChange([...currentDays, day]);
+                                                                }
+                                                            } else {
+                                                                // Remove day
+                                                                onChange(currentDays.filter((d: string) => d !== day));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <Label
+                                                        htmlFor={`customDay_${day}`}
+                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                    >
+                                                        {DAY_LABELS[day] || day}
+                                                    </Label>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    {error && (
+                                        <p className="mt-2 text-sm text-destructive">{error.message}</p>
+                                    )}
+                                </div>
+                            )}
+                        />
                     )}
 
 
