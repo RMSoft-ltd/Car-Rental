@@ -75,7 +75,7 @@ export default function ListingContent() {
 
   return (
     <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+      <div className="container mx-auto">
         {/* Header with Add Listing Button */}
         <div className="flex justify-end items-center mb-6">
           <Button

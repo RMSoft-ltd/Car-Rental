@@ -349,7 +349,7 @@ export default function Home() {
         </div>
 
         <div className="relative z-10 h-full flex flex-col justify-center">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
                 Car & Driver Rental - Search, Compare & Save
@@ -365,7 +365,7 @@ export default function Home() {
         </div>
 
         <div className="absolute bottom-4 left-0 right-0 z-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-4">
             <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6">
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                 <SearchInput
@@ -421,7 +421,7 @@ export default function Home() {
 
       {/* Content Below Hero */}
       <div className="bg-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Filter Sidebar */}
             <aside className="lg:col-span-1">
