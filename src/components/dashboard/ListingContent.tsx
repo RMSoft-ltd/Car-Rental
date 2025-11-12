@@ -10,6 +10,19 @@ import { useSearch } from "@/hooks/use-search";
 import { baseUrl } from "@/lib/api";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+import { useDeleteCarListing } from "@/hooks/use-car-listing-mutations";
 
 const carsPerPage = 6;
 export default function ListingContent() {
@@ -46,6 +59,9 @@ export default function ListingContent() {
     skip: fetchParams.skip,
   });
 
+  // Mutation Hooks
+  const { mutate: deleteCarListing, isPending: deleteCarListingLoading, error: deleteCarListingError } = useDeleteCarListing();
+
   const cars = userCars?.rows || [];
   const totalCount = userCars?.total || 0;
 
@@ -69,8 +85,14 @@ export default function ListingContent() {
   };
 
   const handleDelete = (carId: number) => {
-    console.log("Delete car:", carId);
-    // TODO: Implement delete functionality
+    deleteCarListing(carId, {
+      onSuccess: () => {
+        toast.success("Car listing deleted successfully!");
+      },
+      onError: () => {
+        toast.error("Failed to delete car listing.");
+      },
+    });
   };
 
   return (
@@ -172,19 +194,45 @@ export default function ListingContent() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-3">
-                  <button
+                  <Button
                     onClick={() => handleEdit(car.id)}
+                    size={`lg`}
                     className="flex-grow-[2] bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
                   >
                     Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(car.id)}
-                    className="flex-grow-[1] bg-white text-red-600 hover:text-red-700 font-medium flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-3"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="flex-grow-[1] bg-white text-red-600 hover:text-red-700 font-medium flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-3"
+                      >
+                        <Trash2 />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete listing?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action permanently removes {car.title}. You can&apos;t undo this.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleteCarListingLoading}>
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-white hover:bg-destructive/90"
+                          disabled={deleteCarListingLoading}
+                          onClick={() => handleDelete(car.id)}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </div>
@@ -251,6 +299,9 @@ export default function ListingContent() {
             <p className="text-red-500 text-lg">Failed to load cars. Please try again.</p>
           </div>
         )}
+
+        
+
       </div>
     </div>
   );
