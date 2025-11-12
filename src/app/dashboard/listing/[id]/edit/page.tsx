@@ -144,7 +144,7 @@ export default function EditListingPage() {
     if (isLoading) {
         return (
             <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
-                <div className="max-w-5xl mx-auto">
+                <div className="container mx-auto">
                     <div className="text-center py-12">
                         <p className="text-gray-500 text-lg">Loading car details...</p>
                     </div>
@@ -157,7 +157,7 @@ export default function EditListingPage() {
     if (isError || !carListing) {
         return (
             <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
-                <div className="max-w-5xl mx-auto">
+                <div className="container mx-auto">
                     <div className="text-center py-12">
                         <p className="text-red-500 text-lg">
                             Failed to load car details. Please try again.
@@ -176,7 +176,7 @@ export default function EditListingPage() {
 
     return (
         <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
-            <div className="max-w-5xl mx-auto">
+            <div className="container mx-auto">
                 {/* Page Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">Edit Listing</h1>

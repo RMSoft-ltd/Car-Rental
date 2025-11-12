@@ -200,7 +200,7 @@ export function CarListingForm({
     const isLastStep = currentStep === STEPS.length - 1;
 
     return (
-        <div className="max-w-5xl mx-auto">
+        <div className="container mx-auto">
             <ProgressStepper steps={STEPS} currentStep={currentStep} />
 
             {/* Form Content */}

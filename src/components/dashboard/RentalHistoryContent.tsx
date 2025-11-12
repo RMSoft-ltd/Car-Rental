@@ -191,7 +191,7 @@ export default function RentalHistoryContent() {
 
   return (
     <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
-      <div className="max-w-5xl mx-auto">
+      <div className="container mx-auto">
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="mb-8">
           <div className="flex gap-4">

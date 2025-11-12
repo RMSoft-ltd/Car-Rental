@@ -241,7 +241,7 @@ export default function BookingContent() {
 
   return (
     <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
-      <div className="max-w-5xl mx-auto h-full">
+      <div className="container mx-auto h-full">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
 
           {/* Calendar Section */}
