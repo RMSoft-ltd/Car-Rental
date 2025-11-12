@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Search, Trash2, Gauge, Fuel, SlidersHorizontal, Plus } from "lucide-react";
+import { Search, Trash2, Gauge, Fuel, SlidersHorizontal, Plus, Eye } from "lucide-react";
 import { Car } from "@/types/car-listing";
-import { useUserCarList } from "@/hooks/use-car-list";
+import { useCarList, useUserCarList } from "@/hooks/use-car-list";
 import { useSearch } from "@/hooks/use-search";
 import { baseUrl } from "@/lib/api";
 import { Button } from "../ui/button";
@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { useDeleteCarListing } from "@/hooks/use-car-listing-mutations";
+import { TokenService } from "@/utils/token";
 
 const carsPerPage = 6;
 export default function ListingContent() {
@@ -52,18 +53,34 @@ export default function ListingContent() {
     setCurrentPage(1);
   }, [debouncedSearchTerm]);
 
-  const loggedInUserId = 3; // Replace with actual logged-in user ID
-  const { data: userCars, isLoading: isLoadingUserCars, isError: isErrorUserCars, refetch: refetchUserCars } = useUserCarList(loggedInUserId, {
+  const loggedInUser = TokenService.getUserData();
+  const loggedInUserId = loggedInUser?.id || 0;
+  const loggedInRole = loggedInUser?.role || 'user';
+
+  const isAdmin = loggedInRole.toLowerCase().includes('admin');
+
+  const { data: allCars, isLoading: isLoadingAllCars, isError: isErrorAllCars, refetch: refetchAllCars } = useCarList({
     search: fetchParams.search,
     limit: fetchParams.limit,
     skip: fetchParams.skip,
   });
 
+  const { data: userCars, isLoading: isLoadingUserCars, isError: isErrorUserCars, refetch: refetchUserCars } = useUserCarList(
+    loggedInUserId,
+    {
+      search: fetchParams.search,
+      limit: fetchParams.limit,
+      skip: fetchParams.skip,
+    }
+  );
+
+  const cars = isAdmin ? (allCars?.rows || []) : (userCars?.rows || []);
+  const totalCount = isAdmin ? (allCars?.total || 0) : (userCars?.total || 0);
+  const isLoading = isAdmin ? isLoadingAllCars : isLoadingUserCars;
+  const isError = isAdmin ? isErrorAllCars : isErrorUserCars;
+
   // Mutation Hooks
   const { mutate: deleteCarListing, isPending: deleteCarListingLoading, error: deleteCarListingError } = useDeleteCarListing();
-
-  const cars = userCars?.rows || [];
-  const totalCount = userCars?.total || 0;
 
   const totalPages = Math.ceil(totalCount / carsPerPage);
   const currentCars = cars;
@@ -80,8 +97,8 @@ export default function ListingContent() {
     });
   };
 
-  const handleEdit = (carId: number) => {
-    router.push(`/dashboard/listing/${carId}/edit`);
+  const handleView = (carId: number) => {
+    router.push(`/dashboard/listing/${carId}`);
   };
 
   const handleDelete = (carId: number) => {
@@ -202,44 +219,51 @@ export default function ListingContent() {
                   {/* Action Buttons */}
                   <div className="flex items-center gap-3">
                     <Button
-                      onClick={() => handleEdit(car.id)}
+                      onClick={() => handleView(car.id)}
                       size={`lg`}
-                      className="flex-grow-[2] bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                      variant="outline"
+                      className={`bg-white text-black hover:bg-gray-50 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${car.userId === loggedInUserId || isAdmin ? 'flex-grow-[1]' : 'flex-grow-[2]'
+                        }`}
                     >
-                      Edit
+                      <Eye className="w-4 h-4" />
+                      View
                     </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="lg"
-                          className="flex-grow-[1] bg-white text-red-600 hover:text-red-700 font-medium flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-3"
-                        >
-                          <Trash2 />
-                          Delete
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete listing?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action permanently removes {car.title}. You can&apos;t undo this.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel disabled={deleteCarListingLoading}>
-                            Cancel
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-destructive text-white hover:bg-destructive/90"
-                            disabled={deleteCarListingLoading}
-                            onClick={() => handleDelete(car.id)}
+
+                    {/* Show Delete button only for car owner or admin */}
+                    {(car.userId === loggedInUserId || isAdmin) && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="lg"
+                            className="flex-grow-[1] bg-white text-red-600 hover:text-red-700 font-medium flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-3"
                           >
+                            <Trash2 />
                             Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete listing?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action permanently removes {car.title}. You can&apos;t undo this.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={deleteCarListingLoading}>
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-white hover:bg-destructive/90"
+                              disabled={deleteCarListingLoading}
+                              onClick={() => handleDelete(car.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </div>
               </div>
@@ -288,21 +312,21 @@ export default function ListingContent() {
         )}
 
         {/* No Results */}
-        {cars.length === 0 && !isLoadingUserCars && (
+        {cars.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No cars found matching your search.</p>
           </div>
         )}
 
         {/* Loading State */}
-        {isLoadingUserCars && (
+        {isLoading && (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">Loading cars...</p>
           </div>
         )}
 
         {/* Error State */}
-        {isErrorUserCars && (
+        {isError && (
           <div className="text-center py-12">
             <p className="text-red-500 text-lg">Failed to load cars. Please try again.</p>
           </div>
