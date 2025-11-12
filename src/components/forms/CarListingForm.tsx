@@ -37,6 +37,8 @@ import {
     FormError,
 } from './FormComponents';
 import { CAR_MAKES, CAR_MODELS, FUEL_TYPES, TRANSMISSION_TYPES, DRIVER_TYPES, CAR_COLORS, BODY_TYPES, FUEL_POLICIES, CUSTOM_DAYS } from '@/constants/car-listing';
+import Button from '../shared/Button';
+import { X } from 'lucide-react';
 
 // ============================================
 // Types
@@ -86,6 +88,8 @@ export function CarListingForm({
         ...defaultImages,
         ...initialData,
     });
+
+    console.log(`Initial data: ${JSON.stringify(initialData)}`);
 
     // Get the current step's schema
     const getStepSchema = (step: number) => {
@@ -171,7 +175,7 @@ export function CarListingForm({
                     currency: allData.currency,
                 } as PriceFormData;
             case 3:
-                return {
+                const step3Data: any = {
                     requiredDocs: allData.requiredDocs,
                     securityDeposit: allData.securityDeposit,
                     securityDepositAmount: allData.securityDepositAmount,
@@ -181,10 +185,16 @@ export function CarListingForm({
                     insuranceFile: allData.insuranceFile,
                     availabilityType: allData.availabilityType,
                     customDays: allData.customDays,
-                    startDate: allData.startDate,
-                    endDate: allData.endDate,
-                    pickUpLocation: allData.pickUpLocation,
-                } as InfoFormData;
+                };
+                
+                // Populate individual checkboxes from customDays array
+                if (Array.isArray(allData.customDays) && allData.customDays.length > 0) {
+                    CUSTOM_DAYS.forEach((day) => {
+                        step3Data[`customDay_${day}`] = allData.customDays!.includes(day);
+                    });
+                }
+                
+                return step3Data as InfoFormData;
             case 4:
                 return {
                     carImages: allData.carImages,
@@ -214,6 +224,19 @@ export function CarListingForm({
         if (isValid) {
             // Save current step data
             const stepData = getValues();
+            
+            // Collect custom days if we're on the Important Info step
+            if (currentStep === 3 && stepData.availabilityType === 'CUSTOM') {
+                const customDays: string[] = [];
+                CUSTOM_DAYS.forEach((day) => {
+                    const checkboxKey = `customDay_${day}`;
+                    if (stepData[checkboxKey]) {
+                        customDays.push(day);
+                    }
+                });
+                stepData.customDays = customDays;
+            }
+            
             setFormData((prev) => ({ ...prev, ...stepData }));
 
             // Move to next step
@@ -241,16 +264,33 @@ export function CarListingForm({
         const completeData = {
             ...formData,
             ...data,
-        } as CarListingFormData;
+        } as any;
 
-        await onSubmit(completeData);
+        // Collect custom days from individual checkboxes
+        if (completeData.availabilityType === 'CUSTOM') {
+            const customDays: string[] = [];
+            CUSTOM_DAYS.forEach((day) => {
+                const checkboxKey = `customDay_${day}`;
+                if (completeData[checkboxKey]) {
+                    customDays.push(day);
+                }
+                // Remove the individual checkbox field
+                delete completeData[checkboxKey];
+            });
+            completeData.customDays = customDays;
+        } else {
+            // Clear customDays if not CUSTOM availability type
+            completeData.customDays = undefined;
+        }
+
+        await onSubmit(completeData as CarListingFormData);
     });
 
     const isFirstStep = currentStep === 0;
     const isLastStep = currentStep === STEPS.length - 1;
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-5xl mx-auto">
             {/* Progress Stepper */}
             <div className="mb-8">
                 <div className="flex items-center justify-between">
@@ -259,8 +299,8 @@ export function CarListingForm({
                             <div className="flex flex-col items-center flex-1">
                                 {/* Step Circle */}
                                 <div
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${index < currentStep
-                                        ? 'bg-green-500 text-white'
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-medium transition-colors ${index < currentStep
+                                        ? 'bg-green-500 text-white text-xs'
                                         : index === currentStep
                                             ? 'bg-black text-white'
                                             : 'bg-gray-200 text-gray-600'
@@ -281,7 +321,7 @@ export function CarListingForm({
                                 {/* Step Title */}
                                 <div className="mt-2 text-center">
                                     <p
-                                        className={`text-sm font-medium ${index === currentStep ? 'text-black' : 'text-gray-600'
+                                        className={`text-xs font-medium ${index === currentStep ? 'text-black' : 'text-gray-600'
                                             }`}
                                     >
                                         {step.title}
@@ -330,44 +370,47 @@ export function CarListingForm({
                     <div className="flex justify-between mt-8 pt-6 border-t">
                         <div>
                             {!isFirstStep && (
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={handlePrevious}
                                     disabled={isSubmitting}
-                                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Previous
-                                </button>
+                                </Button>
                             )}
                         </div>
                         <div className="flex space-x-4">
                             {onCancel && (
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={onCancel}
                                     disabled={isSubmitting}
-                                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Cancel
-                                </button>
+                                </Button>
                             )}
                             {!isLastStep ? (
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="primary"
+                                    size="sm"
                                     onClick={handleNext}
                                     disabled={isSubmitting}
                                     className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Next
-                                </button>
+                                </Button>
                             ) : (
-                                <button
-                                    type="submit"
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    type='submit'
                                     disabled={isSubmitting}
                                     className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Listing' : 'Update Listing'}
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>

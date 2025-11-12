@@ -14,7 +14,6 @@ export default function AddListingPage() {
   const toast = useToast();
 
   const handleSubmit = async (data: CarListingFormData) => {
-    console.log(`Submitting car listing: ${JSON.stringify(data)}`);
     if (!user?.id) {
       toast.error("Authentication Required", "Please log in to create a listing");
       router.push("/auth/signin");

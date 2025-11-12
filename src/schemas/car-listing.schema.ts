@@ -249,11 +249,6 @@ export const infoSchema = z.object({
     .optional(),
 
   customDays: z.array(z.string()).optional(),
-
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-
-  pickUpLocation: z.string().optional(),
 });
 
 // ============================================
@@ -357,7 +352,6 @@ export const defaultInfo: Partial<InfoFormData> = {
   insuranceExpirationDate: "",
   insuranceFile: null,
   customDays: [],
-  pickUpLocation: "",
 };
 
 export const defaultImages: ImagesFormData = {
