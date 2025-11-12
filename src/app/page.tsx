@@ -490,8 +490,9 @@ export default function Home() {
             {/* Main Content */}
             <main className="lg:col-span-3">
               <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6 mb-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
+                <div className="flex flex-col md:flex-row md:justify-between mb-4">
+
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900">
                     {isLoading ? "Loading..." : `${carCount} Cars Available`}
                   </h2>
                   <div className="flex items-center gap-2">
@@ -513,9 +514,9 @@ export default function Home() {
                   onValueChange={setSelectedCategory}
                   className="flex cursor-pointer flex-wrap gap-2"
                 >
-                  <TabsList>
+                  <TabsList className=" cursor-pointer  ">
                     {CAR_CATEGORIES.map((category) => (
-                      <TabsTrigger key={category.value} value={category.value}>
+                      <TabsTrigger className="cursor-pointer" key={category.value} value={category.value}>
                         {category.label}
                       </TabsTrigger>
                     ))}
