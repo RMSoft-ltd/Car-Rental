@@ -111,33 +111,3 @@ export const useUserCarList = (
     retryDelay: CAR_QUERY_CONFIG.retryDelay,
   });
 };
-
-// Hook to create a new scheduled trip
-export const useCreateCarListing = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ userId, carData }: { userId: number; carData: FormData }) =>
-      createCarListing(userId, carData),
-    onSuccess: () => {
-      // Invalidate and refetch cars list
-      queryClient.invalidateQueries({ queryKey: carKeys.lists() });
-    },
-    onError: () => {},
-  });
-};
-
-// Hook to update a scheduled trip
-export const useUpdateCarListing = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ carId, carData }: { carId: number; carData: FormData }) =>
-      updateCarListing(carId, carData),
-    onSuccess: () => {
-      // Invalidate lists to ensure consistency
-      queryClient.invalidateQueries({ queryKey: carKeys.lists() });
-    },
-    onError: () => {},
-  });
-};

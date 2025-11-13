@@ -9,6 +9,8 @@ import {
   createCarListing,
   updateCarListing,
   deleteCarListing,
+  deleteCarImage,
+  updateCarStatus,
 } from "@/services/car-listing-service";
 import { getErrorMessage } from "@/utils/error-utils";
 
@@ -149,6 +151,53 @@ export function useDeleteCarListing() {
     onError: (error: unknown) => {
       const message = getErrorMessage(error, "Failed to delete car listing");
       console.error("Failed to delete car listing:", message, error);
+    },
+  });
+}
+
+export function useDeleteCarImage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, carImageUrl }: { id: number; carImageUrl: string }) =>
+      deleteCarImage(id, { carImageUrl }),
+    onSuccess: () => {
+      // Invalidate and refetch car listings
+      queryClient.invalidateQueries({ queryKey: ["cars"] });
+      queryClient.invalidateQueries({ queryKey: ["userCars"] });
+    },
+    onError: (error: unknown) => {
+      const message = getErrorMessage(error, "Failed to delete car image");
+      console.error("Failed to delete car image:", message, error);
+    },
+  });
+}
+
+export function useUpdateCarStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+      changeStatusDescription = "",
+    }: {
+      id: number;
+      status: "available" | "unavailable" | "maintenance";
+      changeStatusDescription?: string;
+    }) => {
+      // Assuming updateCarStatus is defined in car-listing-service
+      return updateCarStatus(id, { status, changeStatusDescription });
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch car listings
+      queryClient.invalidateQueries({ queryKey: ["cars"] });
+      queryClient.invalidateQueries({ queryKey: ["userCars"] });
+      queryClient.invalidateQueries({ queryKey: ["car", variables.id] });
+    },
+    onError: (error: unknown) => {
+      const message = getErrorMessage(error, "Failed to update car status");
+      console.error("Failed to update car status:", message, error);
     },
   });
 }
