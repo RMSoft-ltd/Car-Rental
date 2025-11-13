@@ -7,20 +7,23 @@ interface CarCardProps {
 }
 
 export default function CarCard({ car }: CarCardProps) {
+  const fallbackImage = "https://images.unsplash.com/photo-1502877338535-766e1452684a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80";
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300">
       {/* Car Image */}
       <div className="relative h-48 bg-gray-200">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={car.image}
           alt={`${car.make} ${car.model}`}
           className="w-full h-full object-cover"
           onError={(e) => {
-            e.currentTarget.src = "https://images.unsplash.com/photo-1502877338535-766e1452684a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80";
+            e.currentTarget.src = fallbackImage;
           }}
         />
         {!car.available && (
-          <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
+          <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium z-10">
             Unavailable
           </div>
         )}

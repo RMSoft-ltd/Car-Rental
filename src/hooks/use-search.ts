@@ -76,6 +76,7 @@ export interface UseSearchReturn<T> {
  * );
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useSearch<T = any>({
   searchFn,
   debounceDelay = 500,

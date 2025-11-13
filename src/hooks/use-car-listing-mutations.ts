@@ -10,6 +10,7 @@ import {
   updateCarListing,
   deleteCarListing,
 } from "@/services/car-listing-service";
+import { getErrorMessage } from "@/utils/error-utils";
 
 // ============================================
 // Helper: Convert form data to FormData
@@ -94,8 +95,9 @@ export function useCreateCarListing() {
       queryClient.invalidateQueries({ queryKey: ["cars"] });
       queryClient.invalidateQueries({ queryKey: ["userCars"] });
     },
-    onError: (error: any) => {
-      console.error("Failed to create car listing:", error);
+    onError: (error: unknown) => {
+      const message = getErrorMessage(error, "Failed to create car listing");
+      console.error("Failed to create car listing:", message, error);
     },
   });
 }
@@ -123,8 +125,9 @@ export function useUpdateCarListing() {
       queryClient.invalidateQueries({ queryKey: ["userCars"] });
       queryClient.invalidateQueries({ queryKey: ["car", variables.id] });
     },
-    onError: (error: any) => {
-      console.error("Failed to update car listing:", error);
+    onError: (error: unknown) => {
+      const message = getErrorMessage(error, "Failed to update car listing");
+      console.error("Failed to update car listing:", message, error);
     },
   });
 }
@@ -143,8 +146,9 @@ export function useDeleteCarListing() {
       queryClient.invalidateQueries({ queryKey: ["cars"] });
       queryClient.invalidateQueries({ queryKey: ["userCars"] });
     },
-    onError: (error: any) => {
-      console.error("Failed to delete car listing:", error);
+    onError: (error: unknown) => {
+      const message = getErrorMessage(error, "Failed to delete car listing");
+      console.error("Failed to delete car listing:", message, error);
     },
   });
 }

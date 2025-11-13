@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
@@ -19,7 +19,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({
   const { isAuthenticated } = useAuth();
   const { addNotification } = useNotifications();
   const socketRef = useRef<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const accessToken = TokenService.getToken();
@@ -44,12 +43,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({
       });
 
       socketRef.current.on("connect", () => {
-        setIsConnected(true);
         console.log("Socket connected");
       });
 
       socketRef.current.on("disconnect", () => {
-        setIsConnected(false);
         console.log("Socket disconnected");
       });
 
@@ -72,7 +69,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
-        setIsConnected(false);
       }
     }
 

@@ -42,8 +42,8 @@ export default function Navbar() {
 
   const handleProfileClick = () => {
     if (!isAuthenticated) {
-      router.push("/auth/signin");
       setIsMobileMenuOpen(false);
+      router.push("/auth/signin");
     }
   };
 

@@ -7,7 +7,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useForm, useWatch, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
     carListingSchema,
@@ -126,7 +126,8 @@ export function CarListingForm({
     }, [initialData]);
 
     const form = useForm<CarListingFormData>({
-        resolver: zodResolver(carListingSchema) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(carListingSchema) as any, // Type assertion needed due to Zod transform types
         defaultValues,
         mode: 'onChange',
     });
@@ -136,8 +137,6 @@ export function CarListingForm({
         handleSubmit,
         formState: { errors },
         trigger,
-        setValue,
-        getValues,
         reset,
     } = form;
 
@@ -156,7 +155,7 @@ export function CarListingForm({
     const validateStep = async (): Promise<boolean> => {
         const stepFields = getStepFields(currentStep);
 
-        return await trigger(stepFields as any);
+        return await trigger(stepFields);
     };
 
     // Handle next step
@@ -177,8 +176,8 @@ export function CarListingForm({
     };
 
     // Handle final form submission
-    const handleFormSubmit = handleSubmit(async (data) => {
-        const submitData = { ...data } as any;
+    const handleFormSubmit = handleSubmit(async (data: CarListingFormData) => {
+        const submitData: CarListingFormData = { ...data };
 
         // Debug: Log the data before transformation
         console.log('Form data before submission:', data);
@@ -193,7 +192,7 @@ export function CarListingForm({
         console.log('Final submit data:', submitData);
         console.log('customDays in final data:', submitData.customDays);
 
-        await onSubmit(submitData as CarListingFormData);
+        await onSubmit(submitData);
     });
 
     const isFirstStep = currentStep === 0;
@@ -227,7 +226,12 @@ export function CarListingForm({
                     {currentStep === 4 && <ImagesStep control={control} />}
 
                     {/* Form-level errors */}
-                    {errors.root && <FormError error={errors.root as any} className="mt-6" />}
+                    {errors.root?.message && (
+                        <FormError 
+                            error={{ message: errors.root.message }} 
+                            className="mt-6" 
+                        />
+                    )}
 
                     {/* Navigation Buttons */}
                     <div className="flex justify-between mt-8 pt-6 border-t">
@@ -351,7 +355,8 @@ function ProgressStepper({ steps, currentStep }: ProgressStepperProps) {
 // Step Components
 // ============================================
 
-function ListingInformationStep({ control }: { control: any }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ListingInformationStep({ control }: { control: Control<any> }) {
     const selectedMake = useWatch({
         control,
         name: 'make',
@@ -467,7 +472,8 @@ function ListingInformationStep({ control }: { control: any }) {
     );
 }
 
-function FeaturesStep({ control }: { control: any }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function FeaturesStep({ control }: { control: Control<any> }) {
     return (
         <div className="space-y-8">
             {/* Comfort Features */}
@@ -525,7 +531,8 @@ function FeaturesStep({ control }: { control: any }) {
     );
 }
 
-function PricingStep({ control }: { control: any }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function PricingStep({ control }: { control: Control<any> }) {
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -553,22 +560,18 @@ function PricingStep({ control }: { control: any }) {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
                 <p className="text-sm text-blue-800">
                     <strong>Tip:</strong> Research similar vehicles in your area to set a competitive price. Consider
-                    the car's age, condition, and features when determining your rental rate.
+                    the car&apos;s age, condition, and features when determining your rental rate.
                 </p>
             </div>
         </div>
     );
 }
 
-function ImportantInfoStep({ control }: { control: any }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ImportantInfoStep({ control }: { control: Control<any> }) {
     const availabilityType = useWatch({
         control,
         name: 'availabilityType',
-    });
-
-    const customDays = useWatch({
-        control,
-        name: 'customDays',
     });
 
     return (
@@ -707,7 +710,8 @@ function ImportantInfoStep({ control }: { control: any }) {
     );
 }
 
-function ImagesStep({ control }: { control: any }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ImagesStep({ control }: { control: Control<any> }) {
     return (
         <div className="space-y-6">
             <FormFileUpload

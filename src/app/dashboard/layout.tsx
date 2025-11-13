@@ -1,21 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { logout } = useAuth();
   const pathname = usePathname();
 
-  const handleLogout = () => {
-    window.location.href = "/";
+  const handleLogout = async () => {
+    await logout();
+    router.push("/");
   };
 
   const getPageTitle = () => {

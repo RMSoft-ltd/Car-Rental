@@ -59,13 +59,13 @@ export default function ListingContent() {
 
   const isAdmin = loggedInRole.toLowerCase().includes('admin');
 
-  const { data: allCars, isLoading: isLoadingAllCars, isError: isErrorAllCars, refetch: refetchAllCars } = useCarList({
+  const { data: allCars, isLoading: isLoadingAllCars, isError: isErrorAllCars } = useCarList({
     search: fetchParams.search,
     limit: fetchParams.limit,
     skip: fetchParams.skip,
   });
 
-  const { data: userCars, isLoading: isLoadingUserCars, isError: isErrorUserCars, refetch: refetchUserCars } = useUserCarList(
+  const { data: userCars, isLoading: isLoadingUserCars, isError: isErrorUserCars } = useUserCarList(
     loggedInUserId,
     {
       search: fetchParams.search,
@@ -80,7 +80,7 @@ export default function ListingContent() {
   const isError = isAdmin ? isErrorAllCars : isErrorUserCars;
 
   // Mutation Hooks
-  const { mutate: deleteCarListing, isPending: deleteCarListingLoading, error: deleteCarListingError } = useDeleteCarListing();
+  const { mutate: deleteCarListing, isPending: deleteCarListingLoading } = useDeleteCarListing();
 
   const totalPages = Math.ceil(totalCount / carsPerPage);
   const currentCars = cars;
@@ -152,7 +152,7 @@ export default function ListingContent() {
 
         {/* Car Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {currentCars.map((car: Car, index: number) => {
+          {currentCars.map((car: Car) => {
             // Construct image URL safely
             const carImage = car.carImages?.[0];
             const imageUrl = carImage

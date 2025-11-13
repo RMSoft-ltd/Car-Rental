@@ -16,14 +16,17 @@ class AuthService {
       const response = await apiClient.post("/auth/login", credentials);
       const { accessToken, user } = response.data;
 
+      const decodedToken = TokenService.decodeToken(accessToken);
+      const completeUser = { ...user, role: decodedToken?.role || "" };
+
       // Store tokens and user data
       TokenService.setToken(accessToken);
-      TokenService.setUserData(user);
+      TokenService.setUserData(completeUser);
       if (response.data.refreshToken) {
         TokenService.setRefreshToken(response.data.refreshToken);
       }
 
-      return { accessToken, user };
+      return { accessToken, user: completeUser };
     } catch (error) {
       throw this.handleError(error as AxiosError);
     }
@@ -43,9 +46,13 @@ class AuthService {
       const response = await apiClient.post("/users/signup", userData);
       const { accessToken, user } = response.data;
 
+      const decodedToken = TokenService.decodeToken(accessToken);
+      const completeUser = { ...user, role: decodedToken?.role || "" };
+
       // Store tokens and user data
       TokenService.setToken(accessToken);
-      TokenService.setUserData(user);
+      TokenService.setUserData(completeUser);
+
       if (response.data.refreshToken) {
         TokenService.setRefreshToken(response.data.refreshToken);
       }
@@ -58,16 +65,13 @@ class AuthService {
 
   // Logout user
   async logout(): Promise<{ message: string }> {
-    // Clear all tokens and user data from localStorage
-    // TokenService.clearTokens();
-    // TokenService.removeUserData();
-
-    const response = await apiClient.post("/auth/logout");
-
-    return response.data;
-
-    // Optional: Clear any other app-specific data
-    // localStorage.removeItem('someOtherAppData');
+    try {
+      const response = await apiClient.post("/auth/logout");
+      TokenService.clearTokens();
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
   }
 
   // Get current user profile
@@ -141,12 +145,14 @@ class AuthService {
   }): Promise<User> {
     try {
       const response = await apiClient.put("/auth/profile", profileData);
-      const user = response.data.user;
+      const { user, accessToken } = response.data.user;
+      const decodedToken = TokenService.decodeToken(accessToken);
+      const updatedUser = { ...user, role: decodedToken?.role || "" };
 
       // Update stored user data
-      TokenService.setUserData(user);
+      TokenService.setUserData(updatedUser);
 
-      return user;
+      return updatedUser;
     } catch (error) {
       throw this.handleError(error as AxiosError);
     }

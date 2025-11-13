@@ -6,7 +6,7 @@ import { baseUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ArrowLeft, Calendar, Check, X, MapPin, FileText, Shield, Fuel as FuelIcon, ChevronDown, Car as CarIcon, Settings, Sparkles, Box, User, ArrowRight } from "lucide-react";
+import { ArrowLeft, Check, X, MapPin, FileText, Shield, ChevronDown, Car as CarIcon, Settings, Sparkles, Box, User } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
@@ -32,8 +32,6 @@ export default function CarListingDetailPage() {
     });
 
     const { data: car, isLoading, isError } = useCarListing(carId);
-
-    const isPendingAndAdmin = car?.status === "pending"; // Assume admin check is done elsewhere
 
     if (isLoading) {
         return (

@@ -1,6 +1,5 @@
 import React from "react";
 import clsx from "clsx";
-import { Car, List, Info, Image } from "lucide-react";
 
 interface Step {
   id: string;

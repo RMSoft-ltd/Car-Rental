@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 
 interface FormInputProps {
     name: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
     label: string;
     placeholder?: string;
@@ -139,6 +140,7 @@ export function FormInput({
 
 interface FormSelectProps {
     name: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
     label: string;
     options: { value: string; label: string }[];
@@ -160,7 +162,7 @@ export function FormSelect({
         <Controller
             name={name}
             control={control}
-            render={({ field: { value, onChange, ...field }, fieldState: { error } }) => (
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
                 <div className={className}>
                     <Label htmlFor={name} className="block mb-2">
                         {label}
@@ -196,6 +198,7 @@ export function FormSelect({
 
 interface FormComboboxProps {
     name: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
     label: string;
     options: { value: string; label: string }[];
@@ -217,12 +220,13 @@ export function FormCombobox({
     disabled = false,
     className = '',
 }: FormComboboxProps) {
+    const [open, setOpen] = useState(false);
+
     return (
         <Controller
             name={name}
             control={control}
-            render={({ field: { value, onChange, ...field }, fieldState: { error } }) => {
-                const [open, setOpen] = useState(false);
+            render={({ field: { value, onChange }, fieldState: { error } }) => {
                 const fieldValue = value || '';
                 const selectedOption = options.find((option) => option.value === fieldValue);
 
@@ -293,6 +297,7 @@ export function FormCombobox({
 
 interface FormTextareaProps {
     name: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
     label: string;
     placeholder?: string;
@@ -342,6 +347,7 @@ export function FormTextarea({
 
 interface FormCheckboxProps {
     name: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
     label: string;
     disabled?: boolean;
@@ -391,6 +397,7 @@ export function FormCheckbox({
 
 interface FormFileUploadProps {
     name: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
     label: string;
     accept?: string;
@@ -518,6 +525,7 @@ export function FormFileUpload({
                                         return (
                                             <div key={index} className="relative group">
                                                 <div className="w-full h-24 bg-gray-100 rounded-lg border border-gray-200 shadow-sm flex items-center justify-center overflow-hidden">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                                     <img
                                                         src={src}
                                                         alt={`Preview ${index + 1}`}

@@ -236,16 +236,23 @@ export const defaultCarListingData: Partial<CarListingFormData> = {
   model: "",
   plateNumber: "",
   body: "",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   seats: "" as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   year: "" as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mileage: "" as any,
   fuelType: "",
   transition: "",
   driverType: "",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   engineSize: "" as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   doors: "" as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   smallBags: "" as any,
   color: "",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   largeBags: "" as any,
   inTerminal: "",
   description: "",
@@ -277,12 +284,14 @@ export const defaultCarListingData: Partial<CarListingFormData> = {
   isAntiLockBreaks: false,
 
   // Pricing
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pricePerDay: "" as any,
   currency: undefined,
 
   // Important Information
   requiredDocs: "",
   securityDeposit: "",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   securityDepositAmount: "" as any,
   damageExcess: "",
   fuelPolicy: "",

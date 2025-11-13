@@ -6,6 +6,7 @@ import { useCreateCarListing } from "@/hooks/use-car-listing-mutations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import type { CarListingFormData } from "@/schemas/car-listing.schema";
+import { getErrorMessage } from "@/utils/error-utils";
 
 export default function AddListingPage() {
   const router = useRouter();
@@ -22,15 +23,14 @@ export default function AddListingPage() {
 
     try {
       await createMutation.mutateAsync({
-        userId: user.id,
+        userId: user?.id,
         data,
       });
 
       toast.success("Success", "Car listing created successfully!");
       router.push("/dashboard/listing");
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Failed to create listing. Please try again.";
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, "Failed to create listing. Please try again.");
       toast.error("Error", message);
     }
   };

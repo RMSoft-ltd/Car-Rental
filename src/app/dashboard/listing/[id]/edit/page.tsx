@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { CarListingForm } from "@/components/forms/CarListingForm";
 import { useUpdateCarListing } from "@/hooks/use-car-listing-mutations";
 import { useCarListing } from "@/hooks/use-car-list";
@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import type { CarListingFormData } from "@/schemas/car-listing.schema";
 import type { Car } from "@/types/car-listing";
+import { getErrorMessage } from "@/utils/error-utils";
 
 /**
  * Convert Car API response to CarListingFormData format
@@ -82,7 +83,7 @@ function carToFormData(car: Car): Partial<CarListingFormData> {
                     return JSON.parse(car.customDays);
                 }
                 return Array.isArray(car.customDays) ? car.customDays : [];
-            } catch (error) {
+            } catch {
                 console.error('Failed to parse customDays:', car.customDays);
                 return [];
             }
@@ -128,10 +129,8 @@ export default function EditListingPage() {
 
             toast.success("Success", "Car listing updated successfully!");
             router.push("/dashboard/listing");
-        } catch (error: any) {
-            const message =
-                error?.response?.data?.message ||
-                "Failed to update listing. Please try again.";
+        } catch (error: unknown) {
+            const message = getErrorMessage(error, "Failed to update listing. Please try again.");
             toast.error("Error", message);
         }
     };

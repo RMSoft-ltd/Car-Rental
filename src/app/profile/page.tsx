@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import authService from "@/services/auth.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
-import Image from "next/image";
 import {
   User,
   Camera,

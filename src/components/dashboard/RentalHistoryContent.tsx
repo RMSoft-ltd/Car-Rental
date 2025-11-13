@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Search, MoreVertical } from "lucide-react";
 
 // Mock rental history data
@@ -246,11 +247,14 @@ export default function RentalHistoryContent() {
                     {/* Car Details */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={rental.car.image}
-                          alt={`${rental.car.make} ${rental.car.model}`}
-                          className="w-12 h-12 object-cover rounded-lg"
-                        />
+                        <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                          <Image
+                            src={rental.car.image}
+                            alt={`${rental.car.make} ${rental.car.model}`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
                         <div>
                           <div className="font-semibold text-gray-900">
                             {rental.car.make}, {rental.car.model}

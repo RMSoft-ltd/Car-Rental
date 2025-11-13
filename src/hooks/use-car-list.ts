@@ -69,6 +69,7 @@ export const useCarListing = (id: number): UseQueryResult<Car, Error> => {
     queryFn: async () => {
       const response = await getCarById(id);
       // getCarById returns CarResponse, we need to extract the first car
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return Array.isArray(response) ? response[0] : (response as any);
     },
     enabled: !!id && id > 0, // Only run query if valid ID
