@@ -44,7 +44,7 @@ const EmptyCart = () => {
       </div>
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
       <p className="text-gray-600 mb-6 text-center max-w-md">
-        Looks like you haven't added any cars to your cart yet. Start browsing to find your perfect ride!
+        Looks like you haven&apos;t added any cars to your cart yet. Start browsing to find your perfect ride!
       </p>
       <button className="bg-black text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors">
         Browse Cars

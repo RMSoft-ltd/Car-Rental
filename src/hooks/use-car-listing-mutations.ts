@@ -183,7 +183,7 @@ export function useUpdateCarStatus() {
       changeStatusDescription = "",
     }: {
       id: number;
-      status: "available" | "unavailable" | "maintenance";
+      status: "pending" | "changeRequested" | "approved" | "rejected";
       changeStatusDescription?: string;
     }) => {
       // Assuming updateCarStatus is defined in car-listing-service

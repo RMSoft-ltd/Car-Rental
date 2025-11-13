@@ -93,7 +93,7 @@ export const updateCarStatus = async (
   id: number,
   payload: { status: string; changeStatusDescription: string }
 ) => {
-  const { data } = await apiClient.put<CarResponse>(
+  const { data } = await apiClient.patch<CarResponse>(
     `/car-listing/status/${id}`,
     payload
   );

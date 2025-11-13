@@ -6,18 +6,49 @@ import { baseUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ArrowLeft, Check, X, MapPin, FileText, Shield, ChevronDown, Car as CarIcon, Settings, Sparkles, Box, User } from "lucide-react";
+import { ArrowLeft, Check, X, MapPin, FileText, Shield, ChevronDown, Car as CarIcon, Settings, Sparkles, Box, User, Download } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
+import { useUpdateCarStatus } from "@/hooks/use-car-listing-mutations";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/utils/error-utils";
+import { TokenService } from "@/utils/token";
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { carStatusUpdateSchema, type CarStatusUpdateFormData } from "@/schemas/car-status.schema";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import TiptapEditor from "@/components/shared/TiptapEditor";
 
 export default function CarListingDetailPage() {
     const params = useParams();
     const router = useRouter();
     const carId = Number(params.id);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-
-    // State for collapsible sections - all open by default
     const [openSections, setOpenSections] = useState({
         basicInfo: true,
         location: true,
@@ -31,7 +62,39 @@ export default function CarListingDetailPage() {
         owner: true,
     });
 
-    const { data: car, isLoading, isError } = useCarListing(carId);
+    const loggedInUser = TokenService.getUserData();
+    const loggedInUserId = loggedInUser?.id || 0;
+    const loggedInRole = loggedInUser?.role || 'user';
+
+    const isAdmin = loggedInRole.toLowerCase().includes('admin');
+
+    const { data: car, isLoading, isError, refetch } = useCarListing(carId);
+    const { mutate, isPending } = useUpdateCarStatus();
+
+    const isOwner = Number(loggedInUserId) === Number(car?.owner?.id);
+
+    // Initialize React Hook Form with Zod validation
+    const form = useForm<CarStatusUpdateFormData>({
+        resolver: zodResolver(carStatusUpdateSchema),
+        defaultValues: {
+            status: "pending",
+            changeStatusDescription: "",
+        },
+    });
+
+    const onSubmit = (data: CarStatusUpdateFormData) => {
+        mutate({ id: carId, status: data.status, changeStatusDescription: data.changeStatusDescription }, {
+            onSuccess: () => {
+                toast.success("Car status updated successfully");
+                form.reset();
+                refetch();
+            },
+            onError: (error: unknown) => {
+                const message = getErrorMessage(error, "Failed to Update car listing status");
+                toast.error(`Failed to update car status: ${message}`);
+            },
+        });
+    };
 
     if (isLoading) {
         return (
@@ -67,6 +130,8 @@ export default function CarListingDetailPage() {
 
     const mainImage = carImages[selectedImageIndex] || "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
 
+    const listingStatus = ['pending', 'changeRequested', 'approved', 'rejected'];
+
     // Helper to render boolean feature
     const FeatureItem = ({ label, value }: { label: string; value: boolean }) => (
         <div className="flex items-center justify-between py-2 border-b border-gray-100">
@@ -94,22 +159,97 @@ export default function CarListingDetailPage() {
                     </Button>
 
                     <div className="flex items-center gap-3">
-                        {(<Button
-                            variant={"secondary"}
-                            size={`lg`}
-                            className="flex-grow-[1] border border-green-600 text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors cursor-pointer"
-                        >
-                            Approve
-                        </Button>)}
+                        {isAdmin ? (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        variant={"secondary"}
+                                        size={`lg`}
+                                        className="flex-grow-[1] border border-green-600 text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors cursor-pointer"
+                                    >
+                                        Change Status
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Car listing status change </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action changes listing status of {car.title}.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
 
-                        <Link href={`/dashboard/listing/${car.id}/edit`} className="flex gap-3">
+                                    <Form {...form}>
+                                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="status"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Status</FormLabel>
+                                                        <Select
+                                                            onValueChange={field.onChange}
+                                                            defaultValue={field.value}
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger className="w-full h-12">
+                                                                    <SelectValue placeholder="Select a status" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                {listingStatus.filter(status => status !== car.status).map(status => (
+                                                                    <SelectItem key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={form.control}
+                                                name="changeStatusDescription"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Description</FormLabel>
+                                                        <FormControl>
+                                                            <TiptapEditor
+                                                                value={field.value || ''}
+                                                                onChange={field.onChange}
+                                                                placeholder="Enter description for status change (minimum 10 characters)"
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </form>
+                                    </Form>
+
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel disabled={isPending}>
+                                            Cancel
+                                        </AlertDialogCancel>
+                                        <Button
+                                            className="bg-black text-white hover:bg-gray-800"
+                                            disabled={isPending}
+                                            onClick={form.handleSubmit(onSubmit)}
+                                        >
+                                            {isPending ? "Updating..." : "Update Status"}
+                                        </Button>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        ) : null}
+
+                        {(isOwner || isAdmin) ? (<Link href={`/dashboard/listing/${car.id}/edit`} className="flex gap-3">
                             <Button
                                 size={`lg`}
                                 className="flex-grow-[2] bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors cursor-pointer"
                             >
                                 Edit Listing
                             </Button>
-                        </Link>
+                        </Link>) : null}
                     </div>
 
                 </div>
@@ -174,17 +314,32 @@ export default function CarListingDetailPage() {
                                 </p>
                             </div>
                             <Badge
-                                variant={car.status === "pending" ? "default" : "secondary"}
-                                className="text-sm capitalize"
+                                variant={
+                                    car.status === "approved"
+                                        ? "default"
+                                        : car.status === "rejected"
+                                            ? "destructive"
+                                            : car.status === "changeRequested"
+                                                ? "outline"
+                                                : "secondary"
+                                }
+                                className={`text-sm capitalize ${car.status === "approved"
+                                    ? "bg-green-600 text-white hover:bg-green-700"
+                                    : car.status === "pending"
+                                        ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                                        : car.status === "changeRequested"
+                                            ? "border-orange-500 text-orange-700"
+                                            : ""
+                                    }`}
                             >
-                                {car.status}
+                                {car.status === "changeRequested" ? "Change Requested" : car.status}
                             </Badge>
                         </div>
 
                         {/* Price */}
                         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                             <p className="text-sm text-gray-600">Price per day</p>
-                            <p className="text-3xl font-bold text-gray-900">
+                            <p className="text-lg font-semibold text-gray-900">
                                 {car.currency} {car.pricePerDay.toLocaleString()}
                             </p>
                         </div>
@@ -375,15 +530,33 @@ export default function CarListingDetailPage() {
                                     </div>
                                 </CollapsibleTrigger>
                                 <CollapsibleContent className="mt-4">
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                        <p className="text-sm text-gray-600 mb-1">Insurance Expiration Date</p>
-                                        <p className="text-lg font-semibold">
-                                            {new Date(car.insuranceExpirationDate).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                        <p className="text-sm text-gray-600 mb-1">Insurance File</p>
-                                        <p className="text-lg font-semibold">{car.insuranceFile}</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                            <p className="text-sm text-gray-600 mb-1">Insurance Expiration Date</p>
+                                            <p className="text-lg font-semibold">
+                                                {new Date(car.insuranceExpirationDate).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        {car.insuranceFile && (
+                                            <div className="bg-gray-50 p-4 rounded-lg">
+                                                <p className="text-sm text-gray-600 mb-2">Insurance File</p>
+                                                <Button
+                                                    variant="default"
+                                                    asChild
+                                                    className="w-full"
+                                                >
+                                                    <a
+                                                        href={car.insuranceFile.startsWith("http") ? car.insuranceFile : `${baseUrl}${car.insuranceFile}`}
+                                                        download
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        <Download className="w-4 h-4 mr-2" />
+                                                        Download Insurance Document
+                                                    </a>
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
                                 </CollapsibleContent>
                             </Collapsible>

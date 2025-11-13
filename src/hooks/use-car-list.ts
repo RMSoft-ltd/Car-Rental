@@ -1,16 +1,12 @@
 import {
-  useMutation,
   useQuery,
-  useQueryClient,
   UseQueryResult,
 } from "@tanstack/react-query";
 import { Car, CarQueryParams, CarResponse } from "@/types/car-listing";
 import {
-  createCarListing,
   getCarById,
   getCarByUserId,
   getCars,
-  updateCarListing,
 } from "@/services/car-listing-service";
 
 /** Query key factory for car listings */

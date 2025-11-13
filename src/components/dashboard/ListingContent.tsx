@@ -21,9 +21,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import { useDeleteCarListing } from "@/hooks/use-car-listing-mutations";
 import { TokenService } from "@/utils/token";
+import { Badge } from "../ui/badge";
 
 const carsPerPage = 6;
 export default function ListingContent() {
@@ -175,8 +176,30 @@ export default function ListingContent() {
                   {/* Dark gradient overlay for text readability */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                   {/* Car title overlay */}
-                  <div className="absolute top-3 left-3 bg-black text-white px-2 py-1 text-xs font-medium z-10 rounded capitalize">
-                    {car.status}
+                  <div className="absolute top-3 left-3 px-2 py-1 z-10">
+
+                    <Badge
+                      variant={
+                        car.status === "approved"
+                          ? "default"
+                          : car.status === "rejected"
+                            ? "destructive"
+                            : car.status === "changeRequested"
+                              ? "outline"
+                              : "secondary"
+                      }
+                      className={`text-sm capitalize ${car.status === "approved"
+                        ? "bg-green-600 text-white hover:bg-green-700"
+                        : car.status === "pending"
+                          ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                          : car.status === "changeRequested"
+                            ? "border-orange-500 text-orange-700"
+                            : ""
+                        }`}
+                    >
+                      {car.status === "changeRequested" ? "Change Requested" : car.status}
+                    </Badge>
+
                   </div>
                   <div className="absolute bottom-4 left-4">
                     <h3 className="text-white font-bold text-lg">
