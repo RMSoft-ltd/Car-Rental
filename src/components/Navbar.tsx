@@ -22,7 +22,7 @@ export default function Navbar() {
   const [isMounted, setIsMounted] = useState(false);
   const userId = user?.id ?? 0;
 
-  const { totalItems, totalPrice} = useCartSummary(userId);
+  const { totalItems, totalPrice } = useCartSummary(userId);
 
   useEffect(() => {
     setIsMounted(true);
@@ -95,35 +95,40 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
             {/* Cart Section */}
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    router.push("/cart");
-                  }}
-                  className="text-gray-700 hover:text-gray-900 p-2 relative cursor-pointer transition-colors"
-                >
-                  <Image
-                    src="/images/cart.svg"
-                    alt="Cart"
-                    width={28}
-                    height={28}
-                    className="lg:w-8 lg:h-8 object-contain"
-                  />
-                  {/* Quantity Badge */}
-                  <span className="absolute -top-1 -right-1 bg-black text-white text-xs font-bold rounded-full h-4 w-4 lg:h-5 lg:w-5 flex items-center justify-center">
-                    {totalItems}
-                  </span>
-                </button>
-              </div>
+            {isAuthenticated && (
+              <>
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <button
+                      onClick={() => {
+                        router.push("/cart");
+                      }}
+                      className="text-gray-700 hover:text-gray-900 p-2 relative cursor-pointer transition-colors"
+                    >
+                      <Image
+                        src="/images/cart.svg"
+                        alt="Cart"
+                        width={28}
+                        height={28}
+                        className="lg:w-8 lg:h-8 object-contain"
+                      />
+                      {/* Quantity Badge */}
+                      <span className="absolute -top-1 -right-1 bg-black text-white text-xs font-bold rounded-full h-4 w-4 lg:h-5 lg:w-5 flex items-center justify-center">
+                        {totalItems}
+                      </span>
+                    </button>
+                  </div>
 
-              {/* Total Price */}
-              <div className="hidden lg:block text-sm text-gray-700">
-                <span className="font-semibold">RWF {totalPrice}</span>
-              </div>
-            </div>
+                  {/* Total Price */}
+                  <div className="hidden lg:block text-sm text-gray-700">
+                    <span className="font-semibold">RWF {totalPrice}</span>
+                  </div>
+                </div>
 
-            <div className="h-8 w-px bg-gray-300"></div>
+                <div className="h-8 w-px bg-gray-300"></div>
+              </>
+            )}
+
 
             {/* Profile Section */}
             <Menu as="div" className="relative inline-block text-left">
@@ -242,7 +247,7 @@ export default function Navbar() {
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
             {/* Mobile Cart */}
-            <div className="relative">
+            {isAuthenticated && (<div className="relative">
               <button
                 onClick={() => {
                   router.push("/cart");
@@ -260,7 +265,7 @@ export default function Navbar() {
                   {totalItems}
                 </span>
               </button>
-            </div>
+            </div>)}
 
             <button
               onClick={toggleMobileMenu}
@@ -289,14 +294,14 @@ export default function Navbar() {
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
               {/* Mobile Price Display */}
-              <div className="px-3 py-2 text-center bg-gray-50 rounded-md">
-                <span className="text-sm font-semibold text-gray-700">
-                  Total: RWF {totalPrice}
-                </span>
-              </div>
 
               {isAuthenticated ? (
                 <>
+                  <div className="px-3 py-2 text-left md:text-center bg-gray-50 rounded-md">
+                    <span className="text-sm font-semibold text-gray-700">
+                      Total: RWF {totalPrice}
+                    </span>
+                  </div>
                   {/* User Info in Mobile */}
                   <div className="px-3 py-3 border-b border-gray-200">
                     <div className="flex items-center space-x-3">
