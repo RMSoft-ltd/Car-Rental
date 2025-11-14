@@ -1,7 +1,5 @@
 import apiClient from "@/lib/api";
-import { CartResponse, UpdateCartItemDto } from "@/types/cart";
-
-
+import { BookingResponse, CartResponse, UpdateCartItemDto, PaymentRequest } from "@/types/cart";
 
 /**
  * Fetch all cart items for a user
@@ -33,4 +31,34 @@ export const updateCartItem = async (
  */
 export const deleteCartItem = async (cartItemId: number): Promise<void> => {
   await apiClient.delete(`/car-booking/${cartItemId}`);
+};
+
+/**
+ * Checkout a cart item by ID
+ * @param userId - The cart item ID to checkout
+ */
+export const checkout = async (userId: number): Promise<void> => {
+  await apiClient.post(`/car-booking/booking/${userId}`);
+};
+
+
+
+/**
+ * Request payment for a booking group
+ * @param bookingGroupId - The booking group ID
+ * @param paymentData - Payment request with mobile phone number
+ * @returns Payment response
+ */
+export const requestPayment = async (
+  bookingGroupId: string,
+  paymentData: PaymentRequest
+) => {
+  const { data } = await apiClient.post(`/payment/pay/${bookingGroupId}`, paymentData);
+  return data;
+};
+
+
+export const proceedCartToCheckout = async (userId: number) => {
+  const { data } = await apiClient.post(`/car-booking/booking/${userId}`);
+  return data;
 };

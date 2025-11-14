@@ -3,18 +3,23 @@
 import CartCard from "@/components/cart-card";
 import React, { useState } from "react";
 import { ShoppingCart } from "lucide-react";
-import { useCart, useCartSummary, useDeleteCartItem, useUpdateCartItem } from "@/hooks/use-cart-items";
+import { 
+  useCart, 
+  useCartSummary, 
+  useDeleteCartItem, 
+  useProceedCartToCheckout, 
+  useUpdateCartItem 
+} from "@/hooks/use-cart-items";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { BookingResponse } from "@/types/cart";
 
 // Loading Skeleton Component
 const CartCardSkeleton = () => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-pulse">
       <div className="flex flex-col md:flex-row">
-        {/* Image Skeleton */}
         <div className="w-full md:w-64 h-56 flex-shrink-0 bg-gray-200" />
-
-        {/* Details Skeleton */}
         <div className="flex-1 p-6">
           <div className="h-6 bg-gray-200 rounded w-48 mb-4" />
           <div className="space-y-3">
@@ -23,8 +28,6 @@ const CartCardSkeleton = () => {
             <div className="h-4 bg-gray-200 rounded w-28" />
           </div>
         </div>
-
-        {/* Price Section Skeleton */}
         <div className="border-t md:border-t-0 md:border-l border-gray-200 p-6 md:w-80">
           <div className="h-8 bg-gray-200 rounded w-32 mb-2" />
           <div className="h-4 bg-gray-200 rounded w-20 mb-4" />
@@ -37,6 +40,8 @@ const CartCardSkeleton = () => {
 
 // Empty Cart Component
 const EmptyCart = () => {
+  const router = useRouter();
+  
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="bg-gray-100 rounded-full p-8 mb-6">
@@ -46,7 +51,10 @@ const EmptyCart = () => {
       <p className="text-gray-600 mb-6 text-center max-w-md">
         Looks like you haven&apos;t added any cars to your cart yet. Start browsing to find your perfect ride!
       </p>
-      <button className="bg-black text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors">
+      <button 
+        onClick={() => router.push('/cars')}
+        className="bg-black text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+      >
         Browse Cars
       </button>
     </div>
@@ -59,9 +67,16 @@ interface OrderSummaryProps {
   itemCount: number;
   onCheckout: () => void;
   isLoading?: boolean;
+  isCheckingOut?: boolean;
 }
 
-const OrderSummary = ({ total, itemCount, onCheckout, isLoading = false }: OrderSummaryProps) => {
+const OrderSummary = ({ 
+  total, 
+  itemCount, 
+  onCheckout, 
+  isLoading = false,
+  isCheckingOut = false 
+}: OrderSummaryProps) => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   if (isLoading) {
@@ -111,14 +126,21 @@ const OrderSummary = ({ total, itemCount, onCheckout, isLoading = false }: Order
 
       <button
         onClick={onCheckout}
-        disabled={!agreedToTerms || itemCount === 0}
-        className={`w-full py-4 rounded-lg font-semibold text-white transition-colors ${
-          agreedToTerms && itemCount > 0
+        disabled={!agreedToTerms || itemCount === 0 || isCheckingOut}
+        className={`w-full py-4 rounded-lg font-semibold text-white transition-colors flex items-center justify-center ${
+          agreedToTerms && itemCount > 0 && !isCheckingOut
             ? "bg-black hover:bg-gray-800"
             : "bg-gray-300 cursor-not-allowed"
         }`}
       >
-        Process Checkout
+        {isCheckingOut ? (
+          <>
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+            Processing...
+          </>
+        ) : (
+          "Process Checkout"
+        )}
       </button>
     </div>
   );
@@ -146,7 +168,11 @@ const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void
 // Main Cart Page Component
 const Cart = () => {
   const { user } = useAuth();
+  const router = useRouter();
   const userId = user?.id ?? 0;
+  
+  // State to store checkout response
+  const [checkoutData, setCheckoutData] = useState<BookingResponse | null>(null);
   
   // Fetch cart data
   const { 
@@ -169,10 +195,34 @@ const Cart = () => {
   
   // Delete item mutation
   const { mutate: deleteItem, isPending: isDeleting } = useDeleteCartItem(userId);
+  
+  // Checkout mutation
+  const { 
+    mutate: checkout, 
+    isPending: isCheckingOut 
+  } = useProceedCartToCheckout(userId);
 
   const handleCheckout = () => {
-    console.log("Processing checkout...");
-    // Add your checkout logic here
+    (checkout as any)(undefined, {
+      onSuccess: (data: BookingResponse) => {
+        // Store the checkout response data
+        setCheckoutData(data);
+        
+        // Navigate to checkout page with all booking data
+        const queryParams = new URLSearchParams({
+          bookingGroupId: data.bookingGroupId,
+          bookedItems: JSON.stringify(data.bookedItems || []),
+          failedItems: JSON.stringify(data.failedItems || []),
+          message: encodeURIComponent(data.message || '')
+        }).toString();
+        
+        router.push(`/checkout?${queryParams}`);
+      },
+      onError: (error: any) => {
+        console.error('Checkout failed:', error);
+        alert(`Checkout failed: ${error?.message || 'Please try again'}`);
+      }
+    });
   };
 
   const handleUpdateDates = (cartItemId: number, pickUpDate: string, dropOffDate: string) => {
@@ -255,6 +305,7 @@ const Cart = () => {
                 itemCount={totalItems}
                 onCheckout={handleCheckout}
                 isLoading={isSummaryLoading}
+                isCheckingOut={isCheckingOut}
               />
             </div>
           </div>

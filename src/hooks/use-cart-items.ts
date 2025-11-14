@@ -5,11 +5,18 @@ import {
   UseQueryResult,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { CartItem, CartResponse } from "@/types/cart";
+import { 
+  BookingResponse, 
+  CartItem, 
+  CartResponse, 
+  PaymentRequest,  
+} from "@/types/cart";
 import {
   getCart,
   updateCartItem,
   deleteCartItem,
+  requestPayment,
+  proceedCartToCheckout,
 } from "@/services/cart-service";
 
 /**
@@ -22,6 +29,25 @@ export const cartKeys = {
   details: () => [...cartKeys.all, "detail"] as const,
   detail: (id: number) => [...cartKeys.details(), id] as const,
 };
+
+/**
+ * Query key factory for payments
+ */
+export const paymentKeys = {
+  all: ["payments"] as const,
+  details: () => [...paymentKeys.all, "detail"] as const,
+  detail: (bookingGroupId: string) => [...paymentKeys.details(), bookingGroupId] as const,
+};
+
+/**
+ * Configuration for booking queries
+ */
+const BOOKING_QUERY_CONFIG = {
+  staleTime: 5 * 60 * 1000, // 5 minutes
+  gcTime: 15 * 60 * 1000, // 15 minutes
+  retry: 2,
+  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+} as const;
 
 /**
  * Configuration for cart queries
@@ -180,4 +206,62 @@ export const useCartSummary = (userId: number) => {
     isLoading,
     error,
   };
+};
+
+
+/**
+ * Hook for processing payment
+ */
+export const usePayment = (): UseMutationResult<
+  PaymentResponse,
+  Error,
+  { bookingGroupId: string; paymentData: PaymentRequest }
+> => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      bookingGroupId,
+      paymentData,
+    }: {
+      bookingGroupId: string;
+      paymentData: PaymentRequest;
+    }) => {
+      return await requestPayment(bookingGroupId, paymentData);
+    },
+
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: paymentKeys.detail(variables.bookingGroupId),
+      });
+
+    },
+
+    onError: (error) => {
+      console.error("Payment error:", error);
+    },
+  });
+};
+
+
+// proceed to checkout from cart
+export const useProceedCartToCheckout = (
+  userId: number
+): UseMutationResult<void, Error, void> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      return await proceedCartToCheckout(userId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: cartKeys.list(userId),
+      });
+
+      
+    },
+    onError: (error) => {
+      console.error("Proceed to checkout error:", error);
+    },
+  });
 };
