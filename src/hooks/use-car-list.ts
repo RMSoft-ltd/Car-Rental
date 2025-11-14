@@ -1,13 +1,10 @@
-import {
-  useQuery,
-  UseQueryResult,
-} from "@tanstack/react-query";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { Car, CarQueryParams, CarResponse } from "@/types/car-listing";
 import {
   getCarById,
   getCarByUserId,
   getCars,
-} from "@/services/car-listing-service";
+} from "@/services/car-listing.service";
 
 /** Query key factory for car listings */
 export const carKeys = {

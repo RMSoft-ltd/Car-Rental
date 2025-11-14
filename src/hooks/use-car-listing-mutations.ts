@@ -11,7 +11,7 @@ import {
   deleteCarListing,
   deleteCarImage,
   updateCarStatus,
-} from "@/services/car-listing-service";
+} from "@/services/car-listing.service";
 import { getErrorMessage } from "@/utils/error-utils";
 
 // ============================================
@@ -186,7 +186,7 @@ export function useUpdateCarStatus() {
       status: "pending" | "changeRequested" | "approved" | "rejected";
       changeStatusDescription?: string;
     }) => {
-      // Assuming updateCarStatus is defined in car-listing-service
+      // Assuming updateCarStatus is defined in car-listing.service
       return updateCarStatus(id, { status, changeStatusDescription });
     },
     onSuccess: (_, variables) => {

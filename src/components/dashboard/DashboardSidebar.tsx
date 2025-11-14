@@ -11,6 +11,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  DollarSign,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -48,6 +49,12 @@ export default function DashboardSidebar({
       label: "Booking",
       key: "booking",
       href: "/dashboard/booking",
+    },
+    {
+      icon: DollarSign,
+      label: "Payments",
+      key: "payments",
+      href: "/dashboard/payments",
     },
     {
       icon: History,
@@ -102,6 +109,7 @@ export default function DashboardSidebar({
           <button
             onClick={onToggleCollapse}
             className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
               <ChevronRight className="w-4 h-4 text-gray-600" />
@@ -114,6 +122,7 @@ export default function DashboardSidebar({
           <button
             onClick={onMobileMenuToggle}
             className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+            aria-label="Close menu"
           >
             <X className="w-5 h-5 text-gray-600" />
           </button>
@@ -144,10 +153,9 @@ export default function DashboardSidebar({
                 group
                 relative 
                 cursor-pointer
-                ${
-                  activeTab === item.key
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-600 hover:bg-gray-100"
+                ${activeTab === item.key
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-600 hover:bg-gray-100"
                 }
               `}
               title={isCollapsed ? item.label : undefined}
