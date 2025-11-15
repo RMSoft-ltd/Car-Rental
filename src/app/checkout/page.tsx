@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from "react";
 import {
   CheckCircle,
@@ -10,7 +12,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { usePayment } from "@/hooks/use-cart-items";
-import { useSearchParams } from "next/navigation";
+// Using `window.location.search` instead of `useSearchParams` to avoid
+// requiring a Suspense boundary during prerender.
 import { BookedItem, FailedItem } from "@/types/cart";
 
 interface PaymentMethodSelectorProps {
@@ -174,7 +177,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 }}
                 // =================================================================
 
-                onFocus={(e) => {
+                onFocus={() => {
                   if (!phoneNumber) {
                     setPhoneNumber("");
                   }
@@ -496,7 +499,6 @@ const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry }) => (
 
 // Main Checkout Component
 const Checkout = () => {
-  const searchParams = useSearchParams();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     string | null
   >(null);
@@ -517,10 +519,11 @@ const Checkout = () => {
   // Parse URL parameters on component mount
   useEffect(() => {
     try {
-      const bookingGroupId = searchParams.get("bookingGroupId");
-      const bookedItemsParam = searchParams.get("bookedItems");
-      const failedItemsParam = searchParams.get("failedItems");
-      const message = searchParams.get("message");
+      const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+      const bookingGroupId = params.get("bookingGroupId");
+      const bookedItemsParam = params.get("bookedItems");
+      const failedItemsParam = params.get("failedItems");
+      const message = params.get("message");
 
       if (!bookingGroupId) {
         throw new Error("Missing booking information");
@@ -545,7 +548,7 @@ const Checkout = () => {
       setError(err instanceof Error ? err.message : "Invalid booking data");
       setIsLoading(false);
     }
-  }, [searchParams]);
+  }, []);
 
   // Handle payment submission
   const handlePaymentSubmit = (paymentData: { mobilephone: string }) => {

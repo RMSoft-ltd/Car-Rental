@@ -1,5 +1,5 @@
 import apiClient from "@/lib/api";
-import { BookingResponse, CartResponse, UpdateCartItemDto, PaymentRequest } from "@/types/cart";
+import { CartResponse, UpdateCartItemDto, PaymentRequest } from "@/types/cart";
 
 /**
  * Fetch all cart items for a user
