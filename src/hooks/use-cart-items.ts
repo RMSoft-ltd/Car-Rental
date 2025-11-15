@@ -6,7 +6,6 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { 
-  BookingResponse, 
   CartItem, 
   CartResponse, 
   PaymentRequest,  
@@ -39,15 +38,6 @@ export const paymentKeys = {
   detail: (bookingGroupId: string) => [...paymentKeys.details(), bookingGroupId] as const,
 };
 
-/**
- * Configuration for booking queries
- */
-const BOOKING_QUERY_CONFIG = {
-  staleTime: 5 * 60 * 1000, // 5 minutes
-  gcTime: 15 * 60 * 1000, // 15 minutes
-  retry: 2,
-  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
-} as const;
 
 /**
  * Configuration for cart queries

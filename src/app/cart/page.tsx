@@ -172,7 +172,7 @@ const Cart = () => {
   const userId = user?.id ?? 0;
   
   // State to store checkout response
-  const [checkoutData, setCheckoutData] = useState<BookingResponse | null>(null);
+  // const [checkoutData, setCheckoutData] = useState<BookingResponse | null>(null);
   
   // Fetch cart data
   const { 
@@ -203,24 +203,26 @@ const Cart = () => {
   } = useProceedCartToCheckout(userId);
 
   const handleCheckout = () => {
-    (checkout as any)(undefined, {
-      onSuccess: (data: BookingResponse) => {
+    checkout(undefined, {
+      onSuccess: (data: unknown) => {
         // Store the checkout response data
-        setCheckoutData(data);
-        
+        // setCheckoutData(data as BookingResponse);
+        const response = data as BookingResponse;
+
         // Navigate to checkout page with all booking data
         const queryParams = new URLSearchParams({
-          bookingGroupId: data.bookingGroupId,
-          bookedItems: JSON.stringify(data.bookedItems || []),
-          failedItems: JSON.stringify(data.failedItems || []),
-          message: encodeURIComponent(data.message || '')
+          bookingGroupId: response.bookingGroupId,
+          bookedItems: JSON.stringify(response.bookedItems || []),
+          failedItems: JSON.stringify(response.failedItems || []),
+          message: encodeURIComponent(response.message || '')
         }).toString();
-        
+
         router.push(`/checkout?${queryParams}`);
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         console.error('Checkout failed:', error);
-        alert(`Checkout failed: ${error?.message || 'Please try again'}`);
+        const message = (error as { message?: string })?.message || 'Please try again';
+        alert(`Checkout failed: ${message}`);
       }
     });
   };
