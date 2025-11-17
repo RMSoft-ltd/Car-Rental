@@ -45,7 +45,7 @@ import {
     getPaymentStatusLabel,
     getDepositStatusLabel,
 } from "@/utils/status-colors";
-import { Search, Filter, X, ChevronLeft, ChevronRight, Eye, Calendar, CreditCard, User, Car } from "lucide-react";
+import { Filter, X, ChevronLeft, ChevronRight, Eye, Calendar, CreditCard } from "lucide-react";
 import { useCarList } from "@/hooks/use-car-list";
 
 interface CarOwnerPaymentListProps {
@@ -101,7 +101,7 @@ export function CarOwnerPaymentList({
 
     useEffect(() => {
         if (!isAdmin && currentUserId) {
-            let newFilters = { ...filters };
+            const newFilters = { ...filters };
             let shouldUpdate = false;
 
             if (isOwner && filters.ownerId !== currentUserId) {
@@ -114,9 +114,9 @@ export function CarOwnerPaymentList({
                 onFilterChange?.(newFilters);
             }
         }
-    }, [isAdmin, currentUserId, isOwner]);
+    }, [isAdmin, currentUserId, isOwner, filters, onFilterChange]);
 
-    const handleFilterChange = (key: keyof CarOwnerPaymentFilters, value: any) => {
+    const handleFilterChange = (key: keyof CarOwnerPaymentFilters, value: string | number | undefined) => {
         const newFilters = { ...filters, [key]: value };
         setFilters(newFilters);
         onFilterChange?.(newFilters);

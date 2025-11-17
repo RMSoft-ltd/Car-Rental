@@ -91,7 +91,15 @@ export function GenericStatusBadge({ status }: { status: string }) {
 // ============================================
 // EXAMPLE 5: Status in a Table Cell
 // ============================================
-export function BookingTableRow({ booking }: { booking: any }) {
+interface BookingTableRowData {
+    id: number;
+    bookingStatus: string;
+    paymentStatus: string;
+    depositStatus: string;
+    totalAmount: number;
+}
+
+export function BookingTableRow({ booking }: { booking: BookingTableRowData }) {
     const bookingConfig = getBookingStatusConfig(booking.bookingStatus);
     const paymentConfig = getPaymentStatusConfig(booking.paymentStatus);
     const depositConfig = getDepositStatusConfig(booking.depositStatus);
