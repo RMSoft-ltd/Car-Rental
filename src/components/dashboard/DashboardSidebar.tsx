@@ -97,6 +97,7 @@ export default function DashboardSidebar({
           transition-all 
           duration-300 
           ease-in-out
+          flex-shrink-0
         `}
       >
         {/* Logo and Toggle */}
