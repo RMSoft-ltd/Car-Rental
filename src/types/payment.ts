@@ -1,11 +1,10 @@
 // Payment and Booking Types
 
 export type PaymentStatus =
-  | "PAID"
-  | "PENDING"
-  | "FAILED"
-  | "REFUNDED"
   | "UNPAID"
+  | "PARTIALLY_PAID"
+  | "PAID"
+  | "REFUNDED"
   | "PROCESSING";
 export type BookingStatus =
   | "CONFIRMED"

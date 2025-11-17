@@ -1,9 +1,9 @@
 export const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-RW", {
-    style: "currency",
-    currency: "RWF",
+  const formatted = new Intl.NumberFormat("en-RW", {
+    style: "decimal",
     minimumFractionDigits: 0,
   }).format(amount);
+  return `${formatted} RWF`;
 };
 
 export const formatDate = (dateString: string) => {
