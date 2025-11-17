@@ -11,7 +11,9 @@ import {
   Info,
   Share2,
   Heart,
-  Fuel
+  Fuel,
+  Briefcase,
+  CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -33,6 +35,38 @@ const mockCar: Car = {
   location: "Kigali, Rwanda",
   rating: 4.5
 };
+
+const featureCategories = [
+  {
+    title: "Interior",
+    items: ["Air Conditioner", "Digital Odometer", "Leather Seats", "Heater", "Techometer"]
+  },
+  {
+    title: "Exterior",
+    items: ["Fog Lights Front", "Rain Sensing Wipe", "Rear Spoiler", "Sun Roof"]
+  },
+  {
+    title: "Safety",
+    items: ["Brake Assist", "Child Safety Locks", "Traction Control", "Power Door Locks", "Driver Air Bag"]
+  },
+  {
+    title: "Comfort & Convenience",
+    items: ["Power Steering", "Vanity Mirror", "Trunk Light"]
+  }
+];
+
+const carInfoDetails: { label: string; value: string }[] = [
+  { label: "Body", value: "SUV" },
+  { label: "Mileage", value: "28,000 Miles" },
+  { label: "Fuel Type", value: "Diesel" },
+  { label: "Year", value: "2022" },
+  { label: "Transmission", value: "8-Speed Automatic" },
+  { label: "Driver Type", value: "Front Wheel Drive" },
+  { label: "Engine Size", value: "4.8L" },
+  { label: "Doors", value: "5-door" },
+  { label: "Cylinders", value: "6" },
+  { label: "Interior Color", value: "Black" }
+];
 
 export default function CarDetailPage() {
   return (
@@ -68,10 +102,38 @@ export default function CarDetailPage() {
           <div className="lg:col-span-2">
             {/* Car Title */}
             <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {mockCar.make} {mockCar.model} {mockCar.year}
-              </h1>
-              <p className="text-gray-600">or similar SUV</p>
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 px-6 py-5">
+                <div className="space-y-2">
+                  <div>
+                    <h1 className="text-[28px] font-semibold text-gray-900">
+                      {mockCar.make} {mockCar.model} {mockCar.year}
+                    </h1>
+                    <p className="text-gray-500 text-sm">2.0 D5 Power Pulse Momentum 5dr AWD Geartronic Estate</p>
+                  </div>
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <span className="inline-flex items-center gap-2">
+                      <Users className="w-4 h-4 text-gray-500" />
+                      5 Seats
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-gray-500" />
+                      450 km per rental
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Settings className="w-4 h-4 text-gray-500" />
+                      Automatic
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-gray-500" />
+                      1 Large bag
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-gray-500" />
+                      1 Small bag
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Car Images */}
@@ -127,140 +189,106 @@ export default function CarDetailPage() {
               </div>
             </div>
 
-            {/* Car Specifications */}
-            <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Car Specifications</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center">
-                  <Users className="w-5 h-5 text-gray-500 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500">Seats</p>
-                    <p className="font-semibold">{mockCar.seats}</p>
+            <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+              <div className="space-y-6">
+                {/* Host Information */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mr-4">
+                        <User className="w-6 h-6 text-gray-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Benny Crispin</h3>
+                        <p className="text-sm text-gray-500">Host</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="bg-black text-white px-3 py-1 rounded text-sm font-medium">
+                        <span className="text-lg font-bold">9.3</span> OK
+                      </div>
+                      <span className="text-sm text-gray-500">(111 reviews)</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <Settings className="w-5 h-5 text-gray-500 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500">Transmission</p>
-                    <p className="font-semibold">{mockCar.transmission}</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Fuel className="w-5 h-5 text-gray-500 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500">Fuel Type</p>
-                    <p className="font-semibold">{mockCar.fuelType}</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Clock className="w-5 h-5 text-gray-500 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500">Mileage</p>
-                    <p className="font-semibold">{mockCar.mileage} km</p>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Features */}
-            <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Features</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {mockCar.features.map((feature, index) => (
-                  <div key={index} className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    <span className="text-gray-700">{feature}</span>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <div className="grid grid-cols-2 gap-y-4">
+                    {carInfoDetails.map((detail) => (
+                      <div key={detail.label} className="flex items-center justify-between border-b border-gray-100 pb-3">
+                        <span className="text-sm text-gray-500">{detail.label}</span>
+                        <span className="text-sm font-semibold text-gray-900">{detail.value}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                  <span className="text-gray-700">Power Steering</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                  <span className="text-gray-700">Central Locking</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                  <span className="text-gray-700">ABS</span>
                 </div>
               </div>
-            </div>
 
-            {/* Host Information */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Host Information</h2>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mr-4">
-                    <User className="w-6 h-6 text-gray-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Benny Crispin</h3>
-                    <p className="text-sm text-gray-500">Host</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <div className="bg-black text-white px-3 py-1 rounded text-sm font-medium mr-3">
-                    <span className="text-lg font-bold">9.3</span> OK
-                  </div>
-                  <span className="text-sm text-gray-500">(111 reviews)</span>
-                </div>
-              </div>
             </div>
           </div>
 
           {/* Booking Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm p-6 sticky top-4">
-              <div className="text-center mb-6">
-                <p className="text-sm text-gray-500">Price Per day</p>
-                <p className="text-3xl font-bold text-gray-900">{mockCar.pricePerDay.toLocaleString()} RWF</p>
-                <p className="text-sm text-gray-500">Free cancellation</p>
+            <div className="sticky top-4 space-y-6">
+            
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
+                <p className="text-sm text-gray-500">
+                  <span className="text-gray-900 font-semibold">200,000 Rfw</span> for 6 days
+                </p>
+
+                <div className="flex items-center rounded-2xl border border-gray-900 px-5 py-4 text-sm font-semibold text-gray-900">
+                  <div className="flex-1">
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Pick-up Date</p>
+                    <p className="text-lg text-gray-900">8/8/2025</p>
+                  </div>
+                  <div className="mx-4 h-10 w-px bg-gray-200" />
+                  <div className="flex-1 text-right">
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Drop-off Date</p>
+                    <p className="text-lg text-gray-900">8/20/2025</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 text-sm text-gray-700">
+                  <p className="font-semibold text-gray-900">Rental Price breakdown</p>
+                  <div className="flex items-center justify-between">
+                    <span>Car Rental</span>
+                    <span className="text-gray-900">200,000 Rfw</span>
+                  </div>
+                  <div className="flex items-center justify-between font-semibold text-gray-900">
+                    <span>Total Amount</span>
+                    <span>200,000 Rfw</span>
+                  </div>
+                  <p className="text-xs text-gray-500">Free cancellation</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button className="rounded-2xl border border-gray-900 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-white transition-colors">
+                    Add To Cart
+                  </button>
+                  <Link
+                    href="/booking"
+                    className="rounded-2xl bg-black px-6 py-3 text-center text-sm font-semibold text-white hover:bg-gray-900 transition-colors"
+                  >
+                    Book Now
+                  </Link>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Pick-up Date</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="date"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Drop-off Date</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="date"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Pick-up Location</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Enter location"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <button className="w-full bg-black text-white py-4 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors text-lg">
-                  Book Now
-                </button>
-
-                <div className="flex items-center justify-center text-gray-500">
-                  <Info className="w-4 h-4 mr-2" />
-                  <span className="text-sm">Important Info</span>
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
+                <h3 className="text-lg font-semibold text-gray-900">Features</h3>
+                <div className="space-y-5">
+                  {featureCategories.map((category) => (
+                    <div key={category.title}>
+                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-3">{category.title}</p>
+                      <div className="space-y-2 text-sm text-gray-800">
+                        {category.items.map((item) => (
+                          <div key={item} className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-black" />
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
