@@ -169,3 +169,15 @@ export interface PaymentStatistics {
   totalAmountOwed: number;
   pendingDeposits: number;
 }
+
+// Get Balance Response
+export interface BalanceResponse {
+  success: boolean;
+  balance: number;
+  currency: string;
+  timestamp: string;
+  rawResponse: {
+    balance: number;
+    success: boolean;
+  };
+}

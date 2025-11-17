@@ -7,6 +7,7 @@ import {
   BookingHistoryResponse,
   BookingHistoryFilters,
   CarOwnerPaymentFilters,
+  BalanceResponse,
 } from "@/types/payment";
 
 export const paymentService = {
@@ -36,7 +37,7 @@ export const paymentService = {
   },
 
   // Get admin balance
-  async getAdminBalance(): Promise<any> {
+  async getAdminBalance(): Promise<BalanceResponse> {
     const response = await apiClient.get("/admin-panel/balance");
     return response.data;
   },

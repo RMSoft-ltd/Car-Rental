@@ -59,16 +59,9 @@ export default function PaymentHistoryContent({
         userId: !isAdmin && userId ? userId : undefined,
     });
     const [showFilters, setShowFilters] = useState(false);
-    const [detailsDialog, setDetailsDialog] = useState<{
-        open: boolean;
-        booking: any | null;
-    }>({
-        open: false,
-        booking: null,
-    });
 
     // Fetch booking history with filters
-    const { data, isLoading, error, refetch } = useBookingHistory(filters);
+    const { data, isLoading } = useBookingHistory(filters);
 
     // Calculate statistics from the data
     const statistics = useMemo(() => {
@@ -88,7 +81,7 @@ export default function PaymentHistoryContent({
         };
     }, [data]);
 
-    const handleFilterChange = (key: keyof BookingHistoryFilters, value: any) => {
+    const handleFilterChange = (key: keyof BookingHistoryFilters, value: string | undefined) => {
         const newFilters = { ...filters, [key]: value };
         setFilters(newFilters);
     };
@@ -100,20 +93,6 @@ export default function PaymentHistoryContent({
             userId: !isAdmin && userId ? userId : undefined,
         };
         setFilters(defaultFilters);
-    };
-
-    const openBookingDetails = (booking: any) => {
-        setDetailsDialog({
-            open: true,
-            booking,
-        });
-    };
-
-    const closeBookingDetails = () => {
-        setDetailsDialog({
-            open: false,
-            booking: null,
-        });
     };
 
     const formatDate = (date: string) => {

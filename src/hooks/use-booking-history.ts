@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { BookingHistoryFilters, BookingHistoryResponse } from "@/types/payment";
+import { BookingHistoryFilters } from "@/types/payment";
 import { paymentService } from "@/services/payment.service";
 
 /**
