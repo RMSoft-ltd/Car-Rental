@@ -180,3 +180,12 @@ export interface BalanceResponse {
     success: boolean;
   };
 }
+
+// Make Deposit To Car Owner Request
+export interface MakeDepositRequest {
+  carOwnerId: number;
+  bookingIds: number[];
+  amount: number;
+  reason: string;
+  mobilephone: string;
+}
