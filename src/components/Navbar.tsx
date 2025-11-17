@@ -6,13 +6,14 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Menu, Transition } from "@headlessui/react";
 import { FaBars, FaTimes } from "react-icons/fa";
-import { User, LayoutDashboard, LogOut } from "lucide-react";
+import { User, LayoutDashboard, LogOut, LogIn, HelpCircle, UserPlus } from "lucide-react";
 import { HiChevronDown } from "react-icons/hi";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import clsx from "clsx";
 import { UserAvatar } from "./Avator";
 import { useCartSummary } from "@/hooks/use-cart-items";
+import { LuMenu } from "react-icons/lu";
 
 export default function Navbar() {
   const router = useRouter();
@@ -61,8 +62,8 @@ export default function Navbar() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20">
             <div className="flex-shrink-0">
-              <Link href="/" className="block">
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-black">
+              <Link href="/" className="block group">
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-black group-hover:text-black transition-colors duration-200">
                   <span className="hidden sm:inline">
                     Car & Driver Rental Hub
                   </span>
@@ -82,8 +83,8 @@ export default function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 sm:h-20">
           <div className="flex-shrink-0">
-            <Link href="/" className="block">
-              <span className="text-lg sm:text-xl lg:text-2xl font-bold text-black">
+            <Link href="/" className="block group">
+              <span className="text-lg sm:text-xl lg:text-2xl font-bold text-black group-hover:text-black transition-colors duration-200">
                 <span className="hidden sm:inline">
                   Car & Driver Rental Hub
                 </span>
@@ -134,113 +135,194 @@ export default function Navbar() {
             <Menu as="div" className="relative inline-block text-left">
               <div>
                 <Menu.Button
-                  className="flex items-center text-gray-900 hover:text-gray-700 p-2 rounded-md cursor-pointer outline-none focus:outline-none transition-colors"
-                  onClick={!isAuthenticated ? handleProfileClick : undefined}
+                  className="group flex items-center text-gray-900 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-50 cursor-pointer outline-none focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 transition-all duration-200"
                 >
-                  {user ? (
-                    <UserAvatar user={user} size="default" />
+                  {isAuthenticated && user ? (
+                    <>
+                      <UserAvatar user={user} size="default" />
+                      <div className="hidden lg:block text-left min-w-0 flex-1 ml-2">
+                        <p className="text-sm lg:text-base font-semibold text-gray-900 truncate">
+                          {user.lName ? `${user.lName}` : "User"}
+                        </p>
+                        <p className="text-xs font-medium text-gray-500 truncate max-w-[120px] lg:max-w-[150px]">
+                          {user.email}
+                        </p>
+                      </div>
+                      <HiChevronDown className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0 ml-1" />
+                    </>
                   ) : (
-                    <Image
-                      src="/images/abstract-user-flat-4.png"
-                      alt="User Icon"
-                      width={32}
-                      height={32}
-                      className="h-8 w-8 lg:h-10 lg:w-10"
-                    />
-                  )}
-
-                  {/* User Info */}
-                  {isAuthenticated && user && (
-                    <div className="hidden lg:block ml-3 text-left">
-                      <p className="text-sm lg:text-base font-bold text-gray-900">
-                        {user.lName ? `${user.lName}` : "User"}
-                      </p>
-                      <p className="text-xs font-medium text-gray-500 truncate max-w-[120px] lg:max-w-[150px]">
-                        {user.email}
-                      </p>
-                    </div>
-                  )}
-
-                  {isAuthenticated && (
-                    <HiChevronDown className="ml-1 lg:ml-2 h-4 w-4 flex-shrink-0" />
+                    <LuMenu className="h-6 w-6 text-black" />
                   )}
                 </Menu.Button>
               </div>
 
-              {isAuthenticated && (
-                <Transition
-                  as={Fragment}
-                  enter="transition ease-out duration-100"
-                  enterFrom="transform opacity-0 scale-95"
-                  enterTo="transform opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="transform opacity-100 scale-100"
-                  leaveTo="transform opacity-0 scale-95"
-                >
-                  <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-lg bg-white shadow-lg ring-1 ring-gray-300 ring-opacity-5 focus:outline-none z-50">
-                    <div className="px-4 py-3">
-                      <p className="text-sm text-gray-700">Signed in as</p>
-                      <p className="text-sm font-semibodtext-gray-900 truncate">
-                        {user?.email}
-                      </p>
-                    </div>
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-lg bg-white shadow-lg ring-1 ring-gray-300 ring-opacity-5 focus:outline-none z-50">
+                  {isAuthenticated ? (
+                    <>
+                      {/* Authenticated User Menu */}
+                      <div className="px-4 py-3">
+                        <p className="text-sm text-gray-700">Signed in as</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {user?.email}
+                        </p>
+                      </div>
 
-                    <div className="py-1">
-                      <Menu.Item>
-                        {({ active }) => (
-                          <Link
-                            href="/profile"
-                            className={clsx(
-                              active
-                                ? "bg-gray-100 text-gray-900"
-                                : "text-gray-700",
-                              "flex items-center px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
-                            )}
-                          >
-                            <User className="mr-3 h-4 w-4" />
-                            Manage Profile
-                          </Link>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <Link
-                            href="/dashboard"
-                            className={clsx(
-                              active
-                                ? "bg-gray-100 text-gray-900"
-                                : "text-gray-700",
-                              "flex items-center px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
-                            )}
-                          >
-                            <LayoutDashboard className="mr-3 h-4 w-4" />
-                            Dashboard
-                          </Link>
-                        )}
-                      </Menu.Item>
-                    </div>
+                      <div className="py-1">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <Link
+                              href="/profile"
+                              className={clsx(
+                                active
+                                  ? "bg-gray-100 text-gray-900"
+                                  : "text-gray-700",
+                                "flex items-center px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
+                              )}
+                            >
+                              <User className="mr-3 h-4 w-4" />
+                              Manage Profile
+                            </Link>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <Link
+                              href="/dashboard"
+                              className={clsx(
+                                active
+                                  ? "bg-gray-100 text-gray-900"
+                                  : "text-gray-700",
+                                "flex items-center px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
+                              )}
+                            >
+                              <LayoutDashboard className="mr-3 h-4 w-4" />
+                              Dashboard
+                            </Link>
+                          )}
+                        </Menu.Item>
+                      </div>
 
-                    <div className="py-1">
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={handleLogout}
-                            className={clsx(
-                              active
-                                ? "bg-red-50 text-red-700"
-                                : "text-gray-700",
-                              "flex items-center w-full text-left px-4 py-2 text-sm hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
-                            )}
-                          >
-                            <LogOut className="mr-3 h-4 w-4" />
-                            <span>Logout</span>
-                          </button>
-                        )}
-                      </Menu.Item>
-                    </div>
-                  </Menu.Items>
-                </Transition>
-              )}
+                      {/* Additional Options for Authenticated Users */}
+                      <div className="py-1">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => router.push('/dashboard/add-listing')}
+                              className={clsx(
+                                active
+                                  ? "bg-gray-100 text-gray-900"
+                                  : "text-gray-700",
+                                "flex items-center w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
+                              )}
+                            >
+                              <UserPlus className="mr-3 h-4 w-4" />
+                              Become a Host
+                            </button>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => {/* Add help center logic */}}
+                              className={clsx(
+                                active
+                                  ? "bg-gray-100 text-gray-900"
+                                  : "text-gray-700",
+                                "flex items-center w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
+                              )}
+                            >
+                              <HelpCircle className="mr-3 h-4 w-4" />
+                              Help Center
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </div>
+
+                      <div className="py-1">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={handleLogout}
+                              className={clsx(
+                                active
+                                  ? "bg-red-50 text-red-700"
+                                  : "text-gray-700",
+                                "flex items-center w-full text-left px-4 py-2 text-sm hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
+                              )}
+                            >
+                              <LogOut className="mr-3 h-4 w-4" />
+                              <span>Logout</span>
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Unauthenticated User Menu */}
+                      <div className="py-1">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => router.push('/auth/signin')}
+                              className={clsx(
+                                active
+                                  ? "bg-gray-100 text-gray-900"
+                                  : "text-gray-700",
+                                "flex items-center w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
+                              )}
+                            >
+                              <LogIn className="mr-3 h-4 w-4" />
+                              Login / Sign up
+                            </button>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => router.push('/auth/signup')}
+                              className={clsx(
+                                active
+                                  ? "bg-gray-100 text-gray-900"
+                                  : "text-gray-700",
+                                "flex items-center w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
+                              )}
+                            >
+                              <UserPlus className="mr-3 h-4 w-4" />
+                              Become a Host
+                            </button>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => {/* Add help center logic */}}
+                              className={clsx(
+                                active
+                                  ? "bg-gray-100 text-gray-900"
+                                  : "text-gray-700",
+                                "flex items-center w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
+                              )}
+                            >
+                              <HelpCircle className="mr-3 h-4 w-4" />
+                              Help Center
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </div>
+                    </>
+                  )}
+                </Menu.Items>
+              </Transition>
             </Menu>
           </div>
 

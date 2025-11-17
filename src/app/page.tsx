@@ -26,7 +26,7 @@ import { CAR_CATEGORIES, DEFAULT_SEARCH_VALUES, FEATURE_MAP, FILTER_SECTIONS, Fi
 
 const FeatureItem = React.memo<{ label: string }>(({ label }) => (
   <div className="flex items-center text-white">
-    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+    <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center mr-3">
       <span className="text-white text-sm">✓</span>
     </div>
     <span className="text-lg">{label}</span>
@@ -406,11 +406,11 @@ export default function Home() {
 
                 <div className="md:col-span-1">
                   <button
-                    className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-black text-white py-3 px-6 text-lg rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                     aria-label="Search for cars"
                   >
                     <Search className="w-5 h-5" />
-                    Search Car
+                    Search
                   </button>
                 </div>
               </div>
