@@ -1,11 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { BookingsPerOwnerList, CarOwnerPaymentFilters, DepositStatus, BookingDetail } from "@/types/payment";
+import { useState, useEffect, useMemo } from "react";
+import { BookingsPerOwnerList, CarOwnerPaymentFilters, DepositStatus, BookingDetail, MakeDepositRequest } from "@/types/payment";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -49,6 +62,28 @@ import { Filter, X, ChevronLeft, ChevronRight, Eye, Calendar, CreditCard } from 
 import { useCarList } from "@/hooks/use-car-list";
 import { LuX } from "react-icons/lu";
 
+// Zod schema for deposit payment form
+const depositPaymentSchema = z.object({
+    mobilephone: z
+        .string()
+        .min(10, "Phone number must be at least 10 digits")
+        .max(15, "Phone number must not exceed 15 digits")
+        .regex(/^[0-9]+$/, "Phone number must contain only digits")
+        .refine((val) => val.startsWith("250"), {
+            message: "Phone number must start with 250 (Rwanda)",
+        }),
+    reason: z
+        .string()
+        .min(5, "Reason must be at least 5 characters")
+        .max(200, "Reason must not exceed 200 characters"),
+    amount: z
+        .number()
+        .positive("Amount must be positive")
+        .min(1, "Amount must be at least 1 RWF"),
+});
+
+type DepositPaymentFormValues = z.infer<typeof depositPaymentSchema>;
+
 interface CarOwnerPaymentListProps {
     data: BookingsPerOwnerList;
     onFilterChange?: (filters: CarOwnerPaymentFilters) => void;
@@ -86,6 +121,21 @@ export function CarOwnerPaymentList({
         open: false,
         booking: null,
     });
+    const [paymentDialog, setPaymentDialog] = useState<{
+        open: boolean;
+        carOwnerId: number | null;
+        ownerName: string;
+        ownerEmail: string;
+        bookingIds: number[];
+        totalAmount: number;
+    }>({
+        open: false,
+        carOwnerId: null,
+        ownerName: "",
+        ownerEmail: "",
+        bookingIds: [],
+        totalAmount: 0,
+    });
 
     const { data: carsResponse, isLoading: carsLoading } = useCarList({ limit: 1000 });
 
@@ -93,6 +143,31 @@ export function CarOwnerPaymentList({
         id: car.id,
         label: `${car.make} ${car.model} (${car.year}) - ${car.plateNumber}`,
     })) || [];
+
+    const totalAmount = useMemo(() => {
+        if (!data) return 0;
+        const sum = data.map(owner => owner.details.reduce((ownerSum, booking) => {
+            return ownerSum + booking.totalAmount;
+        }, 0));
+        return sum.reduce((a, b) => a + b, 0);
+    }, [data]);
+
+    const statistics = useMemo(() => {
+        if (!data) return {
+            totalOwners: 0,
+            totalAmountOwed: 0,
+            totalAmountPaid: 0,
+            totalAmount: 0
+        };
+
+        const totalOwners = data.length;
+        return {
+            totalOwners,
+            totalAmountOwed: data.reduce((sum, owner) => sum + owner.totalAmountOwed, 0),
+            totalAmountPaid: data.reduce((sum, owner) => sum + owner.totalAmountOwed, 0),
+            totalAmount: totalAmount
+        }
+    }, [data]);
 
     useEffect(() => {
         if (!isAdmin && currentUserId) {
@@ -168,9 +243,18 @@ export function CarOwnerPaymentList({
     const handlePayOwner = (carOwnerId: number) => {
         const bookingIds = selectedBookings[carOwnerId] || [];
         if (bookingIds.length > 0) {
-            onPayOwner?.(carOwnerId, bookingIds);
-            // Clear selections after payment 
-            deselectAllBookings(carOwnerId);
+            const owner = data.find((o) => o.carOwnerId === carOwnerId);
+            if (owner) {
+                const totalAmount = calculateSelectedAmount(carOwnerId);
+                setPaymentDialog({
+                    open: true,
+                    carOwnerId,
+                    ownerName: `${owner.carOwnerDetails.fname} ${owner.carOwnerDetails.lname}`,
+                    ownerEmail: owner.carOwnerDetails.email,
+                    bookingIds,
+                    totalAmount,
+                });
+            }
         }
     };
 
@@ -198,9 +282,111 @@ export function CarOwnerPaymentList({
         });
     };
 
+    // Initialize payment form
+    const form = useForm<DepositPaymentFormValues>({
+        resolver: zodResolver(depositPaymentSchema),
+        defaultValues: {
+            mobilephone: "",
+            reason: "Security deposit",
+            amount: 0,
+        },
+    });
+
+    // Update form amount when dialog opens
+    useEffect(() => {
+        if (paymentDialog.open && paymentDialog.totalAmount > 0) {
+            form.setValue("amount", paymentDialog.totalAmount);
+        }
+    }, [paymentDialog.open, paymentDialog.totalAmount, form]);
+
+    const closePaymentDialog = () => {
+        setPaymentDialog({
+            open: false,
+            carOwnerId: null,
+            ownerName: "",
+            ownerEmail: "",
+            bookingIds: [],
+            totalAmount: 0,
+        });
+        form.reset();
+    };
+
+    const onSubmitPayment = async (values: DepositPaymentFormValues) => {
+        if (!paymentDialog.carOwnerId) return;
+
+        const depositRequest: MakeDepositRequest = {
+            carOwnerId: paymentDialog.carOwnerId,
+            bookingIds: paymentDialog.bookingIds,
+            amount: values.amount,
+            reason: values.reason,
+            mobilephone: values.mobilephone,
+        };
+
+        try {
+            // Call the parent's onPayOwner with deposit data
+            // You might want to update the prop signature to accept MakeDepositRequest
+            await onPayOwner?.(depositRequest.carOwnerId, depositRequest.bookingIds);
+
+            // Clear selections and close dialog on success
+            deselectAllBookings(paymentDialog.carOwnerId);
+            closePaymentDialog();
+        } catch (error) {
+            console.error("Payment error:", error);
+            // Handle error (you might want to show a toast notification)
+        }
+    };
+
     return (
         <div className="flex flex-col h-[calc(100vh-16rem)] space-y-6">
-            {/* Header with Filters */}
+
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
+                <Card>
+                    <CardContent>
+                        <div>
+                            <p className="text-sm text-muted-foreground mb-1">
+                                Total Owners
+                            </p>
+                            <p className="text-lg font-bold">{data.length}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent>
+                        <div>
+                            <p className="text-sm text-muted-foreground mb-1">
+                                Total Amount Owed
+                            </p>
+                            <p className="text-lg font-bold">
+                                {formatCurrency(statistics.totalAmountOwed)}
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent>
+                        <div>
+                            <p className="text-sm text-muted-foreground mb-1">Total Amount Paid</p>
+                            <p className="text-lg font-bold">{formatCurrency(statistics.totalAmountPaid)}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent>
+                        <div>
+                            <p className="text-sm text-muted-foreground mb-1">
+                                Total Amount
+                            </p>
+                            <p className="text-lg font-bold">
+                                {formatCurrency(statistics.totalAmount)}
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
             {/* Show and Hide Filters Button */}
             <div className="flex justify-between">
                 <Button
@@ -210,10 +396,10 @@ export function CarOwnerPaymentList({
                 >
 
                     {showFilters ? <>
-                        <Filter className="mr-2 h-4 w-4" />
+                        <LuX className="mr-2 h-4 w-4" />
                         Hide
                     </> : <>
-                        <LuX className="mr-2 h-4 w-4" />
+                        <Filter className="mr-2 h-4 w-4" />
                         Show
                     </>} Filters
                 </Button>
@@ -327,7 +513,7 @@ export function CarOwnerPaymentList({
             )}
 
             {/* Payment List - Scrollable Container overflow-y-auto */}
-            <div className="flex-1 pr-2">
+            <div className="flex-1 overflow-y-auto pr-2">
                 {isLoading ? (
                     <Card>
                         <CardContent className="py-10">
@@ -353,7 +539,7 @@ export function CarOwnerPaymentList({
                                     <CardHeader>
                                         <div className="flex items-start justify-between">
                                             <div className="space-y-1">
-                                                <CardTitle className="text-lg">
+                                                <CardTitle className="text-lg capitalize">
                                                     {owner.carOwnerDetails.fname} {owner.carOwnerDetails.lname}
                                                 </CardTitle>
                                                 <CardDescription>{owner.carOwnerDetails.email}</CardDescription>
@@ -434,7 +620,7 @@ export function CarOwnerPaymentList({
                                                                     {owner.details.map((booking) => {
                                                                         const isSelected = selectedBookings[
                                                                             owner.carOwnerId
-                                                                        ]?.includes(booking.id);
+                                                                        ]?.includes(booking.id) ?? false;
 
                                                                         return (
                                                                             <TableRow
@@ -543,7 +729,7 @@ export function CarOwnerPaymentList({
 
             {/* Booking Details Dialog */}
             <Dialog open={detailsDialog.open} onOpenChange={(open) => !open && closeBookingDetails()}>
-                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto backdrop-blur-3xl">
                     <DialogHeader>
                         <DialogTitle>Booking Details</DialogTitle>
                         <DialogDescription>
@@ -591,7 +777,7 @@ export function CarOwnerPaymentList({
                                 <div className="bg-muted p-4 rounded-lg space-y-3">
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm text-muted-foreground">Total Amount:</span>
-                                        <span className="text-xl font-bold text-primary">
+                                        <span className="text-lg font-bold text-primary">
                                             {formatCurrency(detailsDialog.booking.totalAmount)}
                                         </span>
                                     </div>
@@ -637,6 +823,133 @@ export function CarOwnerPaymentList({
                         <Button variant="outline" onClick={closeBookingDetails}>
                             Close
                         </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Payment Dialog */}
+            <Dialog open={paymentDialog.open} onOpenChange={(open) => !open && closePaymentDialog()}>
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto] backdrop-blur-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Make Deposit Payment</DialogTitle>
+                        <DialogDescription>
+                            Process mobile money payment to {paymentDialog.ownerName}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        {/* Owner Information */}
+                        <div className="bg-muted p-4 rounded-lg space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">Owner:</span>
+                                <span className="font-medium">{paymentDialog.ownerName}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">Email:</span>
+                                <span className="font-medium text-sm">{paymentDialog.ownerEmail}</span>
+                            </div>
+                            <Separator className="my-2" />
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">Bookings Selected:</span>
+                                <Badge variant="outline">{paymentDialog.bookingIds.length} booking(s)</Badge>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium">Total Amount:</span>
+                                <span className="text-xl font-bold text-primary">
+                                    {formatCurrency(paymentDialog.totalAmount)}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Payment Form */}
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmitPayment)} className="space-y-4">
+                                {/* Mobile Phone Number */}
+                                <FormField
+                                    control={form.control}
+                                    name="mobilephone"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Mobile Money Number</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="250787299001"
+                                                    {...field}
+                                                    className="font-mono"
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                Enter MTN or Airtel mobile money number (must start with 250)
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Amount */}
+                                <FormField
+                                    control={form.control}
+                                    name="amount"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Amount (RWF)</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    {...field}
+                                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                Payment amount in Rwandan Francs
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Reason */}
+                                <FormField
+                                    control={form.control}
+                                    name="reason"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Payment Reason</FormLabel>
+                                            <FormControl>
+                                                <Textarea
+                                                    placeholder="Enter payment reason..."
+                                                    className="resize-none"
+                                                    rows={3}
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                Brief description of the payment (5-200 characters)
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Action Buttons */}
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={closePaymentDialog}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={form.formState.isSubmitting}
+                                    >
+                                        {form.formState.isSubmitting ? "Processing..." : "Make Payment"}
+                                    </Button>
+                                </div>
+                            </form>
+                        </Form>
                     </div>
                 </DialogContent>
             </Dialog>

@@ -147,7 +147,7 @@ export default function HistoryContent({
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-shrink-0">
                 <Card>
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <div>
                             <p className="text-sm text-muted-foreground mb-1">
                                 Total Bookings
@@ -158,7 +158,7 @@ export default function HistoryContent({
                 </Card>
 
                 <Card>
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <div>
                             <p className="text-sm text-muted-foreground mb-1">Confirmed Bookings</p>
                             <p className="text-lg font-bold">{statistics.confirmedBookings}</p>
@@ -167,7 +167,7 @@ export default function HistoryContent({
                 </Card>
 
                 <Card>
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <div>
                             <p className="text-sm text-muted-foreground mb-1">
                                 Total Amount
@@ -189,10 +189,10 @@ export default function HistoryContent({
                 >
 
                     {showFilters ? <>
-                        <Filter className="mr-2 h-4 w-4" />
+                        <LuX className="mr-2 h-4 w-4" />
                         Hide
                     </> : <>
-                        <LuX className="mr-2 h-4 w-4" />
+                        <Filter className="mr-2 h-4 w-4" />
                         Show
                     </>} Filters
                 </Button>
