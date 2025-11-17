@@ -32,6 +32,8 @@ export default function DashboardLayout({
         return "Add Car Details";
       case "/dashboard/booking":
         return "Bookings";
+      case "/dashboard/payments":
+        return "Payments";
       case "/dashboard/history":
         return "Rental History";
       case "/dashboard/settings":
@@ -45,6 +47,7 @@ export default function DashboardLayout({
     if (pathname === "/dashboard") return "dashboard";
     if (pathname.startsWith("/dashboard/listing") || pathname === "/dashboard/add-listing") return "listing";
     if (pathname.startsWith("/dashboard/booking")) return "booking";
+    if (pathname.startsWith("/dashboard/payments")) return "payments";
     if (pathname.startsWith("/dashboard/history")) return "history";
     if (pathname.startsWith("/dashboard/settings")) return "settings";
     return "dashboard";
@@ -52,7 +55,7 @@ export default function DashboardLayout({
 
   return (
     <div className="h-screen bg-gray-100 overflow-hidden">
-      <div className="flex h-full">
+      <div className="flex h-full w-full">
         <DashboardSidebar
           activeTab={getActiveTab()}
           onLogout={handleLogout}
@@ -61,24 +64,13 @@ export default function DashboardLayout({
           isMobileMenuOpen={isMobileMenuOpen}
           onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         />
-        <div
-          className={`
-          flex-1 
-          flex 
-          flex-col 
-          h-full 
-          transition-all 
-          duration-300 
-          ease-in-out
-          ${isSidebarCollapsed ? "lg:ml-0" : "lg:ml-0"}
-        `}
-        >
+        <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
           <DashboardHeader
             title={getPageTitle()}
             onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             isCollapsed={isSidebarCollapsed}
           />
-          <div className="flex-1 overflow-hidden">{children}</div>
+          <div className="flex-1 overflow-hidden min-w-0">{children}</div>
         </div>
       </div>
     </div>
