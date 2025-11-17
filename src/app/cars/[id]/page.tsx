@@ -11,7 +11,8 @@ import {
   Share2,
   Heart,
   Briefcase,
-  CheckCircle2
+  CheckCircle2,
+  Star
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -105,6 +106,43 @@ const buildCarSpecs = (car: CarListing) => [
   { label: "Interior Color", value: car.color ?? "—" }
 ];
 
+const formatTimeAgo = (dateString?: string) => {
+  if (!dateString) return "Recently";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "Recently";
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const intervals = [
+    { label: "year", seconds: 31536000 },
+    { label: "month", seconds: 2592000 },
+    { label: "week", seconds: 604800 },
+    { label: "day", seconds: 86400 },
+    { label: "hour", seconds: 3600 },
+    { label: "minute", seconds: 60 }
+  ];
+  for (const interval of intervals) {
+    const count = Math.floor(seconds / interval.seconds);
+    if (count >= 1) {
+      return `${count} ${interval.label}${count > 1 ? "s" : ""} ago`;
+    }
+  }
+  return "Just now";
+};
+
+const renderRatingStars = (rating?: number) => {
+  const normalized = Math.round(Number.isFinite(rating ?? NaN) ? rating ?? 0 : 0);
+  return Array.from({ length: 5 }, (_, index) => {
+    const active = index < normalized;
+    return (
+      <Star
+        key={`review-star-${index}`}
+        className={`h-4 w-4 ${
+          active ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+        }`}
+      />
+    );
+  });
+};
+
 const getHostDisplay = (car?: CarListing | null) => {
   const hostName = car?.owner
     ? `${car.owner.fName ?? ""} ${car.owner.lName ?? ""}`.trim()
@@ -142,6 +180,7 @@ export default function CarDetailPage() {
 
   const carSpecs = useMemo(() => (car ? buildCarSpecs(car) : []), [car]);
   const hostDisplay = useMemo(() => getHostDisplay(car), [car]);
+  const reviews = car?.reviews ?? [];
 
   const heroImage = toAbsoluteImage(car?.carImages?.[0]);
   const galleryImages =
@@ -278,13 +317,23 @@ export default function CarDetailPage() {
 
         {/* Details */}
         <section className="grid gap-8 lg:grid-cols-[1.5fr_0.9fr]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+          <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 space-y-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mr-4">
-                  <User className="w-6 h-6 text-gray-600" />
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                  {car.owner?.picture ? (
+                    <Image
+                      src={toAbsoluteImage(car.owner.picture) ?? ""}
+                      alt={hostDisplay?.hostName ?? "Host"}
+                      width={56}
+                      height={56}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-6 h-6 text-gray-600" />
+                  )}
                 </div>
-                <div>
+                <div className="space-y-1">
                   <h3 className="font-semibold text-gray-900">
                     {hostDisplay?.hostName ?? "Host"}
                   </h3>
@@ -304,18 +353,79 @@ export default function CarDetailPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-y-4">
-              {carSpecs.map((detail) => (
-                <div
-                  key={detail.label}
-                  className="flex items-center justify-between border-b border-gray-100 pb-3"
-                >
-                  <span className="text-sm text-gray-500">{detail.label}</span>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {detail.value}
-                  </span>
+            <div className="rounded-2xl bg-gray-50 p-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {carSpecs.map((detail) => (
+                  <div key={detail.label} className="flex flex-col gap-1 border-b border-gray-200 pb-3 last:border-b-0 sm:border-b-0">
+                    <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                      {detail.label}
+                    </span>
+                    <span className="text-base font-semibold text-gray-900 break-words">
+                      {detail.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900">Reviews</h4>
+                  <p className="text-sm text-gray-500">
+                    {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+                  </p>
                 </div>
-              ))}
+                <div className="flex items-center gap-1">
+                  {renderRatingStars(
+                    reviews.length
+                      ? reviews.reduce((sum, current) => sum + (current.rating ?? 0), 0) /
+                          reviews.length
+                      : undefined
+                  )}
+                </div>
+              </div>
+
+              {reviews.length > 0 ? (
+                <div className="space-y-5">
+                  {reviews.map((review, index) => {
+                    const reviewerName =
+                      hostDisplay?.hostName ?? `Guest ${index + 1}`;
+                    const comment =
+                      review.comment ||
+                      "The guest left no written feedback for this trip.";
+
+                    return (
+                      <article
+                        key={review.id ?? `review-${index}`}
+                        className="p-4 rounded-2xl border border-gray-100 bg-white shadow-sm space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {reviewerName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatTimeAgo(review.createdAt)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {renderRatingStars(review.rating)}
+                          </div>
+                        </div>
+                        <p className="text-sm leading-relaxed text-gray-600">
+                          {comment}
+                        </p>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500">
+                  Reviews for this car will appear here once guests share their
+                  experience.
+                </div>
+              )}
             </div>
           </div>
 
