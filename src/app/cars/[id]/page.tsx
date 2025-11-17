@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   ArrowLeft,
   Users,
@@ -20,6 +20,12 @@ import { useParams } from "next/navigation";
 import { useCarListing } from "@/hooks/use-car-list";
 import { baseUrl } from "@/lib/api";
 import { Car as CarListing } from "@/types/car-listing";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/app/shared/ToastProvider";
+import { useMutation } from "@tanstack/react-query";
+import { bookCarNow } from "@/services/cart-service";
+import { AxiosError } from "axios";
 
 const toAbsoluteImage = (path?: string) => {
   if (!path) return null;
@@ -166,12 +172,54 @@ const getHostDisplay = (car?: CarListing | null) => {
 
 export default function CarDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
+  const toast = useToast();
   const carIdParam = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const carId = Number(carIdParam);
 
   const { data: car, isLoading, error } = useCarListing(
     Number.isNaN(carId) ? 0 : carId
   );
+
+  const [pickUpDate, setPickUpDate] = useState<string>("");
+  const [dropOffDate, setDropOffDate] = useState<string>("");
+
+  const getTodayIso = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today.toISOString().split("T")[0];
+  };
+
+  const getNextDayIso = (iso: string) => {
+    const date = new Date(iso);
+    date.setDate(date.getDate() + 1);
+    date.setHours(0, 0, 0, 0);
+    return date.toISOString().split("T")[0];
+  };
+
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let initialPickUp = car?.startDate ? new Date(car.startDate) : new Date();
+    initialPickUp.setHours(0, 0, 0, 0);
+    if (initialPickUp < today) {
+      initialPickUp = today;
+    }
+
+    let initialDropOff = car?.endDate
+      ? new Date(car.endDate)
+      : new Date(initialPickUp.getTime() + 7 * 24 * 60 * 60 * 1000);
+    initialDropOff.setHours(0, 0, 0, 0);
+    if (initialDropOff <= initialPickUp) {
+      initialDropOff = new Date(initialPickUp.getTime() + 24 * 60 * 60 * 1000);
+    }
+
+    const toISO = (date: Date) => date.toISOString().split("T")[0];
+    setPickUpDate(toISO(initialPickUp));
+    setDropOffDate(toISO(initialDropOff));
+  }, [car?.startDate, car?.endDate]);
 
   const featureCategories = useMemo(
     () => (car ? buildFeatureCategories(car) : []),
@@ -193,6 +241,126 @@ export default function CarDetailPage() {
   const currency = car?.currency ?? "RWF";
   const totalForSixDays =
     typeof pricePerDay === "number" ? pricePerDay * 6 : null;
+  const bookingDates = useMemo(() => {
+    const formatDisplayDate = (iso: string) =>
+      iso
+        ? new Date(iso).toLocaleDateString("en-US", {
+            month: "numeric",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "";
+
+    return {
+      pickUpDateLabel: formatDisplayDate(pickUpDate),
+      dropOffDateLabel: formatDisplayDate(dropOffDate),
+      payload: {
+        pickUpDate,
+        dropOffDate,
+      },
+    };
+  }, [pickUpDate, dropOffDate]);
+
+  const dropOffMinDate = pickUpDate
+    ? getNextDayIso(pickUpDate)
+    : getNextDayIso(getTodayIso());
+
+  const rentalDays =
+    pickUpDate && dropOffDate
+      ? Math.max(
+          1,
+          Math.ceil(
+            (new Date(dropOffDate).getTime() -
+              new Date(pickUpDate).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        )
+      : 6;
+
+  const totalSelectedAmount =
+    typeof pricePerDay === "number" && pickUpDate && dropOffDate
+      ? pricePerDay * rentalDays
+      : totalForSixDays;
+
+  const bookingMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) {
+        throw new Error("You must be signed in to book a car.");
+      }
+      if (!car?.id) {
+        throw new Error("Car information is missing.");
+      }
+      return bookCarNow(user.id, car.id, bookingDates.payload);
+    },
+    onSuccess: () => {
+      toast.success("Booking created", "Redirecting to checkout...");
+      router.push("/booking");
+    },
+    onError: (error: unknown) => {
+      let message = "Something went wrong while booking this car.";
+      if (error instanceof AxiosError) {
+        message =
+          (error.response?.data as { message?: string })?.message ??
+          error.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      toast.error("Booking failed", message);
+    },
+  });
+
+  const handleBookNow = () => {
+    if (!user) {
+      toast.info("Sign in required", "Please sign in to book this car.");
+      router.push("/login");
+      return;
+    }
+    if (!car?.id) {
+      toast.error("Booking unavailable", "Car information is missing.");
+      return;
+    }
+    if (!pickUpDate || !dropOffDate) {
+      toast.error("Invalid dates", "Please select pick-up and drop-off dates.");
+      return;
+    }
+    const pickUp = new Date(pickUpDate);
+    const dropOff = new Date(dropOffDate);
+    const today = new Date(getTodayIso());
+    if (pickUp < today) {
+      toast.error("Invalid dates", "Pick-up date cannot be in the past.");
+      return;
+    }
+    if (dropOff <= pickUp) {
+      toast.error(
+        "Invalid dates",
+        "Drop-off date must be after the pick-up date."
+      );
+      return;
+    }
+    bookingMutation.mutate();
+  };
+
+  const handlePickUpChange = (value: string) => {
+    if (!value) return;
+    const todayIso = getTodayIso();
+    const normalized = value < todayIso ? todayIso : value;
+    setPickUpDate(normalized);
+    if (dropOffDate && dropOffDate <= normalized) {
+      setDropOffDate(getNextDayIso(normalized));
+    }
+  };
+
+  const handleDropOffChange = (value: string) => {
+    if (!value) return;
+    if (value <= pickUpDate) {
+      toast.info(
+        "Adjust date",
+        "Drop-off date must be after the pick-up date."
+      );
+      return;
+    }
+    setDropOffDate(value);
+  };
 
   if (isLoading) {
     return (
@@ -278,41 +446,41 @@ export default function CarDetailPage() {
         <section className="grid gap-4 md:grid-cols-2">
           <div className="aspect-video rounded-xl overflow-hidden bg-gray-100">
             {heroImage ? (
-              <Image
+                  <Image
                 src={heroImage}
                 alt={`${car.make} ${car.model}`}
-                width={600}
-                height={400}
-                className="w-full h-full object-cover"
-              />
+                    width={600}
+                    height={400}
+                    className="w-full h-full object-cover"
+                  />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
                 No image available
               </div>
             )}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
+                </div>
+                <div className="grid grid-cols-2 gap-2">
             {galleryImages.length ? (
               galleryImages.map((img, index) => (
                 <div
                   key={`${img}-${index}`}
                   className="aspect-video rounded-lg overflow-hidden bg-gray-100"
                 >
-                  <Image
+                    <Image
                     src={img}
                     alt={`Gallery ${index + 1}`}
-                    width={300}
-                    height={200}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                      width={300}
+                      height={200}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
               ))
             ) : (
               <div className="col-span-2 h-full rounded-lg bg-gray-100 flex items-center justify-center text-sm text-gray-400">
                 No additional images
-              </div>
+                  </div>
             )}
-          </div>
+                  </div>
         </section>
 
         {/* Details */}
@@ -332,7 +500,7 @@ export default function CarDetailPage() {
                   ) : (
                     <User className="w-6 h-6 text-gray-600" />
                   )}
-                </div>
+                  </div>
                 <div className="space-y-1">
                   <h3 className="font-semibold text-gray-900">
                     {hostDisplay?.hostName ?? "Host"}
@@ -370,7 +538,7 @@ export default function CarDetailPage() {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div>
+                  <div>
                   <h4 className="text-lg font-semibold text-gray-900">Reviews</h4>
                   <p className="text-sm text-gray-500">
                     {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
@@ -458,12 +626,16 @@ export default function CarDetailPage() {
             </div>
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
-              {typeof totalForSixDays === "number" && (
+              {typeof totalSelectedAmount === "number" ? (
                 <p className="text-sm text-gray-500">
                   <span className="text-gray-900 font-semibold">
-                    {totalForSixDays.toLocaleString()} {currency}
+                    {totalSelectedAmount.toLocaleString()} {currency}
                   </span>{" "}
-                  for 6 days
+                  for {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Select your dates to see an accurate total.
                 </p>
               )}
 
@@ -472,16 +644,47 @@ export default function CarDetailPage() {
                   <p className="text-[11px] uppercase tracking-wide text-gray-500">
                     Pick-up Date
                   </p>
-                  <p className="text-lg text-gray-900">8/8/2025</p>
+                  <p className="text-lg text-gray-900">
+                    {bookingDates.pickUpDateLabel}
+                  </p>
                 </div>
                 <div className="mx-4 h-10 w-px bg-gray-200" />
                 <div className="flex-1 text-right">
                   <p className="text-[11px] uppercase tracking-wide text-gray-500">
                     Drop-off Date
                   </p>
-                  <p className="text-lg text-gray-900">8/20/2025</p>
+                  <p className="text-lg text-gray-900">
+                    {bookingDates.dropOffDateLabel}
+                  </p>
                 </div>
               </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Select Pick-up Date
+                  </label>
+                    <input
+                      type="date"
+                    value={pickUpDate}
+                    min={getTodayIso()}
+                    onChange={(event) => handlePickUpChange(event.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
+                    />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Select Drop-off Date
+                  </label>
+                    <input
+                      type="date"
+                    value={dropOffDate}
+                    min={dropOffMinDate}
+                    onChange={(event) => handleDropOffChange(event.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
+                    />
+                  </div>
+                </div>
 
               <div className="space-y-3 text-sm text-gray-700">
                 <p className="font-semibold text-gray-900">Rental Price breakdown</p>
@@ -496,24 +699,27 @@ export default function CarDetailPage() {
                 <div className="flex items-center justify-between font-semibold text-gray-900">
                   <span>Total Amount</span>
                   <span>
-                    {typeof pricePerDay === "number"
-                      ? `${pricePerDay.toLocaleString()} ${currency}`
+                    {typeof totalSelectedAmount === "number"
+                      ? `${totalSelectedAmount.toLocaleString()} ${currency}`
                       : "—"}
                   </span>
-                </div>
+                  </div>
                 <p className="text-xs text-gray-500">Free cancellation</p>
-              </div>
+                </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <button className="rounded-2xl border border-gray-900 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-white transition-colors">
                   Add To Cart
                 </button>
-                <Link
-                  href="/booking"
-                  className="rounded-2xl bg-black px-6 py-3 text-center text-sm font-semibold text-white hover:bg-gray-900 transition-colors"
+                <button
+                  onClick={handleBookNow}
+                  disabled={
+                    bookingMutation.isPending || !pickUpDate || !dropOffDate
+                  }
+                  className="rounded-2xl bg-black px-6 py-3 text-center text-sm font-semibold text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed hover:bg-gray-900"
                 >
-                  Book Now
-                </Link>
+                  {bookingMutation.isPending ? "Booking..." : "Book Now"}
+                </button>
               </div>
             </div>
           </div>

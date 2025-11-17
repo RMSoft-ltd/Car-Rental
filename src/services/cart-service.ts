@@ -1,5 +1,10 @@
 import apiClient from "@/lib/api";
-import { CartResponse, UpdateCartItemDto, PaymentRequest } from "@/types/cart";
+import {
+  CartResponse,
+  UpdateCartItemDto,
+  PaymentRequest,
+  BookedItem,
+} from "@/types/cart";
 
 /**
  * Fetch all cart items for a user
@@ -60,5 +65,22 @@ export const requestPayment = async (
 
 export const proceedCartToCheckout = async (userId: number) => {
   const { data } = await apiClient.post(`/car-booking/booking/${userId}`);
+  return data;
+};
+
+export interface DirectBookingPayload {
+  pickUpDate: string;
+  dropOffDate: string;
+}
+
+export const bookCarNow = async (
+  userId: number,
+  carId: number,
+  payload: DirectBookingPayload
+) => {
+  const { data } = await apiClient.post<BookedItem[]>(
+    `/car-booking/booking/${userId}/${carId}`,
+    payload
+  );
   return data;
 };
