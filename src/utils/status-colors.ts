@@ -31,13 +31,11 @@ export type BookingStatus =
  * Payment status types
  */
 export type PaymentStatus =
-  | "PAID"
   | "UNPAID"
-  | "PENDING"
-  | "PROCESSING"
-  | "FAILED"
+  | "PARTIALLY_PAID"
+  | "PAID"
   | "REFUNDED"
-  | "PARTIALLY_PAID";
+  | "PROCESSING";
 
 /**
  * Deposit status types
@@ -128,17 +126,9 @@ export function getPaymentStatusConfig(status: string): StatusConfig {
       variant: "destructive",
       className: "bg-red-100 text-red-800 hover:bg-red-200",
     },
-    PENDING: {
-      variant: "secondary",
-      className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
-    },
     PROCESSING: {
       variant: "secondary",
       className: "bg-blue-100 text-blue-800 hover:bg-blue-200",
-    },
-    FAILED: {
-      variant: "destructive",
-      className: "bg-red-500 hover:bg-red-600 text-white",
     },
     REFUNDED: {
       variant: "outline",
@@ -236,13 +226,11 @@ export function getBookingStatusLabel(status: string): string {
  */
 export function getPaymentStatusLabel(status: string): string {
   const labels: Record<string, string> = {
-    PAID: "Paid",
     UNPAID: "Unpaid",
-    PENDING: "Pending",
-    PROCESSING: "Processing",
-    FAILED: "Failed",
-    REFUNDED: "Refunded",
     PARTIALLY_PAID: "Partially Paid",
+    PAID: "Paid",
+    PROCESSING: "Processing",
+    REFUNDED: "Refunded",
   };
 
   return labels[status.toUpperCase()] || status;
@@ -284,7 +272,7 @@ export function getStatusIconName(status: string): string {
   if (["PENDING", "UNPAID", "PROCESSING"].includes(normalizedStatus)) {
     return "Clock";
   }
-  if (["CANCELLED", "FAILED", "REJECTED"].includes(normalizedStatus)) {
+  if (["CANCELLED", "REJECTED"].includes(normalizedStatus)) {
     return "XCircle";
   }
   if (["REFUNDED"].includes(normalizedStatus)) {

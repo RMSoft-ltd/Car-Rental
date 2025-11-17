@@ -47,6 +47,7 @@ import {
 } from "@/utils/status-colors";
 import { Filter, X, ChevronLeft, ChevronRight, Eye, Calendar, CreditCard } from "lucide-react";
 import { useCarList } from "@/hooks/use-car-list";
+import { LuX } from "react-icons/lu";
 
 interface CarOwnerPaymentListProps {
     data: BookingsPerOwnerList;
@@ -76,7 +77,7 @@ export function CarOwnerPaymentList({
         limit: 10,
         depositStatus: "PENDING",
     });
-    const [showFilters, setShowFilters] = useState(false);
+    const [showFilters, setShowFilters] = useState(true);
     const [selectedBookings, setSelectedBookings] = useState<Record<number, number[]>>({});
     const [detailsDialog, setDetailsDialog] = useState<{
         open: boolean;
@@ -87,12 +88,6 @@ export function CarOwnerPaymentList({
     });
 
     const { data: carsResponse, isLoading: carsLoading } = useCarList({ limit: 1000 });
-
-    const carOwners = data.map((owner) => ({
-        id: owner.carOwnerId,
-        name: `${owner.carOwnerDetails.fname} ${owner.carOwnerDetails.lname}`,
-        email: owner.carOwnerDetails.email,
-    }));
 
     const cars = carsResponse?.rows.map((car) => ({
         id: car.id,
@@ -204,31 +199,30 @@ export function CarOwnerPaymentList({
     };
 
     return (
-        <div className="space-y-6">
+        <div className="flex flex-col h-[calc(100vh-16rem)] space-y-6">
             {/* Header with Filters */}
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle>Car Owner Payments</CardTitle>
-                            <CardDescription>
-                                Manage and track payments owed to car owners
-                            </CardDescription>
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowFilters(!showFilters)}
-                        >
-                            <Filter className="mr-2 h-4 w-4" />
-                            {showFilters ? "Hide" : "Show"} Filters
-                        </Button>
-                    </div>
-                </CardHeader>
+            {/* Show and Hide Filters Button */}
+            <div className="flex justify-between">
+                <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setShowFilters(!showFilters)}
+                >
 
-                {showFilters && (
+                    {showFilters ? <>
+                        <Filter className="mr-2 h-4 w-4" />
+                        Hide
+                    </> : <>
+                        <LuX className="mr-2 h-4 w-4" />
+                        Show
+                    </>} Filters
+                </Button>
+            </div>
+
+            {showFilters && (
+                <Card className="flex-shrink-0">
                     <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="bookingGroupId">Booking Group ID</Label>
                                 <Input
@@ -236,39 +230,9 @@ export function CarOwnerPaymentList({
                                     placeholder="Enter booking group ID"
                                     value={filters.bookingGroupId || ""}
                                     onChange={(e) => handleFilterChange("bookingGroupId", e.target.value)}
+                                    className="w-full h-10"
                                 />
                             </div>
-
-                            {/* Car Owner Filter - Only for Admins */}
-                            {isAdmin && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="ownerId">Car Owner</Label>
-                                    <Select
-                                        value={filters.ownerId?.toString() || "all"}
-                                        onValueChange={(value) =>
-                                            handleFilterChange("ownerId", value === "all" ? undefined : Number(value))
-                                        }
-                                    >
-                                        <SelectTrigger id="ownerId">
-                                            <SelectValue placeholder="Select car owner" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Owners</SelectItem>
-                                            {carOwners.length === 0 ? (
-                                                <SelectItem value="none" disabled>
-                                                    No owners available
-                                                </SelectItem>
-                                            ) : (
-                                                carOwners.map((owner) => (
-                                                    <SelectItem key={owner.id} value={owner.id.toString()}>
-                                                        {owner.name} ({owner.email})
-                                                    </SelectItem>
-                                                ))
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
 
                             {/* Car Filter - Dropdown for better UX */}
                             <div className="space-y-2">
@@ -279,7 +243,7 @@ export function CarOwnerPaymentList({
                                         handleFilterChange("carId", value === "all" ? undefined : Number(value))
                                     }
                                 >
-                                    <SelectTrigger id="carId">
+                                    <SelectTrigger id="carId" size="md" className="w-full">
                                         <SelectValue placeholder="Select car" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -309,7 +273,7 @@ export function CarOwnerPaymentList({
                                     value={filters.depositStatus || "PENDING"}
                                     onValueChange={(value) => handleFilterChange("depositStatus", value as DepositStatus)}
                                 >
-                                    <SelectTrigger id="depositStatus">
+                                    <SelectTrigger id="depositStatus" size="md" className="w-full">
                                         <SelectValue placeholder="Select status" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -332,6 +296,7 @@ export function CarOwnerPaymentList({
                                     onChange={(e) =>
                                         handleFilterChange("totalDays", e.target.value ? Number(e.target.value) : undefined)
                                     }
+                                    className="w-full h-10"
                                 />
                             </div>
 
@@ -345,8 +310,10 @@ export function CarOwnerPaymentList({
                                     onChange={(e) =>
                                         handleFilterChange("totalAmount", e.target.value ? Number(e.target.value) : undefined)
                                     }
+                                    className="w-full h-10"
                                 />
                             </div>
+
                         </div>
 
                         <div className="mt-4 flex justify-end">
@@ -356,192 +323,194 @@ export function CarOwnerPaymentList({
                             </Button>
                         </div>
                     </CardContent>
-                )}
-            </Card>
-
-            {/* Payment List */}
-            {isLoading ? (
-                <Card>
-                    <CardContent className="py-10">
-                        <div className="text-center text-muted-foreground">Loading...</div>
-                    </CardContent>
                 </Card>
-            ) : data.length === 0 ? (
-                <Card>
-                    <CardContent className="py-10">
-                        <div className="text-center text-muted-foreground">
-                            No payment records found
-                        </div>
-                    </CardContent>
-                </Card>
-            ) : (
-                <div className="space-y-4">
-                    {data.map((owner) => {
-                        const selectedCount = selectedBookings[owner.carOwnerId]?.length || 0;
-                        const selectedAmount = calculateSelectedAmount(owner.carOwnerId);
-
-                        return (
-                            <Card key={owner.carOwnerId}>
-                                <CardHeader>
-                                    <div className="flex items-start justify-between">
-                                        <div className="space-y-1">
-                                            <CardTitle className="text-lg">
-                                                {owner.carOwnerDetails.fname} {owner.carOwnerDetails.lname}
-                                            </CardTitle>
-                                            <CardDescription>{owner.carOwnerDetails.email}</CardDescription>
-                                            <div className="flex gap-4 text-sm mt-2">
-                                                <span>
-                                                    <strong>Total Bookings:</strong> {owner.totalBookings}
-                                                </span>
-                                                <span>
-                                                    <strong>Total Amount Owed:</strong>{" "}
-                                                    {formatCurrency(owner.totalAmountOwed)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        {selectedCount > 0 && (
-                                            <div className="flex gap-2 items-center">
-                                                <div className="text-right text-sm">
-                                                    <div className="font-medium">
-                                                        {selectedCount} booking{selectedCount > 1 ? "s" : ""} selected
-                                                    </div>
-                                                    <div className="text-muted-foreground">
-                                                        {formatCurrency(selectedAmount)}
-                                                    </div>
-                                                </div>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handlePayOwner(owner.carOwnerId)}
-                                                >
-                                                    Pay Selected
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <Accordion type="single" collapsible className="w-full">
-                                        <AccordionItem value="bookings">
-                                            <AccordionTrigger className="text-sm hover:no-underline py-2 cursor-pointer">
-                                                View Booking Details ({owner.details.length})
-                                            </AccordionTrigger>
-                                            <AccordionContent>
-                                                <div className="space-y-4">
-                                                    <div className="flex justify-between items-center">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() =>
-                                                                selectAllBookings(
-                                                                    owner.carOwnerId,
-                                                                    owner.details.map((b) => b.id)
-                                                                )
-                                                            }
-                                                        >
-                                                            Select All
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => deselectAllBookings(owner.carOwnerId)}
-                                                        >
-                                                            Deselect All
-                                                        </Button>
-                                                    </div>
-
-                                                    <div className="overflow-x-auto">
-                                                        <Table>
-                                                            <TableHeader>
-                                                                <TableRow>
-                                                                    <TableHead className="w-12">Select</TableHead>
-                                                                    <TableHead>Booking ID</TableHead>
-                                                                    <TableHead>Period</TableHead>
-                                                                    <TableHead>Days</TableHead>
-                                                                    <TableHead>Amount</TableHead>
-                                                                    <TableHead>Deposit Status</TableHead>
-                                                                    <TableHead className="text-right">Actions</TableHead>
-                                                                </TableRow>
-                                                            </TableHeader>
-                                                            <TableBody>
-                                                                {owner.details.map((booking) => {
-                                                                    const isSelected = selectedBookings[
-                                                                        owner.carOwnerId
-                                                                    ]?.includes(booking.id);
-
-                                                                    return (
-                                                                        <TableRow
-                                                                            key={booking.id}
-                                                                            className={isSelected ? "bg-muted/50" : ""}
-                                                                        >
-                                                                            <TableCell>
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    checked={isSelected}
-                                                                                    onChange={() =>
-                                                                                        toggleBookingSelection(
-                                                                                            owner.carOwnerId,
-                                                                                            booking.id
-                                                                                        )
-                                                                                    }
-                                                                                    className="h-4 w-4 rounded border-gray-300"
-                                                                                    aria-label={`Select booking ${booking.id}`}
-                                                                                />
-                                                                            </TableCell>
-                                                                            <TableCell className="font-mono text-xs">
-                                                                                #{booking.id}
-                                                                            </TableCell>
-                                                                            <TableCell className="text-sm">
-                                                                                <div className="flex flex-col gap-1">
-                                                                                    <span>{formatDate(booking.pickUpDate)}</span>
-                                                                                    <span className="text-muted-foreground text-xs">
-                                                                                        to {formatDate(booking.dropOffDate)}
-                                                                                    </span>
-                                                                                </div>
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <Badge variant="outline">{booking.totalDays} days</Badge>
-                                                                            </TableCell>
-                                                                            <TableCell className="font-medium">
-                                                                                {formatCurrency(booking.totalAmount)}
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <Badge
-                                                                                    variant={getDepositStatusConfig(booking.depositStatus).variant}
-                                                                                    className={getDepositStatusConfig(booking.depositStatus).className}
-                                                                                >
-                                                                                    {getDepositStatusLabel(booking.depositStatus)}
-                                                                                </Badge>
-                                                                            </TableCell>
-                                                                            <TableCell className="text-right">
-                                                                                <Button
-                                                                                    variant="ghost"
-                                                                                    size="sm"
-                                                                                    onClick={() => openBookingDetails(booking)}
-                                                                                >
-                                                                                    <Eye className="h-4 w-4 mr-1" />
-                                                                                    Details
-                                                                                </Button>
-                                                                            </TableCell>
-                                                                        </TableRow>
-                                                                    );
-                                                                })}
-                                                            </TableBody>
-                                                        </Table>
-                                                    </div>
-                                                </div>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    </Accordion>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
-                </div>
             )}
+
+            {/* Payment List - Scrollable Container overflow-y-auto */}
+            <div className="flex-1 pr-2">
+                {isLoading ? (
+                    <Card>
+                        <CardContent className="py-10">
+                            <div className="text-center text-muted-foreground">Loading...</div>
+                        </CardContent>
+                    </Card>
+                ) : data.length === 0 ? (
+                    <Card>
+                        <CardContent className="py-10">
+                            <div className="text-center text-muted-foreground">
+                                No payment records found
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="space-y-4 pb-4">
+                        {data.map((owner) => {
+                            const selectedCount = selectedBookings[owner.carOwnerId]?.length || 0;
+                            const selectedAmount = calculateSelectedAmount(owner.carOwnerId);
+
+                            return (
+                                <Card key={owner.carOwnerId}>
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between">
+                                            <div className="space-y-1">
+                                                <CardTitle className="text-lg">
+                                                    {owner.carOwnerDetails.fname} {owner.carOwnerDetails.lname}
+                                                </CardTitle>
+                                                <CardDescription>{owner.carOwnerDetails.email}</CardDescription>
+                                                <div className="flex gap-4 text-sm mt-2">
+                                                    <span>
+                                                        <strong>Total Bookings:</strong> {owner.totalBookings}
+                                                    </span>
+                                                    <span>
+                                                        <strong>Total Amount Owed:</strong>{" "}
+                                                        {formatCurrency(owner.totalAmountOwed)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {selectedCount > 0 && (
+                                                <div className="flex gap-2 items-center">
+                                                    <div className="text-right text-sm">
+                                                        <div className="font-medium">
+                                                            {selectedCount} booking{selectedCount > 1 ? "s" : ""} selected
+                                                        </div>
+                                                        <div className="text-muted-foreground">
+                                                            {formatCurrency(selectedAmount)}
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => handlePayOwner(owner.carOwnerId)}
+                                                    >
+                                                        Pay Selected
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <Accordion type="single" collapsible className="w-full">
+                                            <AccordionItem value="bookings">
+                                                <AccordionTrigger className="text-sm hover:no-underline py-2 cursor-pointer">
+                                                    View Booking Details ({owner.details.length})
+                                                </AccordionTrigger>
+                                                <AccordionContent>
+                                                    <div className="space-y-4">
+                                                        <div className="flex justify-between items-center">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() =>
+                                                                    selectAllBookings(
+                                                                        owner.carOwnerId,
+                                                                        owner.details.map((b) => b.id)
+                                                                    )
+                                                                }
+                                                            >
+                                                                Select All
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => deselectAllBookings(owner.carOwnerId)}
+                                                            >
+                                                                Deselect All
+                                                            </Button>
+                                                        </div>
+
+                                                        <div className="overflow-x-auto">
+                                                            <Table>
+                                                                <TableHeader>
+                                                                    <TableRow>
+                                                                        <TableHead className="w-12">Select</TableHead>
+                                                                        <TableHead>Booking ID</TableHead>
+                                                                        <TableHead>Period</TableHead>
+                                                                        <TableHead>Days</TableHead>
+                                                                        <TableHead>Amount</TableHead>
+                                                                        <TableHead>Deposit Status</TableHead>
+                                                                        <TableHead className="text-right">Actions</TableHead>
+                                                                    </TableRow>
+                                                                </TableHeader>
+                                                                <TableBody>
+                                                                    {owner.details.map((booking) => {
+                                                                        const isSelected = selectedBookings[
+                                                                            owner.carOwnerId
+                                                                        ]?.includes(booking.id);
+
+                                                                        return (
+                                                                            <TableRow
+                                                                                key={booking.id}
+                                                                                className={isSelected ? "bg-muted/50" : ""}
+                                                                            >
+                                                                                <TableCell>
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={isSelected}
+                                                                                        onChange={() =>
+                                                                                            toggleBookingSelection(
+                                                                                                owner.carOwnerId,
+                                                                                                booking.id
+                                                                                            )
+                                                                                        }
+                                                                                        className="h-4 w-4 rounded border-gray-300"
+                                                                                        aria-label={`Select booking ${booking.id}`}
+                                                                                    />
+                                                                                </TableCell>
+                                                                                <TableCell className="font-mono text-xs">
+                                                                                    #{booking.id}
+                                                                                </TableCell>
+                                                                                <TableCell className="text-sm">
+                                                                                    <div className="flex flex-col gap-1">
+                                                                                        <span>{formatDate(booking.pickUpDate)}</span>
+                                                                                        <span className="text-muted-foreground text-xs">
+                                                                                            to {formatDate(booking.dropOffDate)}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <Badge variant="outline">{booking.totalDays} days</Badge>
+                                                                                </TableCell>
+                                                                                <TableCell className="font-medium">
+                                                                                    {formatCurrency(booking.totalAmount)}
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <Badge
+                                                                                        variant={getDepositStatusConfig(booking.depositStatus).variant}
+                                                                                        className={getDepositStatusConfig(booking.depositStatus).className}
+                                                                                    >
+                                                                                        {getDepositStatusLabel(booking.depositStatus)}
+                                                                                    </Badge>
+                                                                                </TableCell>
+                                                                                <TableCell className="text-right">
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="sm"
+                                                                                        onClick={() => openBookingDetails(booking)}
+                                                                                    >
+                                                                                        <Eye className="h-4 w-4 mr-1" />
+                                                                                        Details
+                                                                                    </Button>
+                                                                                </TableCell>
+                                                                            </TableRow>
+                                                                        );
+                                                                    })}
+                                                                </TableBody>
+                                                            </Table>
+                                                        </div>
+                                                    </div>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        </Accordion>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-                <Card>
+                <Card className="flex-shrink-0">
                     <CardContent className="py-4">
                         <div className="flex items-center justify-between">
                             <div className="text-sm text-muted-foreground">
