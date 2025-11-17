@@ -1,5 +1,5 @@
 import React from "react";
-import { X, User, Shield, Settings, Fuel, MapPin } from "lucide-react";
+import { X, User, Shield, Settings, Fuel, MapPin, Check } from "lucide-react";
 
 interface ImportantInfoModalProps {
   isOpen: boolean;
@@ -22,20 +22,20 @@ export default function ImportantInfoModal({
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
       <div className="absolute inset-0 backdrop-blur-sm"></div>
-      <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full h-auto border border-gray-200">
+      <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] min-h-[400px] border border-gray-200 flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900">Important info</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
           {/* Driver & License Requirements */}
           <div className="flex items-start space-x-4">
             <div className="flex-shrink-0">
@@ -48,26 +48,20 @@ export default function ImportantInfoModal({
               <p className="text-gray-600 mb-3">
                 When you pick the car up, you&apos;ll need:
               </p>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-black rounded-sm flex items-center justify-center mr-3">
-                    <div className="w-2 h-2 bg-white rounded-sm"></div>
-                  </div>
+              <ul className="space-y-2">
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-black mr-3 flex-shrink-0" />
                   <span className="text-gray-700">Passport or national ID card</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-black rounded-sm flex items-center justify-center mr-3">
-                    <div className="w-2 h-2 bg-white rounded-sm"></div>
-                  </div>
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-black mr-3 flex-shrink-0" />
                   <span className="text-gray-700">Driving licence</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-black rounded-sm flex items-center justify-center mr-3">
-                    <div className="w-2 h-2 bg-white rounded-sm"></div>
-                  </div>
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-black mr-3 flex-shrink-0" />
                   <span className="text-gray-700">Credit or debit card or Cash</span>
-                </div>
-              </div>
+                </li>
+              </ul>
             </div>
           </div>
 

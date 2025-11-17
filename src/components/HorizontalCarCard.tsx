@@ -23,6 +23,8 @@ export default function HorizontalCarCard({
   reviewRating = 9.3,
 }: HorizontalCarCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const handleInfoClick = () => {
     setIsModalOpen(true);
@@ -44,9 +46,28 @@ export default function HorizontalCarCard({
 
         {/* Main Content - Responsive Layout */}
         <div className="flex flex-col md:flex-row">
-          {/* Car Image - Fixed aspect ratio */}
-          {/* <div className="w-full md:w-80  h-64 md:h-56 lg:h-64 flex-shrink-0 relative"> */}
-          <div className="w-full md:w-72 h-48 flex-shrink-0 relative">
+          {/* Car Image - Optimized aspect ratio */}
+          <div className="w-full md:w-80 h-56 md:h-48 lg:h-56 flex-shrink-0 relative overflow-hidden rounded-l-xl md:rounded-l-xl md:rounded-r-none bg-gray-100">
+            {/* Loading Skeleton */}
+            {!imageLoaded && !imageError && (
+              <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+                <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+              </div>
+            )}
+
+            {/* Error State */}
+            {imageError && (
+              <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mb-2 mx-auto">
+                    <Settings className="w-6 h-6 text-gray-500" />
+                  </div>
+                  <p className="text-xs text-gray-500">Image unavailable</p>
+                </div>
+              </div>
+            )}
+
+            {/* Main Image */}
             <Image
               src={(() => {
                 const carImage = car.carImages?.[0];
@@ -55,64 +76,74 @@ export default function HorizontalCarCard({
                 }
                 return carImage.startsWith('http') ? carImage : `${baseUrl}${carImage}`;
               })()}
-              objectFit="cover"
-              width={500}
-              height={500}
+              fill
+              className={`object-cover transition-all duration-300 ${
+                imageLoaded ? 'hover:scale-105 opacity-100' : 'opacity-0'
+              }`}
               alt={`${car.make} ${car.model}`}
-              onError={(e) => {
-                e.currentTarget.src = "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
+              onLoad={() => {
+                setImageLoaded(true);
+                setImageError(false);
+              }}
+              onError={() => {
+                setImageError(true);
+                setImageLoaded(false);
               }}
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 320px, 384px"
+              priority={false}
             />
+
+            {/* Image Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
           </div>
 
           {/* Car Details Section */}
           <div className="flex-1 p-4 sm:p-6">
-            <div className="flex flex-col lg:flex-row justify-between h-full gap-4">
+            <div className="flex flex-col lg:flex-row justify-between h-full gap-4 lg:gap-6">
               {/* Left Side - Car Info */}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 {/* Car Title */}
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-2 line-clamp-1">
                   {car.make} {car.model} {car.year}
                 </h3>
 
                 {/* Car Features */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-3 mt-3 sm:mt-4">
-                  <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                    <Users className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span>{car.doors} Seats</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                  <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                    <Users className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
+                    <span className="font-medium">{car.doors} Seats</span>
                   </div>
-                  <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                    <Briefcase className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span>1 Large bag</span>
+                  <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                    <Briefcase className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
+                    <span className="font-medium">1 Large bag</span>
                   </div>
-                  <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                    <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span>{car.mileage} mileage</span>
+                  <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                    <Clock className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
+                    <span className="font-medium">{car.mileage} km</span>
                   </div>
-                  <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                    <Briefcase className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span>2 Small bag</span>
+                  <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                    <Briefcase className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
+                    <span className="font-medium">2 Small bags</span>
                   </div>
-                  <div className="flex items-center text-xs sm:text-sm text-gray-600 col-span-2">
-                    <Settings className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span>{car.transition}</span>
+                  <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2 sm:col-span-2">
+                    <Settings className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
+                    <span className="font-medium capitalize">{car.transition}</span>
                   </div>
                 </div>
               </div>
 
               {/* Right Side - Price and Action */}
-              <div className="lg:w-48 flex flex-row lg:flex-col justify-between lg:justify-between items-center lg:items-end gap-4">
-                <div className="text-left lg:text-right">
-                  <p className="text-xs sm:text-sm text-gray-500">Price Per day</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                    {car.pricePerDay.toLocaleString()} RWF
+              <div className="lg:w-52 flex flex-row lg:flex-col justify-between lg:justify-end items-center lg:items-end gap-4 lg:gap-6">
+                <div className="text-center lg:text-right flex-1 lg:flex-none">
+                  <p className="text-xs sm:text-sm text-gray-500 font-medium">Price Per day</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+                    {car.pricePerDay.toLocaleString()} <span className="text-lg font-semibold text-gray-600">RWF</span>
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500">Free cancellation</p>
+                  <p className="text-xs sm:text-sm text-black font-medium mt-1">✓ Free cancellation</p>
                 </div>
                 <Link
                   href={`/cars/${car.id}`}
-                  className="w-fit sm:w-auto lg:w-full bg-black text-white py-2 sm:py-3 px-4 sm:px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors text-center text-sm sm:text-base whitespace-nowrap"
+                  className="w-full lg:w-auto bg-black text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-900 hover:shadow-lg transition-all duration-200 text-center text-sm sm:text-base hover:scale-105 active:scale-95"
                 >
                   View Deal
                 </Link>
@@ -122,41 +153,38 @@ export default function HorizontalCarCard({
         </div>
 
         {/* Second Row: Host | Rating | Important Info */}
-        <div className="border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+        <div className="border-t border-gray-100 bg-gray-50/50 px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
             {/* Host Info */}
-            <div className="flex items-center">
+            <div className="flex items-center bg-white rounded-lg px-3 py-2">
               <UserAvatar user={car.owner} size="small" />
-              <div className="ml-2">
-                <p className="text-xs sm:text-sm capitalize font-medium text-gray-900">
+              <div className="ml-3">
+                <p className="text-sm font-semibold text-gray-900 line-clamp-1">
                   {hostName}
                 </p>
-                <p className="text-xs text-gray-500">Host</p>
+                <p className="text-xs text-gray-700 font-medium">Verified Host</p>
               </div>
             </div>
 
-            {/* Rating and Important Info - Grouped on mobile */}
-            <div className="flex items-center gap-3 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end">
+            {/* Rating and Important Info */}
+            <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
               {/* Rating */}
-              <div className="flex items-center">
-                <div className="bg-black text-white px-2 py-1 rounded text-xs font-medium mr-2 sm:mr-3">
-                  <span className="text-xs font-bold">
-                    {reviewRating.toFixed(1)}
-                  </span>{" "}
-                  OK
+              <div className="flex items-center bg-white rounded-lg px-3 py-2">
+                <div className="bg-black text-white px-3 py-1 rounded-md text-sm font-bold mr-3">
+                  {reviewRating.toFixed(1)}
                 </div>
-                <span className="text-xs sm:text-sm text-gray-500">
-                  ({reviewCount})
-                </span>
+                <div className="text-left">
+                  <span className="text-xs text-gray-700">({reviewCount} reviews)</span>
+                </div>
               </div>
 
               {/* Important Info */}
               <button
                 onClick={handleInfoClick}
-                className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"
+                className="flex items-center text-gray-600 hover:text-gray-900 bg-white hover:bg-gray-100 rounded-lg px-3 py-2 font-medium transition-all duration-200 cursor-pointer hover:font-semibold"
               >
-                <Info className="w-4 h-4 mr-1" />
-                <span className="text-xs sm:text-sm">Important Info</span>
+                <Info className="w-4 h-4 mr-2" />
+                <span className="text-sm">Important Info</span>
               </button>
             </div>
           </div>
