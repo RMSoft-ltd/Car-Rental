@@ -19,6 +19,8 @@ export interface Car {
   driverType: string;
   engineSize: number;
   doors: number;
+  seats?: number;
+  cylinders?: number;
   category: string | null;
   color: string;
   inTerminal: string;
