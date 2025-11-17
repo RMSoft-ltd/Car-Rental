@@ -513,7 +513,7 @@ export function CarOwnerPaymentList({
             )}
 
             {/* Payment List - Scrollable Container overflow-y-auto */}
-            <div className="flex-1 overflow-y-auto pr-2">
+            <div className="flex-1 pr-2">
                 {isLoading ? (
                     <Card>
                         <CardContent className="py-10">
