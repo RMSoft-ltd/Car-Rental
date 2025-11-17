@@ -1,5 +1,5 @@
 import apiClient from "@/lib/api";
-import { CarQueryParams, CarResponse } from "@/types/car-listing";
+import { Car, CarQueryParams, CarResponse } from "@/types/car-listing";
 
 export const getCars = async (params?: CarQueryParams) => {
   const { data } = await apiClient.get<Promise<CarResponse>>("/car-listing", {
@@ -9,9 +9,7 @@ export const getCars = async (params?: CarQueryParams) => {
 };
 
 export const getCarById = async (id: number) => {
-  const { data } = await apiClient.get<Promise<CarResponse>>(
-    `/car-listing/${id}`
-  );
+  const { data } = await apiClient.get<Car>(`/car-listing/${id}`);
   return data;
 };
 
