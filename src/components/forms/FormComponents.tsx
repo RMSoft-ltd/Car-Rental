@@ -25,7 +25,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
-import { CheckIcon, ChevronDownIcon } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ============================================
@@ -207,6 +207,7 @@ interface FormComboboxProps {
     emptyText?: string;
     disabled?: boolean;
     className?: string;
+    allowCustomValue?: boolean;
 }
 
 export function FormCombobox({
@@ -219,8 +220,10 @@ export function FormCombobox({
     emptyText = 'No results found.',
     disabled = false,
     className = '',
+    allowCustomValue = false,
 }: FormComboboxProps) {
     const [open, setOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     return (
         <Controller
@@ -229,6 +232,13 @@ export function FormCombobox({
             render={({ field: { value, onChange }, fieldState: { error } }) => {
                 const fieldValue = value || '';
                 const selectedOption = options.find((option) => option.value === fieldValue);
+
+                // Check if search term matches any existing options
+                const hasExactMatch = options.some(
+                    (option) => option.value.toLowerCase() === searchTerm.toLowerCase()
+                );
+
+                const showAddOption = allowCustomValue && searchTerm.trim() !== '' && !hasExactMatch;
 
                 return (
                     <div className={className}>
@@ -248,34 +258,68 @@ export function FormCombobox({
                                         error && 'border-destructive'
                                     )}
                                 >
-                                    {selectedOption ? selectedOption.label : placeholder}
+                                    {selectedOption ? selectedOption.label : fieldValue || placeholder}
                                     <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </PopoverTrigger>
+
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                <Command>
-                                    <CommandInput placeholder={searchPlaceholder} />
+                                <Command shouldFilter={false}>
+                                    <CommandInput
+                                        placeholder={searchPlaceholder}
+                                        value={searchTerm}
+                                        onValueChange={setSearchTerm}
+                                    />
                                     <CommandList>
-                                        <CommandEmpty>{emptyText}</CommandEmpty>
+                                        <CommandEmpty>
+                                            {showAddOption ? (
+                                                <div className="text-sm text-muted-foreground py-6 text-center">
+                                                    No results found
+                                                </div>
+                                            ) : (
+                                                emptyText
+                                            )}
+                                        </CommandEmpty>
                                         <CommandGroup>
-                                            {options.map((option) => (
+                                            {options
+                                                .filter((option) =>
+                                                    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+                                                )
+                                                .map((option) => (
+                                                    <CommandItem
+                                                        key={option.value}
+                                                        value={option.value}
+                                                        onSelect={() => {
+                                                            onChange(option.value);
+                                                            setOpen(false);
+                                                            setSearchTerm('');
+                                                        }}
+                                                    >
+                                                        <CheckIcon
+                                                            className={cn(
+                                                                'mr-2 h-4 w-4',
+                                                                fieldValue === option.value ? 'opacity-100' : 'opacity-0'
+                                                            )}
+                                                        />
+                                                        {option.label}
+                                                    </CommandItem>
+                                                ))}
+                                            {showAddOption && (
                                                 <CommandItem
-                                                    key={option.value}
-                                                    value={option.value}
+                                                    value={searchTerm}
                                                     onSelect={() => {
-                                                        onChange(option.value);
+                                                        onChange(searchTerm);
                                                         setOpen(false);
+                                                        setSearchTerm('');
                                                     }}
+                                                    className="border-t"
                                                 >
-                                                    <CheckIcon
-                                                        className={cn(
-                                                            'mr-2 h-4 w-4',
-                                                            fieldValue === option.value ? 'opacity-100' : 'opacity-0'
-                                                        )}
-                                                    />
-                                                    {option.label}
+                                                    <Button variant={'outline'} className='!text-black font-semibold'>
+                                                        <Plus className="size-4 shrink-0 opacity-50" />
+                                                        <span>Add &quot;{searchTerm}&quot;</span>
+                                                    </Button>
                                                 </CommandItem>
-                                            ))}
+                                            )}
                                         </CommandGroup>
                                     </CommandList>
                                 </Command>

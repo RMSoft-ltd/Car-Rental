@@ -402,6 +402,7 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
                     placeholder="Select model"
                     searchPlaceholder="Search model..."
                     disabled={!selectedMake}
+                    allowCustomValue={true}
                 />
 
                 <FormInput
