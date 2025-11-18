@@ -35,7 +35,10 @@ export const carListingSchema = z.object({
       "Plate number can only contain letters, numbers, and hyphens"
     ),
 
-  body: z.string().optional(),
+  body: z
+    .string()
+    .min(2, "Body type is required")
+    .max(50, "Body type must not exceed 50 characters"),
 
   seats: z
     .string()

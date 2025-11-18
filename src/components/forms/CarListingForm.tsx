@@ -419,7 +419,7 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
                 <FormSelect
                     name="body"
                     control={control}
-                    label="Body Type"
+                    label={<div className='flex items-center'>Body Type <Asterisk size={14} className='text-destructive' /></div>}
                     options={BODY_TYPES.map((body) => ({ value: body, label: body }))}
                 />
 

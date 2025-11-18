@@ -196,12 +196,18 @@ export function FormSelect({
 // FormCombobox Component (Searchable Select)
 // ============================================
 
+interface FormComboboxOption {
+    value: string;
+    label: string;
+    icon?: React.ComponentType<{ className?: string }>;
+}
+
 interface FormComboboxProps {
     name: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
     label: React.ReactNode;
-    options: { value: string; label: string }[];
+    options: FormComboboxOption[];
     placeholder?: string;
     searchPlaceholder?: string;
     emptyText?: string;
@@ -258,7 +264,12 @@ export function FormCombobox({
                                         error && 'border-destructive'
                                     )}
                                 >
-                                    {selectedOption ? selectedOption.label : fieldValue || placeholder}
+                                    <div className="flex items-center gap-2">
+                                        {selectedOption?.icon && (
+                                            <selectedOption.icon className="h-4 w-4 shrink-0" />
+                                        )}
+                                        <span>{selectedOption ? selectedOption.label : fieldValue || placeholder}</span>
+                                    </div>
                                     <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </PopoverTrigger>
@@ -301,6 +312,9 @@ export function FormCombobox({
                                                                 fieldValue === option.value ? 'opacity-100' : 'opacity-0'
                                                             )}
                                                         />
+                                                        {option.icon && (
+                                                            <option.icon className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
+                                                        )}
                                                         {option.label}
                                                     </CommandItem>
                                                 ))}
