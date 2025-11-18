@@ -59,6 +59,7 @@ export default function CarListingDetailPage() {
         technology: true,
         exterior: true,
         other: true,
+        driveType: true,
         owner: true,
     });
 
@@ -139,7 +140,7 @@ export default function CarListingDetailPage() {
             {value ? (
                 <Check className="w-5 h-5 text-green-600" />
             ) : (
-                <X className="w-5 h-5 text-gray-300" />
+                <X className="w-5 h-5 text-red-500" />
             )}
         </div>
     );
@@ -305,7 +306,7 @@ export default function CarListingDetailPage() {
                         {/* Title and Status */}
                         <div className="flex items-start justify-between mb-4">
                             <div>
-                                <h1 className="text-xl font-bold text-gray-900 mb-2">
+                                <h1 className="text-lg font-bold text-gray-900 mb-2">
                                     {car.title}
                                 </h1>
 
@@ -338,7 +339,7 @@ export default function CarListingDetailPage() {
 
                         {/* Price */}
                         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                            <p className="text-sm text-gray-600">Price per day</p>
+                            <p className="text-sm text-gray-600">Price per day (incl. 10% system charge)</p>
                             <p className="text-lg font-semibold text-gray-900">
                                 {car.currency} {car.pricePerDay.toLocaleString()}
                             </p>
@@ -347,7 +348,7 @@ export default function CarListingDetailPage() {
                         {/* Description */}
                         {car.description && (
                             <div className="mb-6">
-                                <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
+                                <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                                     <FileText className="w-5 h-5" />
                                     Description
                                 </h2>
@@ -363,7 +364,7 @@ export default function CarListingDetailPage() {
                         >
                             <CollapsibleTrigger className="w-full">
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                                    <h2 className="text-lg font-semibold flex items-center gap-2">
                                         <CarIcon className="w-5 h-5" />
                                         Basic Information
                                     </h2>
@@ -423,7 +424,7 @@ export default function CarListingDetailPage() {
                         >
                             <CollapsibleTrigger className="w-full">
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                                    <h2 className="text-lg font-semibold flex items-center gap-2">
                                         <MapPin className="w-5 h-5" />
                                         Location & Availability
                                     </h2>
@@ -441,21 +442,22 @@ export default function CarListingDetailPage() {
                                             <p className="text-lg font-semibold">{car.pickUpLocation}</p>
                                         </div>
                                     )}
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                        <p className="text-sm text-gray-600 mb-1">In Terminal</p>
-                                        <p className="text-lg font-semibold capitalize">{car.inTerminal}</p>
-                                    </div>
+
                                     {car.availabilityType && (
                                         <div className="bg-gray-50 p-4 rounded-lg">
                                             <p className="text-sm text-gray-600 mb-1">Availability Type</p>
-                                            <p className="text-lg font-semibold capitalize">{car.availabilityType}</p>
+                                            <p className="text-lg font-semibold capitalize">{car.availabilityType.toLowerCase()}</p>
                                         </div>
                                     )}
-                                    {car.startDate && car.endDate && (
+
+                                    {car.availabilityType === "CUSTOM" && car.customDays && car.customDays.length > 0 && (
                                         <div className="bg-gray-50 p-4 rounded-lg">
-                                            <p className="text-sm text-gray-600 mb-1">Available Period</p>
+                                            <p className="text-sm text-gray-600 mb-1">Available Days</p>
                                             <p className="text-lg font-semibold">
-                                                {new Date(car.startDate).toLocaleDateString()} - {new Date(car.endDate).toLocaleDateString()}
+                                                {typeof car.customDays === 'string'
+                                                    ? car.customDays.split(',').join(', ')
+                                                    : car.customDays.join(', ')
+                                                }
                                             </p>
                                         </div>
                                     )}
@@ -471,7 +473,7 @@ export default function CarListingDetailPage() {
                         >
                             <CollapsibleTrigger className="w-full">
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                                    <h2 className="text-lg font-semibold flex items-center gap-2">
                                         <Shield className="w-5 h-5" />
                                         Rental Terms
                                     </h2>
@@ -492,10 +494,7 @@ export default function CarListingDetailPage() {
                                             </p>
                                         )}
                                     </div>
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                        <p className="text-sm text-gray-600 mb-1">Damage Excess</p>
-                                        <p className="text-lg font-semibold capitalize">{car.damageExcess}</p>
-                                    </div>
+
                                     <div className="bg-gray-50 p-4 rounded-lg">
                                         <p className="text-sm text-gray-600 mb-1">Fuel Policy</p>
                                         <p className="text-lg font-semibold capitalize">{car.fuelPolicy}</p>
@@ -510,58 +509,6 @@ export default function CarListingDetailPage() {
                             </CollapsibleContent>
                         </Collapsible>
 
-                        {/* Insurance */}
-                        {car.insuranceExpirationDate && (
-                            <Collapsible
-                                open={openSections.insurance}
-                                onOpenChange={(open) => setOpenSections({ ...openSections, insurance: open })}
-                                className="mb-6"
-                            >
-                                <CollapsibleTrigger className="w-full">
-                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                                            <FileText className="w-5 h-5" />
-                                            Insurance Information
-                                        </h2>
-                                        <ChevronDown
-                                            className={`w-5 h-5 transition-transform ${openSections.insurance ? "transform rotate-180" : ""
-                                                }`}
-                                        />
-                                    </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="mt-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="bg-gray-50 p-4 rounded-lg">
-                                            <p className="text-sm text-gray-600 mb-1">Insurance Expiration Date</p>
-                                            <p className="text-lg font-semibold">
-                                                {new Date(car.insuranceExpirationDate).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                        {car.insuranceFile && (
-                                            <div className="bg-gray-50 p-4 rounded-lg">
-                                                <p className="text-sm text-gray-600 mb-2">Insurance File</p>
-                                                <Button
-                                                    variant="default"
-                                                    asChild
-                                                    className="w-full"
-                                                >
-                                                    <a
-                                                        href={car.insuranceFile.startsWith("http") ? car.insuranceFile : `${baseUrl}${car.insuranceFile}`}
-                                                        download
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                    >
-                                                        <Download className="w-4 h-4 mr-2" />
-                                                        Download Insurance Document
-                                                    </a>
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </CollapsibleContent>
-                            </Collapsible>
-                        )}
-
                         {/* Safety Features */}
                         <Collapsible
                             open={openSections.safety}
@@ -570,7 +517,7 @@ export default function CarListingDetailPage() {
                         >
                             <CollapsibleTrigger className="w-full">
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                                    <h2 className="text-lg font-semibold flex items-center gap-2">
                                         <Shield className="w-5 h-5" />
                                         Safety Features
                                     </h2>
@@ -583,11 +530,13 @@ export default function CarListingDetailPage() {
                             <CollapsibleContent className="mt-4">
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <FeatureItem label="Driver Air Bag" value={car.isDriverAirBag} />
+                                    <FeatureItem label="Airbag Equipped" value={car.isAirbagEquipped} />
                                     <FeatureItem label="Anti-Lock Brakes (ABS)" value={car.isAntiLockBreaks} />
                                     <FeatureItem label="Brake Assist" value={car.isBreakeAssist} />
                                     <FeatureItem label="Traction Control" value={car.isTractionControl} />
                                     <FeatureItem label="Child Safety Locks" value={car.isChildSafetyLocks} />
                                     <FeatureItem label="Power Door Locks" value={car.isPowerDoorLocks} />
+                                    <FeatureItem label="Backup Camera" value={car.isBackCameraEquipped} />
                                 </div>
                             </CollapsibleContent>
                         </Collapsible>
@@ -600,7 +549,7 @@ export default function CarListingDetailPage() {
                         >
                             <CollapsibleTrigger className="w-full">
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                                    <h2 className="text-lg font-semibold flex items-center gap-2">
                                         <Sparkles className="w-5 h-5" />
                                         Comfort Features
                                     </h2>
@@ -612,18 +561,17 @@ export default function CarListingDetailPage() {
                             </CollapsibleTrigger>
                             <CollapsibleContent className="mt-4">
                                 <div className="bg-gray-50 p-4 rounded-lg">
-                                    <FeatureItem label="Air Conditioner" value={car.isAirConditioner} />
-                                    <FeatureItem label="Heater" value={car.isHeater} />
                                     <FeatureItem label="Power Steering" value={car.isPowerSteering} />
                                     <FeatureItem label="Cruise Control" value={car.isCruiseControl} />
-                                    <FeatureItem label="Leather Seats" value={car.isLeatherSeats} />
-                                    <FeatureItem label="Memory Seats" value={car.isMemorySeats} />
-                                    <FeatureItem label="Sunroof" value={car.isSunRoof} />
+                                    <FeatureItem label="Navigation System" value={car.isNavigation} />
+                                    <FeatureItem label="Power Locks" value={car.isPowerLocks} />
+                                    <FeatureItem label="Vanity Mirror" value={car.isVanityMirror} />
+                                    <FeatureItem label="Trunk Light" value={car.isTrunkLight} />
                                 </div>
                             </CollapsibleContent>
                         </Collapsible>
 
-                        {/* Technology Features */}
+                        {/* Interior Features */}
                         <Collapsible
                             open={openSections.technology}
                             onOpenChange={(open) => setOpenSections({ ...openSections, technology: open })}
@@ -631,9 +579,9 @@ export default function CarListingDetailPage() {
                         >
                             <CollapsibleTrigger className="w-full">
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                                    <h2 className="text-lg font-semibold flex items-center gap-2">
                                         <Settings className="w-5 h-5" />
-                                        Technology Features
+                                        Interior Features
                                     </h2>
                                     <ChevronDown
                                         className={`w-5 h-5 transition-transform ${openSections.technology ? "transform rotate-180" : ""
@@ -643,10 +591,13 @@ export default function CarListingDetailPage() {
                             </CollapsibleTrigger>
                             <CollapsibleContent className="mt-4">
                                 <div className="bg-gray-50 p-4 rounded-lg">
-                                    <FeatureItem label="Navigation System" value={car.isNavigation} />
-                                    <FeatureItem label="Digital Odometer" value={car.isDigitalOdometer} />
-                                    <FeatureItem label="Tachometer" value={car.Techometer} />
-                                    <FeatureItem label="Vanity Mirror" value={car.isVanityMirror} />
+                                    <FeatureItem label="Air Conditioner" value={car.isAirConditioner} />
+                                    <FeatureItem label="Leather Seats" value={car.isLeatherSeats} />
+                                    <FeatureItem label="Memory Seats" value={car.isMemorySeats} />
+                                    <FeatureItem label="Heated Seats" value={car.isHeatedSeatEquipped} />
+                                    <FeatureItem label="Radio Equipped" value={car.isRadioEquipped} />
+                                    <FeatureItem label="Bluetooth Radio" value={car.isRadioBluetoothEnabled} />
+                                    <FeatureItem label="Keyless Entry" value={car.isKeyLess} />
                                 </div>
                             </CollapsibleContent>
                         </Collapsible>
@@ -659,7 +610,7 @@ export default function CarListingDetailPage() {
                         >
                             <CollapsibleTrigger className="w-full">
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                                    <h2 className="text-lg font-semibold flex items-center gap-2">
                                         <Box className="w-5 h-5" />
                                         Exterior Features
                                     </h2>
@@ -673,14 +624,14 @@ export default function CarListingDetailPage() {
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <FeatureItem label="Fog Lights (Front)" value={car.isFogLightsFront} />
                                     <FeatureItem label="Rear Spoiler" value={car.isRearSpoiler} />
-                                    <FeatureItem label="Rear Window Defroster" value={car.isRearWindow} />
+                                    <FeatureItem label="Rear Window Wiper" value={car.isRearWindow} />
                                     <FeatureItem label="Rain Sensing Wipers" value={car.isRainSensingWipe} />
-                                    <FeatureItem label="Window Defroster" value={car.isWindowDefroster} />
+                                    <FeatureItem label="Sunroof" value={car.isSunRoof} />
                                 </div>
                             </CollapsibleContent>
                         </Collapsible>
 
-                        {/* Other Features */}
+                        {/* Equipment & Accessories */}
                         <Collapsible
                             open={openSections.other}
                             onOpenChange={(open) => setOpenSections({ ...openSections, other: open })}
@@ -688,9 +639,9 @@ export default function CarListingDetailPage() {
                         >
                             <CollapsibleTrigger className="w-full">
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                                    <h2 className="text-lg font-semibold flex items-center gap-2">
                                         <Settings className="w-5 h-5" />
-                                        Other Features
+                                        Equipment & Accessories
                                     </h2>
                                     <ChevronDown
                                         className={`w-5 h-5 transition-transform ${openSections.other ? "transform rotate-180" : ""
@@ -700,8 +651,35 @@ export default function CarListingDetailPage() {
                             </CollapsibleTrigger>
                             <CollapsibleContent className="mt-4">
                                 <div className="bg-gray-50 p-4 rounded-lg">
-                                    <FeatureItem label="Power Locks" value={car.isPowerLocks} />
-                                    <FeatureItem label="Trunk Light" value={car.isTrunkLight} />
+                                    <FeatureItem label="Spare Tire Included" value={car.isSpareTireIncluded} />
+                                    <FeatureItem label="Jack Included" value={car.isJackIncluded} />
+                                    <FeatureItem label="Wheel Spanner Included" value={car.isWheelSpannerIncluded} />
+                                </div>
+                            </CollapsibleContent>
+                        </Collapsible>
+
+                        {/* Drive Type */}
+                        <Collapsible
+                            open={openSections.driveType}
+                            onOpenChange={(open) => setOpenSections({ ...openSections, driveType: open })}
+                            className="mb-6"
+                        >
+                            <CollapsibleTrigger className="w-full">
+                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                                        <CarIcon className="w-5 h-5" />
+                                        Drive Type
+                                    </h2>
+                                    <ChevronDown
+                                        className={`w-5 h-5 transition-transform ${openSections.driveType ? "transform rotate-180" : ""
+                                            }`}
+                                    />
+                                </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="mt-4">
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <FeatureItem label="Right Hand Drive" value={car.isRightHandDrive} />
+                                    <FeatureItem label="Left Hand Drive" value={car.isLeftHandDrive} />
                                 </div>
                             </CollapsibleContent>
                         </Collapsible>
@@ -715,7 +693,7 @@ export default function CarListingDetailPage() {
                             >
                                 <CollapsibleTrigger className="w-full">
                                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                        <h2 className="text-xl font-semibold flex items-center gap-2">
+                                        <h2 className="text-lg font-semibold flex items-center gap-2">
                                             <User className="w-5 h-5" />
                                             Owner Information
                                         </h2>

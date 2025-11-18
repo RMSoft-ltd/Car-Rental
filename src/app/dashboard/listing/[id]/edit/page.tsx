@@ -34,7 +34,6 @@ function carToFormData(car: Car): Partial<CarListingFormData> {
         smallBags: 0, // Default value as Car type doesn't have smallBags
         color: car.color,
         largeBags: 0, // Default value as Car type doesn't have largeBags
-        inTerminal: car.inTerminal,
         description: car.description,
 
         // Features
@@ -45,17 +44,13 @@ function carToFormData(car: Car): Partial<CarListingFormData> {
         isVanityMirror: Boolean(car.isVanityMirror),
         isTrunkLight: Boolean(car.isTrunkLight),
         isAirConditioner: Boolean(car.isAirConditioner),
-        Techometer: Boolean(car.Techometer),
-        isDigitalOdometer: Boolean(car.isDigitalOdometer),
         isLeatherSeats: Boolean(car.isLeatherSeats),
-        isHeater: Boolean(car.isHeater),
         isMemorySeats: Boolean(car.isMemorySeats),
         isFogLightsFront: Boolean(car.isFogLightsFront),
         isRainSensingWipe: Boolean(car.isRainSensingWipe),
         isRearSpoiler: Boolean(car.isRearSpoiler),
         isSunRoof: Boolean(car.isSunRoof),
         isRearWindow: Boolean(car.isRearWindow),
-        isWindowDefroster: Boolean(car.isWindowDefroster),
         isBreakeAssist: Boolean(car.isBreakeAssist),
         isChildSafetyLocks: Boolean(car.isChildSafetyLocks),
         isTractionControl: Boolean(car.isTractionControl),
@@ -78,15 +73,11 @@ function carToFormData(car: Car): Partial<CarListingFormData> {
         insuranceFile: car.insuranceFile || null,
 
         customDays: (() => {
-            try {
-                if (typeof car.customDays === 'string') {
-                    return JSON.parse(car.customDays);
-                }
-                return Array.isArray(car.customDays) ? car.customDays : [];
-            } catch {
-                console.error('Failed to parse customDays:', car.customDays);
-                return [];
+            if (typeof car.customDays === 'string') {
+                // Handle comma-separated string format: "Mon,Wed,Fri"
+                return car.customDays.split(',').map(day => day.trim()).filter(day => day.length > 0);
             }
+            return Array.isArray(car.customDays) ? car.customDays : [];
         })(),
 
 
@@ -174,7 +165,7 @@ export default function EditListingPage() {
     }
 
     return (
-        <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
+        <div className="flex-1 p-4 lg:p-8">
             <div className="container mx-auto">
                 {/* Page Header */}
                 <div className="mb-8">

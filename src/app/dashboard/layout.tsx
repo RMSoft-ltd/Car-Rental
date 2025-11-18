@@ -54,7 +54,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="h-screen bg-gray-100 overflow-hidden">
+    <div className="bg-gray-100 overflow-hidden">
       <div className="flex h-full w-full">
         <DashboardSidebar
           activeTab={getActiveTab()}

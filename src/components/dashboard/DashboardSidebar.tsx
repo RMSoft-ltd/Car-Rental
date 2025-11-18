@@ -93,7 +93,7 @@ export default function DashboardSidebar({
           border-gray-200 
           flex 
           flex-col 
-          h-full 
+          flex-y-1
           transition-all 
           duration-300 
           ease-in-out

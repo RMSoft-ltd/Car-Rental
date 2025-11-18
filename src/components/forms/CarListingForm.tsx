@@ -85,7 +85,7 @@ const getStepFields = (step: number): (keyof CarListingFormData)[] => {
         case 0:
             return ['title', 'make', 'model', 'plateNumber', 'body', 'seats', 'year', 'mileage',
                 'fuelType', 'transition', 'driverType', 'engineSize', 'doors', 'smallBags',
-                'color', 'largeBags', 'inTerminal', 'description'];
+                'color', 'largeBags', 'description'];
         case 1:
             return ['isPowerSteering', 'isCruiseControl', 'isNavigation', 'isPowerLocks',
                 'isVanityMirror', 'isTrunkLight', 'isAirConditioner',
@@ -100,7 +100,7 @@ const getStepFields = (step: number): (keyof CarListingFormData)[] => {
             return ['pricePerDay', 'currency'];
         case 3:
             return ['requiredDocs', 'securityDeposit', 'securityDepositAmount',
-                'fuelPolicy', 'availabilityType', 'customDays'];
+                'fuelPolicy', 'pickUpLocation', 'availabilityType', 'customDays'];
         case 4:
             return ['carImages'];
         default:
@@ -467,8 +467,6 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
                 />
 
                 <FormInput name="largeBags" control={control} label="Large Bags Capacity" type="number" placeholder="e.g., 2" />
-
-                <FormInput name="inTerminal" control={control} label="Terminal Location" placeholder="e.g., Kigali Airport Terminal 1" />
             </div>
 
             <Controller
@@ -659,31 +657,56 @@ function ImportantInfoStep({ control }: { control: Control<any> }) {
 
     return (
         <div className="space-y-6">
-            <FormTextarea
-                name="requiredDocs"
-                control={control}
-                label="Required Documents"
-                rows={6}
-                placeholder="List the documents renters need to provide (e.g., Valid driver's license, National ID, etc.)"
-            />
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className="md:col-span-2 space-y-6">
+                    <Controller
+                        name="requiredDocs"
+                        control={control}
+                        render={({ field, fieldState: { error } }) => (
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Important Documents
+                                </label>
+                                <TiptapEditor
+                                    value={field.value || ''}
+                                    onChange={field.onChange}
+                                    placeholder="List the documents renters need to provide (e.g., Valid driver's license, National ID, etc.)"
+                                />
+                                {error && (
+                                    <p className="text-sm text-destructive">{error.message}</p>
+                                )}
+                            </div>
+                        )}
+                    />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormInput
+                        name="securityDepositAmount"
+                        control={control}
+                        label="Security Deposit Amount"
+                        type="number"
+                        placeholder="e.g., 200000"
+                    />
 
-                <FormInput
-                    name="securityDepositAmount"
-                    control={control}
-                    label="Security Deposit Amount"
-                    type="number"
-                    placeholder="e.g., 200000"
-                />
-
-                <FormInput
-                    name="securityDeposit"
-                    control={control}
-                    label={<div className='flex items-start'><span>Security Deposit Description</span> </div>}
-                    placeholder="e.g., "
-                    type='string'
-                />
+                    <Controller
+                        name="securityDeposit"
+                        control={control}
+                        render={({ field, fieldState: { error } }) => (
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Security Deposit Description
+                                </label>
+                                <TiptapEditor
+                                    value={field.value || ''}
+                                    onChange={field.onChange}
+                                    placeholder="Describe your security deposit terms and conditions..."
+                                />
+                                {error && (
+                                    <p className="text-sm text-destructive">{error.message}</p>
+                                )}
+                            </div>
+                        )}
+                    />
+                </div>
 
                 <FormSelect
                     name="fuelPolicy"
@@ -691,74 +714,75 @@ function ImportantInfoStep({ control }: { control: Control<any> }) {
                     label="Fuel Policy"
                     options={FUEL_POLICIES.map((policy) => ({ value: policy, label: policy }))}
                 />
-            </div>
+
+                <FormInput name="pickUpLocation" control={control} label="Pickup Location" placeholder="e.g., Kigali Airport Terminal 1" />
 
 
-            <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Availability</h3>
-                <div className="space-y-6">
-                    <FormSelect
-                        name="availabilityType"
-                        control={control}
-                        label="Availability Type"
-                        options={[
-                            { value: 'FULL', label: 'Full Time (24/7)' },
-                            { value: 'WEEKDAYS', label: 'Weekdays Only' },
-                            { value: 'WEEKENDS', label: 'Weekends Only' },
-                            { value: 'CUSTOM', label: 'Custom Days' },
-                        ]}
-                    />
-
-                    {availabilityType === 'CUSTOM' && (
-                        <Controller
-                            name="customDays"
+                <div className="pt-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Availability</h3>
+                    <div className="space-y-6">
+                        <FormSelect
+                            name="availabilityType"
                             control={control}
-                            render={({ field: { value = [], onChange }, fieldState: { error } }) => (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                                        Select Available Days
-                                    </label>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {CUSTOM_DAYS.map((day) => {
-                                            const isChecked = isDaySelected(value as string[], day);
-
-                                            return (
-                                                <div key={day} className="flex items-center space-x-2">
-                                                    <Checkbox
-                                                        id={`customDay_${day}`}
-                                                        checked={isChecked}
-                                                        onCheckedChange={(checked) => {
-                                                            const currentDays = Array.isArray(value) ? value : [];
-                                                            if (checked) {
-                                                                // Add day if not already present
-                                                                if (!currentDays.includes(day)) {
-                                                                    onChange([...currentDays, day]);
-                                                                }
-                                                            } else {
-                                                                // Remove day
-                                                                onChange(currentDays.filter((d: string) => d !== day));
-                                                            }
-                                                        }}
-                                                    />
-                                                    <Label
-                                                        htmlFor={`customDay_${day}`}
-                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                                    >
-                                                        {DAY_LABELS[day] || day}
-                                                    </Label>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    {error && (
-                                        <p className="mt-2 text-sm text-destructive">{error.message}</p>
-                                    )}
-                                </div>
-                            )}
+                            label="Availability Type"
+                            options={[
+                                { value: 'FULL', label: 'Full Time (24/7)' },
+                                { value: 'WEEKDAYS', label: 'Weekdays Only' },
+                                { value: 'WEEKENDS', label: 'Weekends Only' },
+                                { value: 'CUSTOM', label: 'Custom Days' },
+                            ]}
                         />
-                    )}
 
+                        {availabilityType === 'CUSTOM' && (
+                            <Controller
+                                name="customDays"
+                                control={control}
+                                render={({ field: { value = [], onChange }, fieldState: { error } }) => (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                                            Select Available Days
+                                        </label>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {CUSTOM_DAYS.map((day) => {
+                                                const isChecked = isDaySelected(value as string[], day);
 
+                                                return (
+                                                    <div key={day} className="flex items-center space-x-2">
+                                                        <Checkbox
+                                                            id={`customDay_${day}`}
+                                                            checked={isChecked}
+                                                            onCheckedChange={(checked) => {
+                                                                const currentDays = Array.isArray(value) ? value : [];
+                                                                if (checked) {
+                                                                    // Add day if not already present
+                                                                    if (!currentDays.includes(day)) {
+                                                                        onChange([...currentDays, day]);
+                                                                    }
+                                                                } else {
+                                                                    // Remove day
+                                                                    onChange(currentDays.filter((d: string) => d !== day));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <Label
+                                                            htmlFor={`customDay_${day}`}
+                                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                        >
+                                                            {DAY_LABELS[day] || day}
+                                                        </Label>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        {error && (
+                                            <p className="mt-2 text-sm text-destructive">{error.message}</p>
+                                        )}
+                                    </div>
+                                )}
+                            />
+                        )}
+
+                    </div>
                 </div>
             </div>
         </div>

@@ -13,7 +13,7 @@ const mockBookings = [
     location: "Remera, Kigali",
     vehicle: "Toyota Corolla 2018",
     pickupTime: "Apr 12, 2024, 10:30",
-    pickupLocation: "Kacyiru, KK ST 23",
+    pickUpLocation: "Kacyiru, KK ST 23",
     returnTime: "Apr 17, 2024, 21:30",
     returnLocation: "Kacyiru, KK ST 23",
     startDate: "2024-04-09",
@@ -28,7 +28,7 @@ const mockBookings = [
     location: "Kimisagara, Kigali",
     vehicle: "Honda Civic 2019",
     pickupTime: "Apr 10, 2024, 09:00",
-    pickupLocation: "Kimisagara, KG 123",
+    pickUpLocation: "Kimisagara, KG 123",
     returnTime: "Apr 13, 2024, 18:00",
     returnLocation: "Kimisagara, KG 123",
     startDate: "2024-04-10",
@@ -43,7 +43,7 @@ const mockBookings = [
     location: "Nyamirambo, Kigali",
     vehicle: "BMW X5 2020",
     pickupTime: "Apr 10, 2024, 14:00",
-    pickupLocation: "Nyamirambo, NY 456",
+    pickUpLocation: "Nyamirambo, NY 456",
     returnTime: "Apr 11, 2024, 12:00",
     returnLocation: "Nyamirambo, NY 456",
     startDate: "2024-04-10",
@@ -58,7 +58,7 @@ const mockBookings = [
     location: "Gikondo, Kigali",
     vehicle: "Mercedes C-Class 2021",
     pickupTime: "Apr 13, 2024, 08:00",
-    pickupLocation: "Gikondo, GK 789",
+    pickUpLocation: "Gikondo, GK 789",
     returnTime: "Apr 15, 2024, 20:00",
     returnLocation: "Gikondo, GK 789",
     startDate: "2024-04-13",
@@ -73,7 +73,7 @@ const mockBookings = [
     location: "Kacyiru, Kigali",
     vehicle: "Audi A4 2022",
     pickupTime: "May 5, 2024, 10:00",
-    pickupLocation: "Kacyiru, KK ST 45",
+    pickUpLocation: "Kacyiru, KK ST 45",
     returnTime: "May 8, 2024, 18:00",
     returnLocation: "Kacyiru, KK ST 45",
     startDate: "2024-05-05",
@@ -88,7 +88,7 @@ const mockBookings = [
     location: "Remera, Kigali",
     vehicle: "Nissan Altima 2021",
     pickupTime: "May 15, 2024, 14:30",
-    pickupLocation: "Remera, RM 67",
+    pickUpLocation: "Remera, RM 67",
     returnTime: "May 18, 2024, 12:00",
     returnLocation: "Remera, RM 67",
     startDate: "2024-05-15",
@@ -103,7 +103,7 @@ const mockBookings = [
     location: "Kimisagara, Kigali",
     vehicle: "Hyundai Elantra 2020",
     pickupTime: "Jun 2, 2024, 09:00",
-    pickupLocation: "Kimisagara, KG 89",
+    pickUpLocation: "Kimisagara, KG 89",
     returnTime: "Jun 5, 2024, 17:00",
     returnLocation: "Kimisagara, KG 89",
     startDate: "2024-06-02",
@@ -118,7 +118,7 @@ const mockBookings = [
     location: "Nyamirambo, Kigali",
     vehicle: "Volkswagen Jetta 2021",
     pickupTime: "Jun 20, 2024, 11:00",
-    pickupLocation: "Nyamirambo, NY 12",
+    pickUpLocation: "Nyamirambo, NY 12",
     returnTime: "Jun 23, 2024, 19:00",
     returnLocation: "Nyamirambo, NY 12",
     startDate: "2024-06-20",
@@ -260,8 +260,8 @@ export default function BookingContent() {
                 <button
                   onClick={() => setViewMode('single')}
                   className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'single'
-                      ? 'bg-black text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-black text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                 >
                   1 Month
@@ -269,8 +269,8 @@ export default function BookingContent() {
                 <button
                   onClick={() => setViewMode('double')}
                   className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'double'
-                      ? 'bg-black text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-black text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                 >
                   2 Months
@@ -278,8 +278,8 @@ export default function BookingContent() {
                 <button
                   onClick={() => setViewMode('triple')}
                   className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'triple'
-                      ? 'bg-black text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-black text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                 >
                   3 Months
@@ -335,8 +335,8 @@ export default function BookingContent() {
                         <div
                           key={dayIndex}
                           className={`min-h-[40px] p-1 border border-gray-200 ${isCurrentMonth
-                              ? 'bg-white'
-                              : 'bg-gray-100 text-gray-400'
+                            ? 'bg-white'
+                            : 'bg-gray-100 text-gray-400'
                             } ${isToday ? 'bg-blue-50 border-blue-300' : ''}`}
                         >
                           <div className={`text-xs font-medium ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
@@ -427,7 +427,7 @@ export default function BookingContent() {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Pick-up Location</span>
                   <span className="text-sm font-semibold text-gray-900">
-                    {selectedBooking.pickupLocation}
+                    {selectedBooking.pickUpLocation}
                   </span>
                 </div>
 

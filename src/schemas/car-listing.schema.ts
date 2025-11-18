@@ -89,7 +89,9 @@ export const carListingSchema = z.object({
     .transform((val) => (typeof val === "string" ? parseInt(val) : val))
     .optional(),
 
-  inTerminal: z.string().optional(),
+  pickUpLocation: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 
   description: z.string().optional(),
 
@@ -223,7 +225,9 @@ export const defaultCarListingData: Partial<CarListingFormData> = {
   color: "",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   largeBags: "" as any,
-  inTerminal: "",
+  pickUpLocation: "",
+  latitude: undefined,
+  longitude: undefined,
   description: "",
 
   // Features
