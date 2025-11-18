@@ -33,6 +33,7 @@ export interface BookingUser {
   lName: string;
   email: string;
   phone: string | null;
+  picture: string | null;
 }
 
 // Car owner details in booking response
@@ -141,6 +142,7 @@ export interface BookingHistoryFilters {
   isUpcoming?: boolean; // Filter bookings that are upcoming (pick up date > today)
   totalDays?: number; // Filter by exact total days (rarely used in UI)
   totalAmount?: number; // Filter by exact total amount (rarely used in UI)
+  search?: string;
 }
 
 export interface BookingHistoryResponse {
