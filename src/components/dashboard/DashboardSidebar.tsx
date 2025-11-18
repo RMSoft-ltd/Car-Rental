@@ -86,22 +86,25 @@ export default function DashboardSidebar({
           ${isCollapsed ? "w-16" : "w-64"} 
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} 
           lg:translate-x-0 
-          fixed lg:relative 
+          fixed lg:sticky
+          top-0
+          left-0
+          h-screen
           z-50 
           bg-white 
           border-r 
           border-gray-200 
           flex 
           flex-col 
-          flex-y-1
           transition-all 
           duration-300 
           ease-in-out
           flex-shrink-0
+          overflow-hidden
         `}
       >
         {/* Logo and Toggle */}
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           {!isCollapsed && (
             <h1 className="text-lg font-bold text-gray-900 transition-opacity duration-200">
               Car Rental Hub
@@ -129,8 +132,8 @@ export default function DashboardSidebar({
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1">
+        {/* Navigation - Scrollable if needed */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {sidebarItems.map((item) => (
             <Link
               key={item.key}
@@ -178,8 +181,8 @@ export default function DashboardSidebar({
           ))}
         </nav>
 
-        {/* Logout */}
-        <div className="p-3 border-t border-gray-200">
+        {/* Logout - Fixed at bottom */}
+        <div className="p-3 border-t border-gray-200 flex-shrink-0">
           <button
             onClick={onLogout}
             className={`
@@ -196,7 +199,7 @@ export default function DashboardSidebar({
               ease-in-out
               group
               relative
-            cursor-pointer
+              cursor-pointer
             `}
             title={isCollapsed ? "Logout" : undefined}
           >
