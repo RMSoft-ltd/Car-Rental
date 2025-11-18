@@ -54,24 +54,31 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="bg-gray-100 overflow-hidden">
-      <div className="flex h-full w-full">
-        <DashboardSidebar
-          activeTab={getActiveTab()}
-          onLogout={handleLogout}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          isMobileMenuOpen={isMobileMenuOpen}
+    <div className="h-screen w-screen overflow-hidden flex bg-gray-50">
+      {/* Sidebar */}
+      <DashboardSidebar
+        activeTab={getActiveTab()}
+        onLogout={handleLogout}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        isMobileMenuOpen={isMobileMenuOpen}
+        onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      />
+      
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+        {/* Header */}
+        <DashboardHeader
+          title={getPageTitle()}
           onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          isCollapsed={isSidebarCollapsed}
         />
-        <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-          <DashboardHeader
-            title={getPageTitle()}
-            onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            isCollapsed={isSidebarCollapsed}
-          />
-          <div className="flex-1 overflow-hidden min-w-0">{children}</div>
-        </div>
+        
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="min-h-full bg-gray-50">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

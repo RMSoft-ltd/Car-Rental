@@ -24,7 +24,7 @@ export default function SettingsContent() {
 
   const settingsSections = [
     { id: "profile", label: "Profile", icon: User },
-    { id: "payment", label: "Payment", icon: CreditCard },
+    { id: "payment", label: "Payment Config", icon: CreditCard },
     { id: "security", label: "Security", icon: Lock },
     { id: "billing", label: "Billing", icon: Receipt },
     { id: "notifications", label: "Notifications", icon: Bell },

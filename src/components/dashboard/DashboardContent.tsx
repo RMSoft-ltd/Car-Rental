@@ -302,7 +302,7 @@ export default function DashboardContent() {
   );
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { variant: any; className: string }> = {
+    const statusConfig: Record<string, { variant: unknown; className: string }> = {
       PENDING: { variant: "secondary", className: "bg-yellow-100 text-yellow-800" },
       CONFIRMED: { variant: "default", className: "bg-blue-100 text-blue-800" },
       ACTIVE: { variant: "default", className: "bg-green-100 text-green-800" },
