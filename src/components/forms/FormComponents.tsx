@@ -36,7 +36,7 @@ interface FormInputProps {
     name: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
-    label: string;
+    label: React.ReactNode;
     placeholder?: string;
     type?: string;
     disabled?: boolean;
@@ -142,7 +142,7 @@ interface FormSelectProps {
     name: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
-    label: string;
+    label: React.ReactNode;
     options: { value: string; label: string }[];
     placeholder?: string;
     disabled?: boolean;
@@ -200,7 +200,7 @@ interface FormComboboxProps {
     name: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
-    label: string;
+    label: React.ReactNode;
     options: { value: string; label: string }[];
     placeholder?: string;
     searchPlaceholder?: string;
@@ -299,7 +299,7 @@ interface FormTextareaProps {
     name: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
-    label: string;
+    label: React.ReactNode;
     placeholder?: string;
     rows?: number;
     disabled?: boolean;
@@ -349,7 +349,7 @@ interface FormCheckboxProps {
     name: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
-    label: string;
+    label: React.ReactNode;
     disabled?: boolean;
     className?: string;
 }
@@ -399,7 +399,7 @@ interface FormFileUploadProps {
     name: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: Control<any>;
-    label: string;
+    label: React.ReactNode;
     accept?: string;
     multiple?: boolean;
     maxSize?: number; // in MB

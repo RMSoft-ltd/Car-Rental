@@ -27,6 +27,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { CAR_MAKES, CAR_MODELS, FUEL_TYPES, TRANSMISSION_TYPES, DRIVER_TYPES, CAR_COLORS, BODY_TYPES, FUEL_POLICIES, CUSTOM_DAYS } from '@/constants/car-listing';
 import Button from '../shared/Button';
+import { Asterisk } from 'lucide-react';
+import TiptapEditor from '../shared/TiptapEditor';
 
 // ============================================
 // Types
@@ -86,16 +88,19 @@ const getStepFields = (step: number): (keyof CarListingFormData)[] => {
                 'color', 'largeBags', 'inTerminal', 'description'];
         case 1:
             return ['isPowerSteering', 'isCruiseControl', 'isNavigation', 'isPowerLocks',
-                'isVanityMirror', 'isTrunkLight', 'isAirConditioner', 'Techometer',
-                'isDigitalOdometer', 'isLeatherSeats', 'isHeater', 'isMemorySeats',
+                'isVanityMirror', 'isTrunkLight', 'isAirConditioner',
+                'isLeatherSeats', 'isMemorySeats',
+                'isHeatedSeatEquipped', 'isRadioEquipped', 'isRadioBluetoothEnabled', 'isKeyLess',
                 'isFogLightsFront', 'isRainSensingWipe', 'isRearSpoiler', 'isSunRoof',
-                'isRearWindow', 'isWindowDefroster', 'isBreakeAssist', 'isChildSafetyLocks',
-                'isTractionControl', 'isPowerDoorLocks', 'isDriverAirBag', 'isAntiLockBreaks'];
+                'isRearWindow', 'isBreakeAssist', 'isChildSafetyLocks',
+                'isTractionControl', 'isPowerDoorLocks', 'isDriverAirBag', 'isAntiLockBreaks',
+                'isAirbagEquipped', 'isBackCameraEquipped', 'isSpareTireIncluded',
+                'isJackIncluded', 'isWheelSpannerIncluded', 'isRightHandDrive', 'isLeftHandDrive'];
         case 2:
             return ['pricePerDay', 'currency'];
         case 3:
-            return ['requiredDocs', 'securityDeposit', 'securityDepositAmount', 'damageExcess',
-                'fuelPolicy', 'insuranceExpirationDate', 'insuranceFile', 'availabilityType', 'customDays'];
+            return ['requiredDocs', 'securityDeposit', 'securityDepositAmount',
+                'fuelPolicy', 'availabilityType', 'customDays'];
         case 4:
             return ['carImages'];
         default:
@@ -227,9 +232,9 @@ export function CarListingForm({
 
                     {/* Form-level errors */}
                     {errors.root?.message && (
-                        <FormError 
-                            error={{ message: errors.root.message }} 
-                            className="mt-6" 
+                        <FormError
+                            error={{ message: errors.root.message }}
+                            className="mt-6"
                         />
                     )}
 
@@ -368,7 +373,7 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
                 <FormInput
                     name="title"
                     control={control}
-                    label="Listing Title *"
+                    label={<div className='flex items-center'>Listing Title <Asterisk size={14} className='text-destructive' /></div>}
                     placeholder="e.g., Toyota Camry 2020 - Excellent Condition"
                     className="md:col-span-2"
                 />
@@ -376,7 +381,7 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
                 <FormCombobox
                     name="make"
                     control={control}
-                    label="Make *"
+                    label={<div className='flex items-center'>Make <Asterisk size={14} className='text-destructive' /></div>}
                     options={CAR_MAKES.map((make) => ({ value: make, label: make }))}
                     placeholder="Select make"
                     searchPlaceholder="Search make..."
@@ -385,7 +390,7 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
                 <FormCombobox
                     name="model"
                     control={control}
-                    label="Model *"
+                    label={<div className='flex items-center'>Model <Asterisk size={14} className='text-destructive' /></div>}
                     options={
                         selectedMake && CAR_MODELS[selectedMake as keyof typeof CAR_MODELS]
                             ? CAR_MODELS[selectedMake as keyof typeof CAR_MODELS].map((model) => ({
@@ -399,7 +404,16 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
                     disabled={!selectedMake}
                 />
 
-                <FormInput name="plateNumber" control={control} label="Plate Number *" placeholder="e.g., RAB1234" />
+                <FormInput
+                    name="plateNumber"
+                    control={control}
+                    label={<div className='flex items-center'>Plate Number <Asterisk size={14} className='text-destructive' /></div>}
+                    placeholder="e.g., RAB1234"
+                />
+
+                <FormInput name="year" control={control} label={<div className='flex items-center'>Year <Asterisk size={14} className='text-destructive' /></div>} type="number" placeholder="e.g., 2020" />
+
+                <FormInput name="seats" control={control} label={<div className='flex items-center'>Number of Seats <Asterisk size={14} className='text-destructive' /></div>} type="number" placeholder="e.g., 5" />
 
                 <FormSelect
                     name="body"
@@ -407,10 +421,6 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
                     label="Body Type"
                     options={BODY_TYPES.map((body) => ({ value: body, label: body }))}
                 />
-
-                <FormInput name="seats" control={control} label="Number of Seats *" type="number" placeholder="e.g., 5" />
-
-                <FormInput name="year" control={control} label="Year *" type="number" placeholder="e.g., 2020" />
 
                 <FormInput name="mileage" control={control} label="Mileage (km)" type="number" placeholder="e.g., 45000" />
 
@@ -461,13 +471,26 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
                 <FormInput name="inTerminal" control={control} label="Terminal Location" placeholder="e.g., Kigali Airport Terminal 1" />
             </div>
 
-            <FormTextarea
+            <Controller
                 name="description"
                 control={control}
-                label="Description"
-                rows={6}
-                placeholder="Provide a detailed description of the car..."
+                render={({ field, fieldState: { error } }) => (
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                            Description
+                        </label>
+                        <TiptapEditor
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                            placeholder="Enter detailed description of your car"
+                        />
+                        {error && (
+                            <p className="text-sm text-destructive">{error.message}</p>
+                        )}
+                    </div>
+                )}
             />
+
         </div>
     );
 }
@@ -494,11 +517,12 @@ function FeaturesStep({ control }: { control: Control<any> }) {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Interior Features</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormCheckbox name="isAirConditioner" control={control} label="Air Conditioner" />
-                    <FormCheckbox name="Techometer" control={control} label="Tachometer" />
-                    <FormCheckbox name="isDigitalOdometer" control={control} label="Digital Odometer" />
                     <FormCheckbox name="isLeatherSeats" control={control} label="Leather Seats" />
-                    <FormCheckbox name="isHeater" control={control} label="Heater" />
                     <FormCheckbox name="isMemorySeats" control={control} label="Memory Seats" />
+                    <FormCheckbox name="isHeatedSeatEquipped" control={control} label="Heated Seats" />
+                    <FormCheckbox name="isRadioEquipped" control={control} label="Radio Equipped" />
+                    <FormCheckbox name="isRadioBluetoothEnabled" control={control} label="Bluetooth Radio" />
+                    <FormCheckbox name="isKeyLess" control={control} label="Keyless Entry" />
                 </div>
             </div>
 
@@ -511,7 +535,18 @@ function FeaturesStep({ control }: { control: Control<any> }) {
                     <FormCheckbox name="isRearSpoiler" control={control} label="Rear Spoiler" />
                     <FormCheckbox name="isSunRoof" control={control} label="Sunroof" />
                     <FormCheckbox name="isRearWindow" control={control} label="Rear Window Wiper" />
-                    <FormCheckbox name="isWindowDefroster" control={control} label="Window Defroster" />
+                </div>
+            </div>
+
+            {/* Exterior Features */}
+            <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Exterior Features</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormCheckbox name="isFogLightsFront" control={control} label="Fog Lights (Front)" />
+                    <FormCheckbox name="isRainSensingWipe" control={control} label="Rain Sensing Wipers" />
+                    <FormCheckbox name="isRearSpoiler" control={control} label="Rear Spoiler" />
+                    <FormCheckbox name="isSunRoof" control={control} label="Sunroof" />
+                    <FormCheckbox name="isRearWindow" control={control} label="Rear Window Wiper" />
                 </div>
             </div>
 
@@ -525,6 +560,27 @@ function FeaturesStep({ control }: { control: Control<any> }) {
                     <FormCheckbox name="isPowerDoorLocks" control={control} label="Power Door Locks" />
                     <FormCheckbox name="isDriverAirBag" control={control} label="Driver Airbag" />
                     <FormCheckbox name="isAntiLockBreaks" control={control} label="Anti-lock Brakes (ABS)" />
+                    <FormCheckbox name="isAirbagEquipped" control={control} label="Airbag Equipped" />
+                    <FormCheckbox name="isBackCameraEquipped" control={control} label="Backup Camera" />
+                </div>
+            </div>
+
+            {/* Equipment & Accessories */}
+            <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Equipment & Accessories</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormCheckbox name="isSpareTireIncluded" control={control} label="Spare Tire Included" />
+                    <FormCheckbox name="isJackIncluded" control={control} label="Jack Included" />
+                    <FormCheckbox name="isWheelSpannerIncluded" control={control} label="Wheel Spanner Included" />
+                </div>
+            </div>
+
+            {/* Drive Type */}
+            <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Drive Type</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormCheckbox name="isRightHandDrive" control={control} label="Right Hand Drive" />
+                    <FormCheckbox name="isLeftHandDrive" control={control} label="Left Hand Drive" />
                 </div>
             </div>
         </div>
@@ -533,27 +589,54 @@ function FeaturesStep({ control }: { control: Control<any> }) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function PricingStep({ control }: { control: Control<any> }) {
+    const pricePerDay = useWatch({
+        control,
+        name: 'pricePerDay',
+    });
+
+    // Calculate price with 10% fee
+    const priceFee = pricePerDay ? Number(pricePerDay) * 0.1 : null;
+    const priceWithFee = priceFee ? Number(pricePerDay) + Number(priceFee) : null;
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormInput
                     name="pricePerDay"
                     control={control}
-                    label="Price Per Day"
+                    label={<div className='flex items-center justify-between w-full'>
+                        <span className='flex '>Price Per Day <Asterisk size={14} className='text-destructive' /></span>
+                        {priceWithFee && <span className="text-sm text-gray-600">{priceWithFee.toLocaleString()} RWF (incl. 10% System fee)</span>}
+                    </div>}
                     placeholder="e.g., 50,000"
                     type='number'
                 />
 
-                <FormSelect
+                <Controller
                     name="currency"
                     control={control}
-                    label="Currency"
-                    options={[
-                        { value: 'RWF', label: 'RWF (Rwandan Franc)' },
-                        { value: 'USD', label: 'USD (US Dollar)' },
-                        { value: 'EUR', label: 'EUR (Euro)' },
-                        { value: 'NGN', label: 'NGN (Nigerian Naira)' },
-                    ]}
+                    defaultValue="RWF"
+                    render={({ field }) => (
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Currency
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value="RWF (Rwandan Franc)"
+                                    disabled
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 cursor-not-allowed h-12"
+                                    aria-label="Currency"
+                                />
+                                <input
+                                    type="hidden"
+                                    {...field}
+                                    value="RWF"
+                                />
+                            </div>
+                        </div>
+                    )}
                 />
             </div>
 
@@ -585,13 +668,6 @@ function ImportantInfoStep({ control }: { control: Control<any> }) {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormInput
-                    name="securityDeposit"
-                    control={control}
-                    label="Security Deposit"
-                    placeholder="e.g., 50000 RWF"
-                    type='number'
-                />
 
                 <FormInput
                     name="securityDepositAmount"
@@ -602,11 +678,11 @@ function ImportantInfoStep({ control }: { control: Control<any> }) {
                 />
 
                 <FormInput
-                    name="damageExcess"
+                    name="securityDeposit"
                     control={control}
-                    label="Damage Excess"
-                    placeholder="e.g., 100000 RWF"
-                    type='number'
+                    label={<div className='flex items-start'><span>Security Deposit Description</span> </div>}
+                    placeholder="e.g., "
+                    type='string'
                 />
 
                 <FormSelect
@@ -617,27 +693,6 @@ function ImportantInfoStep({ control }: { control: Control<any> }) {
                 />
             </div>
 
-            <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Insurance Information</h3>
-                <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormInput
-                            name="insuranceExpirationDate"
-                            control={control}
-                            label="Insurance Expiration Date"
-                            type="date"
-                            placeholder="YYYY-MM-DD"
-                        />
-
-                        <FormInput
-                            name="insuranceFile"
-                            control={control}
-                            label="Insurance File"
-                            type="file"
-                        />
-                    </div>
-                </div>
-            </div>
 
             <div className="border-t pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Availability</h3>

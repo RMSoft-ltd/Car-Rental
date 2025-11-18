@@ -154,7 +154,7 @@ export const TRANSMISSION_TYPES = [
 
 export type TransmissionType = (typeof TRANSMISSION_TYPES)[number];
 
-export const DRIVER_TYPES = ["4WD", "2WD", "FWD", "RWD"] as const;
+export const DRIVER_TYPES = ["AWD", "4WD", "2WD", "FWD", "RWD"] as const;
 
 export type DriverType = (typeof DRIVER_TYPES)[number];
 

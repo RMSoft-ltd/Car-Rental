@@ -35,22 +35,21 @@ export const carListingSchema = z.object({
       "Plate number can only contain letters, numbers, and hyphens"
     ),
 
-  body: z
-    .string()
-    .min(2, "Body type is required")
-    .max(50, "Body type must not exceed 50 characters"),
+  body: z.string().optional(),
+
   seats: z
     .string()
     .or(z.number())
     .transform((val) => (typeof val === "string" ? parseInt(val) : val))
-    .refine((val) => val >= 1 && val <= 12, "Seats must be between 1 and 12"),
+    .refine((val) => val >= 1, "Seats must be atleast 1"),
 
   mileage: z
     .string()
     .or(z.number())
     .transform((val) => (typeof val === "string" ? parseFloat(val) : val))
-    .refine((val) => val >= 0, "Mileage must be a positive number"),
-  fuelType: z.string().min(2, "Fuel type is required"),
+    .optional(),
+
+  fuelType: z.string().optional(),
 
   year: z
     .string()
@@ -60,62 +59,39 @@ export const carListingSchema = z.object({
       message: "Please enter a valid year",
     }),
 
-  transition: z.string().min(2, "Transmission type is required"),
+  transition: z.string().optional(),
 
-  driverType: z
-    .string()
-    .min(2, "Driver type is required")
-    .max(50, "Driver type must not exceed 50 characters"),
+  driverType: z.string().optional(),
+
   engineSize: z
     .string()
     .or(z.number())
     .transform((val) => (typeof val === "string" ? parseFloat(val) : val))
-    .refine(
-      (val) => val > 0 && val <= 10,
-      "Engine size must be between 0 and 10 liters"
-    ),
+    .optional(),
+
   doors: z
     .string()
     .or(z.number())
     .transform((val) => (typeof val === "string" ? parseInt(val) : val))
-    .refine((val) => val >= 2 && val <= 6, "Doors must be between 2 and 6"),
+    .refine((val) => val >= 1, "Doors must be at least 1"),
+
   smallBags: z
     .string()
     .or(z.number())
     .transform((val) => (typeof val === "string" ? parseInt(val) : val))
-    .refine(
-      (val) => val >= 0 && val <= 10,
-      "Small bags must be between 0 and 10"
-    )
     .optional(),
 
-  color: z
-    .string()
-    .min(2, "Color is required")
-    .max(30, "Color must not exceed 30 characters")
-    .optional(),
+  color: z.string().optional(),
 
   largeBags: z
     .string()
     .or(z.number())
     .transform((val) => (typeof val === "string" ? parseInt(val) : val))
-    .refine(
-      (val) => val >= 0 && val <= 10,
-      "Large bags must be between 0 and 10"
-    )
     .optional(),
 
-  inTerminal: z
-    .string()
-    .min(2, "Terminal location is required")
-    .max(200, "Terminal location must not exceed 200 characters")
-    .optional(),
+  inTerminal: z.string().optional(),
 
-  description: z
-    .string()
-    .min(20, "Description must be at least 20 characters")
-    .max(1000, "Description must not exceed 1000 characters")
-    .optional(),
+  description: z.string().optional(),
 
   // Features - Comfort
   isPowerSteering: z.boolean().default(false),
@@ -127,11 +103,12 @@ export const carListingSchema = z.object({
 
   // Features - Interior
   isAirConditioner: z.boolean().default(false),
-  Techometer: z.boolean().default(false),
-  isDigitalOdometer: z.boolean().default(false),
   isLeatherSeats: z.boolean().default(false),
-  isHeater: z.boolean().default(false),
   isMemorySeats: z.boolean().default(false),
+  isHeatedSeatEquipped: z.boolean().default(false),
+  isRadioEquipped: z.boolean().default(false),
+  isRadioBluetoothEnabled: z.boolean().default(false),
+  isKeyLess: z.boolean().default(false),
 
   // Features - Exterior
   isFogLightsFront: z.boolean().default(false),
@@ -139,15 +116,23 @@ export const carListingSchema = z.object({
   isRearSpoiler: z.boolean().default(false),
   isSunRoof: z.boolean().default(false),
   isRearWindow: z.boolean().default(false),
-  isWindowDefroster: z.boolean().default(false),
 
-  // Features - Safety
+  // Features - Safety & Equipment
   isBreakeAssist: z.boolean().default(false),
   isChildSafetyLocks: z.boolean().default(false),
   isTractionControl: z.boolean().default(false),
   isPowerDoorLocks: z.boolean().default(false),
   isDriverAirBag: z.boolean().default(false),
   isAntiLockBreaks: z.boolean().default(false),
+  isAirbagEquipped: z.boolean().default(false),
+  isBackCameraEquipped: z.boolean().default(false),
+  isSpareTireIncluded: z.boolean().default(false),
+  isJackIncluded: z.boolean().default(false),
+  isWheelSpannerIncluded: z.boolean().default(false),
+
+  // Features - Drive Type
+  isRightHandDrive: z.boolean().default(false),
+  isLeftHandDrive: z.boolean().default(false),
 
   // Pricing
   pricePerDay: z
@@ -173,10 +158,8 @@ export const carListingSchema = z.object({
     .max(500, "Required documents must not exceed 500 characters")
     .optional(),
 
-  securityDeposit: z
-    .string()
-    .min(2, "Security deposit information is required")
-    .max(500, "Security deposit must not exceed 500 characters"),
+  securityDeposit: z.string().optional(),
+
   securityDepositAmount: z
     .string()
     .or(z.number())
@@ -187,25 +170,11 @@ export const carListingSchema = z.object({
       return val;
     })
     .refine((val) => val >= 0, "Security deposit must be a positive number"),
-  damageExcess: z
-    .string()
-    .min(5, "Damage excess information is required")
-    .max(500, "Damage excess must not exceed 500 characters"),
+
   fuelPolicy: z
     .string()
     .min(5, "Fuel policy is required")
     .max(500, "Fuel policy must not exceed 500 characters"),
-  insuranceExpirationDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
-    .refine(
-      (val) => new Date(val) > new Date(),
-      "Insurance must not be expired"
-    ),
-  insuranceFile: z
-    .union([z.instanceof(File), z.string()])
-    .optional()
-    .nullable(),
 
   availabilityType: z.enum(["FULL", "WEEKDAYS", "WEEKENDS", "CUSTOM"], {
     message: "Please select availability type",
@@ -265,23 +234,30 @@ export const defaultCarListingData: Partial<CarListingFormData> = {
   isVanityMirror: false,
   isTrunkLight: false,
   isAirConditioner: false,
-  Techometer: false,
-  isDigitalOdometer: false,
   isLeatherSeats: false,
-  isHeater: false,
   isMemorySeats: false,
+  isHeatedSeatEquipped: false,
+  isRadioEquipped: false,
+  isRadioBluetoothEnabled: false,
+  isKeyLess: false,
   isFogLightsFront: false,
   isRainSensingWipe: false,
   isRearSpoiler: false,
   isSunRoof: false,
   isRearWindow: false,
-  isWindowDefroster: false,
   isBreakeAssist: false,
   isChildSafetyLocks: false,
   isTractionControl: false,
   isPowerDoorLocks: false,
   isDriverAirBag: false,
   isAntiLockBreaks: false,
+  isAirbagEquipped: false,
+  isBackCameraEquipped: false,
+  isSpareTireIncluded: false,
+  isJackIncluded: false,
+  isWheelSpannerIncluded: false,
+  isRightHandDrive: false,
+  isLeftHandDrive: false,
 
   // Pricing
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -293,11 +269,8 @@ export const defaultCarListingData: Partial<CarListingFormData> = {
   securityDeposit: "",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   securityDepositAmount: "" as any,
-  damageExcess: "",
   fuelPolicy: "",
   availabilityType: undefined,
-  insuranceExpirationDate: "",
-  insuranceFile: null,
   customDays: [],
 
   // Images
