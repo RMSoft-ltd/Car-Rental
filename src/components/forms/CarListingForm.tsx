@@ -100,7 +100,7 @@ const getStepFields = (step: number): (keyof CarListingFormData)[] => {
             return ['pricePerDay', 'currency'];
         case 3:
             return ['requiredDocs', 'securityDeposit', 'securityDepositAmount',
-                'fuelPolicy', 'pickUpLocation', 'availabilityType', 'customDays'];
+                'fuelPolicy', 'returnCondition', 'pickUpLocation', 'availabilityType', 'customDays'];
         case 4:
             return ['carImages'];
         default:
@@ -707,6 +707,26 @@ function ImportantInfoStep({ control }: { control: Control<any> }) {
                             </div>
                         )}
                     />
+
+                    <Controller
+                        name="returnCondition"
+                        control={control}
+                        render={({ field, fieldState: { error } }) => (
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Return Condition
+                                </label>
+                                <TiptapEditor
+                                    value={field.value || ''}
+                                    onChange={field.onChange}
+                                    placeholder="Specify the condition the car should be returned in (e.g., it should be washed, full tank, etc.)"
+                                />
+                                {error && (
+                                    <p className="text-sm text-destructive">{error.message}</p>
+                                )}
+                            </div>
+                        )}
+                    />
                 </div>
 
                 <FormSelect
@@ -719,8 +739,7 @@ function ImportantInfoStep({ control }: { control: Control<any> }) {
                 <FormInput name="pickUpLocation" control={control} label="Pickup Location" placeholder="e.g., Kigali Airport Terminal 1" />
 
 
-                <div className="pt-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Availability</h3>
+                <div className="col-span-2">
                     <div className="space-y-6">
                         <FormSelect
                             name="availabilityType"
