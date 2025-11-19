@@ -54,7 +54,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="bg-gray-100 overflow-hidden">
+    <div className="bg-gray-100 h-screen">
       <div className="flex h-full w-full">
         <DashboardSidebar
           activeTab={getActiveTab()}
@@ -64,13 +64,15 @@ export default function DashboardLayout({
           isMobileMenuOpen={isMobileMenuOpen}
           onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         />
-        <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+        <div className="flex-1 flex flex-col h-full min-w-0">
           <DashboardHeader
             title={getPageTitle()}
             onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             isCollapsed={isSidebarCollapsed}
           />
-          <div className="flex-1 overflow-hidden min-w-0">{children}</div>
+          <div className="flex-1 overflow-y-auto min-w-0">
+            {children}
+          </div>
         </div>
       </div>
     </div>
