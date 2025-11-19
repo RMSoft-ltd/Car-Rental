@@ -12,7 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   DollarSign,
+  Users,
 } from "lucide-react";
+import { TokenService } from "@/utils/token";
 
 interface SidebarProps {
   activeTab: string;
@@ -31,6 +33,11 @@ export default function DashboardSidebar({
   isMobileMenuOpen,
   onMobileMenuToggle,
 }: SidebarProps) {
+
+    const loggedInUser = TokenService.getUserData();
+    const loggedInRole = loggedInUser?.role || 'user';
+    const isAdmin = loggedInRole.toLowerCase().includes('admin');
+
   const sidebarItems = [
     {
       icon: LayoutDashboard,
@@ -62,6 +69,13 @@ export default function DashboardSidebar({
       key: "history",
       href: "/dashboard/history",
     },
+    // Only show User Management for admin users
+    ...(isAdmin ? [{
+      icon: Users,
+      label: "User Management",
+      key: "users",
+      href: "/dashboard/users",
+    }] : []),
     {
       icon: Settings,
       label: "Settings",
