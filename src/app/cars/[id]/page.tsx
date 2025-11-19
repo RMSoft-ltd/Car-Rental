@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   Users,
@@ -19,6 +19,7 @@ import { useParams } from "next/navigation";
 import { useCarListing } from "@/hooks/use-car-list";
 import { baseUrl } from "@/lib/api";
 import { Car as CarListing } from "@/types/car-listing";
+import { BookedItem } from "@/types/cart";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
@@ -179,42 +180,31 @@ export default function CarDetailPage() {
 
   const [pickUpDate, setPickUpDate] = useState<string>("");
   const [dropOffDate, setDropOffDate] = useState<string>("");
+  const pickUpInputRef = useRef<HTMLInputElement | null>(null);
+  const dropOffInputRef = useRef<HTMLInputElement | null>(null);
 
   const getTodayIso = () => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today.toISOString().split("T")[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   const getNextDayIso = (iso: string) => {
-    const date = new Date(iso);
+    const date = new Date(iso + "T00:00:00");
     date.setDate(date.getDate() + 1);
-    date.setHours(0, 0, 0, 0);
-    return date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   useEffect(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let initialPickUp = car?.startDate ? new Date(car.startDate) : new Date();
-    initialPickUp.setHours(0, 0, 0, 0);
-    if (initialPickUp < today) {
-      initialPickUp = today;
-    }
-
-    let initialDropOff = car?.endDate
-      ? new Date(car.endDate)
-      : new Date(initialPickUp.getTime() + 7 * 24 * 60 * 60 * 1000);
-    initialDropOff.setHours(0, 0, 0, 0);
-    if (initialDropOff <= initialPickUp) {
-      initialDropOff = new Date(initialPickUp.getTime() + 24 * 60 * 60 * 1000);
-    }
-
-    const toISO = (date: Date) => date.toISOString().split("T")[0];
-    setPickUpDate(toISO(initialPickUp));
-    setDropOffDate(toISO(initialDropOff));
-  }, [car?.startDate, car?.endDate]);
+    const todayIso = getTodayIso();
+    setPickUpDate(todayIso);
+    setDropOffDate(todayIso);
+  }, []);
 
   const featureCategories = useMemo(
     () => (car ? buildFeatureCategories(car) : []),
@@ -234,8 +224,8 @@ export default function CarDetailPage() {
 
   const pricePerDay = car?.pricePerDay;
   const currency = car?.currency ?? "RWF";
-  const totalForSixDays =
-    typeof pricePerDay === "number" ? pricePerDay * 6 : null;
+  const totalForOneDay =
+    typeof pricePerDay === "number" ? pricePerDay * 1 : null;
   const bookingDates = useMemo(() => {
     const formatDisplayDate = (iso: string) =>
       iso
@@ -256,28 +246,58 @@ export default function CarDetailPage() {
     };
   }, [pickUpDate, dropOffDate]);
 
-  const dropOffMinDate = pickUpDate
-    ? getNextDayIso(pickUpDate)
-    : getNextDayIso(getTodayIso());
+  const dropOffMinDate = pickUpDate || getTodayIso();
 
   const rentalDays =
     pickUpDate && dropOffDate
       ? Math.max(
         1,
         Math.ceil(
-          (new Date(dropOffDate).getTime() -
-            new Date(pickUpDate).getTime()) /
+          (new Date(dropOffDate + "T00:00:00").getTime() -
+            new Date(pickUpDate + "T00:00:00").getTime()) /
           (1000 * 60 * 60 * 24)
-        )
+        ) + 1
       )
-      : 6;
+      : 1;
 
   const totalSelectedAmount =
     typeof pricePerDay === "number" && pickUpDate && dropOffDate
       ? pricePerDay * rentalDays
-      : totalForSixDays;
+      : totalForOneDay;
 
-  const bookingMutation = useMutation({
+  const cacheDirectBookingContext = (bookedItems: BookedItem[]) => {
+    if (typeof window === "undefined" || !bookedItems?.length || !car) {
+      return;
+    }
+    try {
+      const payload = {
+        bookingGroupId: bookedItems[0]?.bookingGroupId ?? null,
+        bookedItems,
+        car,
+        dates: bookingDates.payload,
+        totals: {
+          currency,
+          pricePerDay: pricePerDay ?? null,
+          totalAmount: totalSelectedAmount ?? null,
+          rentalDays,
+        },
+        user: user
+          ? {
+              id: user.id,
+              name:
+                `${user.fName ?? ""} ${user.lName ?? ""}`.trim() || user.email,
+              email: user.email,
+              phone: user.phone,
+            }
+          : null,
+      };
+      sessionStorage.setItem("directBooking", JSON.stringify(payload));
+    } catch (error) {
+      console.error("Failed to cache booking context", error);
+    }
+  };
+
+  const bookingMutation = useMutation<BookedItem[]>({
     mutationFn: async () => {
       if (!user) {
         throw new Error("You must be signed in to book a car.");
@@ -287,7 +307,8 @@ export default function CarDetailPage() {
       }
       return bookCarNow(user.id, car.id, bookingDates.payload);
     },
-    onSuccess: () => {
+    onSuccess: (bookedItems) => {
+      cacheDirectBookingContext(bookedItems ?? []);
       toast.success("Booking created", "Redirecting to checkout...");
       router.push("/booking");
     },
@@ -325,10 +346,10 @@ export default function CarDetailPage() {
       toast.error("Invalid dates", "Pick-up date cannot be in the past.");
       return;
     }
-    if (dropOff <= pickUp) {
+    if (dropOff < pickUp) {
       toast.error(
         "Invalid dates",
-        "Drop-off date must be after the pick-up date."
+        "Drop-off date cannot be before the pick-up date."
       );
       return;
     }
@@ -340,21 +361,43 @@ export default function CarDetailPage() {
     const todayIso = getTodayIso();
     const normalized = value < todayIso ? todayIso : value;
     setPickUpDate(normalized);
-    if (dropOffDate && dropOffDate <= normalized) {
-      setDropOffDate(getNextDayIso(normalized));
+    if (dropOffDate && dropOffDate < normalized) {
+      setDropOffDate(normalized);
     }
   };
 
   const handleDropOffChange = (value: string) => {
     if (!value) return;
-    if (value <= pickUpDate) {
+    if (value < pickUpDate) {
       toast.info(
         "Adjust date",
-        "Drop-off date must be after the pick-up date."
+        "Drop-off date cannot be before the pick-up date."
       );
       return;
     }
     setDropOffDate(value);
+  };
+
+  const openPickUpPicker = () => {
+    const input = pickUpInputRef.current;
+    if (!input) return;
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+    } else {
+      input.focus();
+      input.click();
+    }
+  };
+
+  const openDropOffPicker = () => {
+    const input = dropOffInputRef.current;
+    if (!input) return;
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+    } else {
+      input.focus();
+      input.click();
+    }
   };
 
   if (isLoading) {
@@ -634,53 +677,54 @@ export default function CarDetailPage() {
                 </p>
               )}
 
-              <div className="flex items-center rounded-2xl border border-gray-900 px-5 py-4 text-sm font-semibold text-gray-900">
-                <div className="flex-1">
+              <div className="relative flex items-center rounded-2xl border border-gray-900 px-5 py-4 text-sm font-semibold text-gray-900">
+                <button
+                  type="button"
+                  className="flex flex-1 flex-col text-left focus:outline-none"
+                  onClick={openPickUpPicker}
+                >
                   <p className="text-[11px] uppercase tracking-wide text-gray-500">
                     Pick-up Date
                   </p>
                   <p className="text-lg text-gray-900">
                     {bookingDates.pickUpDateLabel}
                   </p>
-                </div>
+                </button>
                 <div className="mx-4 h-10 w-px bg-gray-200" />
-                <div className="flex-1 text-right">
+                <button
+                  type="button"
+                  className="flex flex-1 flex-col text-right focus:outline-none"
+                  onClick={openDropOffPicker}
+                >
                   <p className="text-[11px] uppercase tracking-wide text-gray-500">
                     Drop-off Date
                   </p>
                   <p className="text-lg text-gray-900">
                     {bookingDates.dropOffDateLabel}
                   </p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label htmlFor="pickup-date" className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Select Pick-up Date
-                  </label>
-                  <input
-                    id="pickup-date"
-                    type="date"
-                    value={pickUpDate}
-                    min={getTodayIso()}
-                    onChange={(event) => handlePickUpChange(event.target.value)}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="dropoff-date" className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Select Drop-off Date
-                  </label>
-                  <input
-                    id="dropoff-date"
-                    type="date"
-                    value={dropOffDate}
-                    min={dropOffMinDate}
-                    onChange={(event) => handleDropOffChange(event.target.value)}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
-                  />
-                </div>
+                </button>
+                <input
+                  ref={pickUpInputRef}
+                  id="pickup-date"
+                  type="date"
+                  value={pickUpDate}
+                  min={getTodayIso()}
+                  onChange={(event) => handlePickUpChange(event.target.value)}
+                  className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
+                <input
+                  ref={dropOffInputRef}
+                  id="dropoff-date"
+                  type="date"
+                  value={dropOffDate}
+                  min={dropOffMinDate}
+                  onChange={(event) => handleDropOffChange(event.target.value)}
+                  className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
               </div>
 
               <div className="space-y-3 text-sm text-gray-700">
