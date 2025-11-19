@@ -26,6 +26,7 @@ import { useToast } from "@/app/shared/ToastProvider";
 import { useMutation } from "@tanstack/react-query";
 import { bookCarNow } from "@/services/cart-service";
 import { AxiosError } from "axios";
+import { useAddToCart } from "@/hooks/use-cart-items";
 
 const toAbsoluteImage = (path?: string) => {
   if (!path) return null;
@@ -297,6 +298,10 @@ export default function CarDetailPage() {
     }
   };
 
+  const { mutate: addToCartMutation, isPending: isAddingToCart } = useAddToCart(
+    user?.id ?? 0
+  );
+
   const bookingMutation = useMutation<BookedItem[]>({
     mutationFn: async () => {
       if (!user) {
@@ -354,6 +359,60 @@ export default function CarDetailPage() {
       return;
     }
     bookingMutation.mutate();
+  };
+
+  const handleAddToCart = () => {
+    if (!user) {
+      toast.info("Sign in required", "Please sign in to add items to cart.");
+      router.push("/auth/signin");
+      return;
+    }
+    if (!car?.id) {
+      toast.error("Cart unavailable", "Car information is missing.");
+      return;
+    }
+    if (!pickUpDate || !dropOffDate) {
+      toast.error("Invalid dates", "Please select pick-up and drop-off dates.");
+      return;
+    }
+    const pickUp = new Date(pickUpDate);
+    const dropOff = new Date(dropOffDate);
+    const today = new Date(getTodayIso());
+    if (pickUp < today) {
+      toast.error("Invalid dates", "Pick-up date cannot be in the past.");
+      return;
+    }
+    if (dropOff < pickUp) {
+      toast.error(
+        "Invalid dates",
+        "Drop-off date cannot be before the pick-up date."
+      );
+      return;
+    }
+
+    addToCartMutation(
+      {
+        carId: car.id,
+        pickUpDate,
+        dropOffDate,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Added to cart", "Car has been added to your cart.");
+        },
+        onError: (error: unknown) => {
+          let message = "Something went wrong while adding to cart.";
+          if (error instanceof AxiosError) {
+            message =
+              (error.response?.data as { message?: string })?.message ??
+              error.message;
+          } else if (error instanceof Error) {
+            message = error.message;
+          }
+          toast.error("Add to cart failed", message);
+        },
+      }
+    );
   };
 
   const handlePickUpChange = (value: string) => {
@@ -749,8 +808,12 @@ export default function CarDetailPage() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <button className="rounded-2xl border border-gray-900 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-white transition-colors">
-                  Add To Cart
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isAddingToCart || !pickUpDate || !dropOffDate}
+                  className="rounded-2xl border border-gray-900 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isAddingToCart ? "Adding..." : "Add To Cart"}
                 </button>
                 <button
                   onClick={handleBookNow}
