@@ -19,6 +19,9 @@ import { FiPhone, FiMail } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Car as CarListing } from "@/types/car-listing";
 import { BookedItem } from "@/types/cart";
+import { usePayment } from "@/hooks/use-cart-items";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/app/shared/ToastProvider";
 
 type SummaryStat = {
   label: string;
@@ -75,6 +78,9 @@ const formatDateDisplay = (iso?: string) => {
 
 export default function BookingRequestPage() {
   const { user } = useAuth();
+  const router = useRouter();
+  const toast = useToast();
+  const { mutate: processPayment, isPending: isProcessingPayment } = usePayment();
   const [bookingData, setBookingData] = useState<DirectBookingSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPayment, setSelectedPayment] = useState<PaymentOption>(PAYMENT_OPTIONS[0]);
@@ -177,6 +183,7 @@ export default function BookingRequestPage() {
   const totalDisplay = totals?.totalAmount ?? primaryBooking?.totalAmount;
   const currencyDisplay = totals?.currency ?? bookingData?.car?.currency ?? "RWF";
   const rentalDaysDisplay = totals?.rentalDays ?? primaryBooking?.totalDays;
+  const bookingGroupId = primaryBooking?.bookingGroupId ?? bookingData?.bookingGroupId;
 
   // Phone number validation helper (from checkout page)
   const getValidationInfo = (methodValue: string) => {
@@ -200,6 +207,54 @@ export default function BookingRequestPage() {
     }
 
     return { regex, prefixes, placeholder, title };
+  };
+
+  const handleBookNow = () => {
+    if (!bookingGroupId) {
+      toast.error("Payment unavailable", "Booking information is missing.");
+      return;
+    }
+
+    if (selectedPayment.type === "mobile") {
+      const validationInfo = getValidationInfo(selectedPayment.value);
+      const { regex } = validationInfo;
+
+      if (!mobileNumber || !regex.test(mobileNumber)) {
+        toast.error("Invalid phone number", "Please enter a valid 9-digit phone number.");
+        return;
+      }
+
+      const fullPhoneNumber = `250${mobileNumber}`;
+      processPayment(
+        {
+          bookingGroupId,
+          paymentData: { mobilephone: fullPhoneNumber },
+        },
+        {
+          onSuccess: () => {
+            toast.success("Payment processed", "Redirecting to your bookings...");
+            router.push("/dashboard/history");
+          },
+          onError: (error: unknown) => {
+            const message =
+              error instanceof Error
+                ? error.message
+                : "Payment failed. Please try again.";
+            toast.error("Payment failed", message);
+          },
+        }
+      );
+    } else {
+      // Card payment - validate card details
+      if (!cardDetails.number || !cardDetails.expiry || !cardDetails.cvv) {
+        toast.error("Invalid card details", "Please fill in all card information.");
+        return;
+      }
+      // For card payments, we might need a different API endpoint
+      // For now, we'll use the same endpoint with card details
+      // You may need to adjust this based on your backend API
+      toast.info("Card payment", "Card payment processing is not yet implemented.");
+    }
   };
 
   const renderPaymentFields = () => {
@@ -443,10 +498,11 @@ export default function BookingRequestPage() {
 
           <button
             type="button"
-            className="w-full rounded-2xl bg-black py-4 text-white font-semibold text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-50"
-            disabled={!bookingData}
+            onClick={handleBookNow}
+            className="w-full rounded-2xl bg-black py-4 text-white font-semibold text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!bookingData || isProcessingPayment}
           >
-            Book Now <ArrowRight className="w-4 h-4" />
+            {isProcessingPayment ? "Processing Payment..." : "Book Now"} <ArrowRight className="w-4 h-4" />
           </button>
         </section>
 
