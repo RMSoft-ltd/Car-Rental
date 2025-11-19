@@ -21,6 +21,14 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface TwoFactorChallenge {
+  requiresTwoFactor: true;
+  twoFactorToken?: string;
+  message?: string;
+}
+
+export type LoginResult = AuthResponse | TwoFactorChallenge;
+
 export interface LoginRequest {
   email: string;
   password: string;

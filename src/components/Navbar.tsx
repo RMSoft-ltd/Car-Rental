@@ -6,14 +6,13 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Menu, Transition } from "@headlessui/react";
 import { FaBars, FaTimes } from "react-icons/fa";
-import { User, LayoutDashboard, LogOut, LogIn, HelpCircle, UserPlus } from "lucide-react";
+import { User, LayoutDashboard, LogOut, HelpCircle, UserPlus } from "lucide-react";
 import { HiChevronDown } from "react-icons/hi";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import clsx from "clsx";
 import { UserAvatar } from "./Avator";
 import { useCartSummary } from "@/hooks/use-cart-items";
-import { LuMenu } from "react-icons/lu";
 
 export default function Navbar() {
   const router = useRouter();
@@ -131,42 +130,36 @@ export default function Navbar() {
             )}
 
 
-            {/* Profile Section */}
-            <Menu as="div" className="relative inline-block text-left">
-              <div>
-                <Menu.Button
-                  className="group flex items-center text-gray-900 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-50 cursor-pointer outline-none focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 transition-all duration-200"
-                >
-                  {isAuthenticated && user ? (
-                    <>
-                      <UserAvatar user={user} size="default" />
-                      <div className="hidden lg:block text-left min-w-0 flex-1 ml-2">
-                        <p className="text-sm lg:text-base font-semibold text-gray-900 truncate">
-                          {user.lName ? `${user.lName}` : "User"}
-                        </p>
-                        <p className="text-xs font-medium text-gray-500 truncate max-w-[120px] lg:max-w-[150px]">
-                          {user.email}
-                        </p>
-                      </div>
-                      <HiChevronDown className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0 ml-1" />
-                    </>
-                  ) : (
-                    <LuMenu className="h-6 w-6 text-black" />
-                  )}
-                </Menu.Button>
-              </div>
+            {/* Profile / Auth Section */}
+            {isAuthenticated && user ? (
+              <Menu as="div" className="relative inline-block text-left">
+                <div>
+                  <Menu.Button
+                    className="group flex items-center text-gray-900 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-50 cursor-pointer outline-none focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 transition-all duration-200"
+                  >
+                    <UserAvatar user={user} size="default" />
+                    <div className="hidden lg:block text-left min-w-0 flex-1 ml-2">
+                      <p className="text-sm lg:text-base font-semibold text-gray-900 truncate">
+                        {user.lName ? `${user.lName}` : "User"}
+                      </p>
+                      <p className="text-xs font-medium text-gray-500 truncate max-w-[120px] lg:max-w-[150px]">
+                        {user.email}
+                      </p>
+                    </div>
+                    <HiChevronDown className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0 ml-1" />
+                  </Menu.Button>
+                </div>
 
-              <Transition
-                as={Fragment}
-                enter="transition ease-out duration-100"
-                enterFrom="transform opacity-0 scale-95"
-                enterTo="transform opacity-100 scale-100"
-                leave="transition ease-in duration-75"
-                leaveFrom="transform opacity-100 scale-100"
-                leaveTo="transform opacity-0 scale-95"
-              >
-                <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-lg bg-white shadow-lg ring-1 ring-gray-300 ring-opacity-5 focus:outline-none z-50">
-                  {isAuthenticated ? (
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-lg bg-white shadow-lg ring-1 ring-gray-300 ring-opacity-5 focus:outline-none z-50">
                     <>
                       {/* Authenticated User Menu */}
                       <div className="px-4 py-3">
@@ -216,7 +209,7 @@ export default function Navbar() {
                         <Menu.Item>
                           {({ active }) => (
                             <button
-                              onClick={() => router.push('/dashboard/add-listing')}
+                              onClick={() => router.push("/dashboard/add-listing")}
                               className={clsx(
                                 active
                                   ? "bg-gray-100 text-gray-900"
@@ -232,7 +225,9 @@ export default function Navbar() {
                         <Menu.Item>
                           {({ active }) => (
                             <button
-                              onClick={() => {/* Add help center logic */}}
+                              onClick={() => {
+                                /* Add help center logic */
+                              }}
                               className={clsx(
                                 active
                                   ? "bg-gray-100 text-gray-900"
@@ -266,64 +261,25 @@ export default function Navbar() {
                         </Menu.Item>
                       </div>
                     </>
-                  ) : (
-                    <>
-                      {/* Unauthenticated User Menu */}
-                      <div className="py-1">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => router.push('/auth/signin')}
-                              className={clsx(
-                                active
-                                  ? "bg-gray-100 text-gray-900"
-                                  : "text-gray-700",
-                                "flex items-center w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
-                              )}
-                            >
-                              <LogIn className="mr-3 h-4 w-4" />
-                              Login / Sign up
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => router.push('/auth/signup')}
-                              className={clsx(
-                                active
-                                  ? "bg-gray-100 text-gray-900"
-                                  : "text-gray-700",
-                                "flex items-center w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
-                              )}
-                            >
-                              <UserPlus className="mr-3 h-4 w-4" />
-                              Become a Host
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => {/* Add help center logic */}}
-                              className={clsx(
-                                active
-                                  ? "bg-gray-100 text-gray-900"
-                                  : "text-gray-700",
-                                "flex items-center w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer"
-                              )}
-                            >
-                              <HelpCircle className="mr-3 h-4 w-4" />
-                              Help Center
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </div>
-                    </>
-                  )}
-                </Menu.Items>
-              </Transition>
-            </Menu>
+                  </Menu.Items>
+                </Transition>
+              </Menu>
+            ) : (
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/auth/signin"
+                  className="px-7 py-2 rounded-full text-black text-sm font-semibold hover:bg-black/5 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="px-7 py-2 rounded-full bg-black text-white text-sm font-semibold hover:bg-black/90 transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}

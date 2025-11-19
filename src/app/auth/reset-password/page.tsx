@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -26,11 +26,28 @@ export default function ResetPasswordPage() {
     handleSubmit,
     formState: { errors, isValid },
     watch,
+    setValue,
   } = useForm<ResetPasswordForm>({
     mode: "onChange", // Enable real-time validation
   });
 
   const password = watch("password");
+  const otpLength = 6;
+  const [otpValues, setOtpValues] = useState<string[]>(
+    () => new Array(otpLength).fill("")
+  );
+  const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
+
+  useEffect(() => {
+    register("otp", {
+      required: "OTP is required",
+      validate: validateOTP,
+    });
+  }, [register]);
+
+  useEffect(() => {
+    setValue("otp", otpValues.join(""), { shouldValidate: true });
+  }, [otpValues, setValue]);
 
   // Debug form state
   console.log("Form errors:", errors);
@@ -70,7 +87,6 @@ export default function ResetPasswordPage() {
   };
 
   const onSubmit = async (data: ResetPasswordForm) => {
-    console.log("Form data being submitted:", data); // Debug log
 
     // Additional validation check
     if (!data.otp || !data.password) {
@@ -128,18 +144,61 @@ export default function ResetPasswordPage() {
                 >
                   Enter OTP Code
                 </label>
-                <div className="mt-1">
-                  <input
-                    {...register("otp", {
-                      required: "OTP is required",
-                      validate: validateOTP,
-                    })}
-                    type="text"
-                    autoComplete="one-time-code"
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-gray-700 focus:border-gray-800 sm:text-sm text-center text-lg tracking-widest"
-                    placeholder="123456"
-                    maxLength={6}
-                  />
+                <div className="mt-3">
+                  <div className="flex items-center justify-between">
+                    {otpValues.map((digit, index) => (
+                      <input
+                        key={index}
+                        ref={(el) => {
+                          otpRefs.current[index] = el;
+                          return undefined;
+                        }}
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, "");
+                          if (value.length > 1) return;
+                          const updatedOtp = [...otpValues];
+                          updatedOtp[index] = value;
+                          setOtpValues(updatedOtp);
+                          if (value && index < otpLength - 1) {
+                            otpRefs.current[index + 1]?.focus();
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Backspace" && !otpValues[index]) {
+                            if (index > 0) {
+                              otpRefs.current[index - 1]?.focus();
+                            }
+                          }
+                        }}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          const pastedData = e.clipboardData
+                            .getData("text/plain")
+                            .replace(/\D/g, "")
+                            .slice(0, otpLength);
+                          if (!pastedData) return;
+
+                          const updatedOtp = new Array(otpLength).fill("");
+                          for (let i = 0; i < pastedData.length; i++) {
+                            updatedOtp[i] = pastedData[i];
+                          }
+                          setOtpValues(updatedOtp);
+                          const focusIndex = Math.min(
+                            pastedData.length,
+                            otpLength - 1
+                          );
+                          otpRefs.current[focusIndex]?.focus();
+                        }}
+                        className="w-10 h-10 sm:w-14 sm:h-14 text-center text-xl sm:text-2xl font-semibold border border-gray-200 rounded-lg bg-gray-50 focus:ring-1 focus:ring-gray-700 focus:border-gray-900 transition-all tracking-widest"
+                        aria-label={`OTP digit ${index + 1}`}
+                      />
+                    ))}
+                  </div>
                 </div>
                 {errors.otp && (
                   <p className="mt-1 text-sm text-red-600">

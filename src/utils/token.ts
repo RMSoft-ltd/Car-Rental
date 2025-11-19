@@ -86,10 +86,19 @@ export const TokenService = {
     return !!this.getToken();
   },
 
-  decodeToken(token: string): DecodedToken | null {
+  decodeToken(token?: string | null): DecodedToken | null {
+    if (!token || typeof token !== "string") {
+      return null;
+    }
     try {
       const payload = token.split(".")[1];
-      const decoded = atob(payload);
+      if (!payload) {
+        throw new Error("Invalid token structure");
+      }
+      const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const paddedPayload =
+        normalizedPayload + "=".repeat((4 - (normalizedPayload.length % 4)) % 4);
+      const decoded = atob(paddedPayload);
       return JSON.parse(decoded) as DecodedToken;
     } catch (error) {
       console.error("Error decoding token:", error);

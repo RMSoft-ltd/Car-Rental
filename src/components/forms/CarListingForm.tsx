@@ -1,9 +1,3 @@
-/**
- * Multi-step Car Listing Form Component
- * Handles both CREATE and UPDATE modes
- * Integrates with React Hook Form and Zod validation
- */
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
