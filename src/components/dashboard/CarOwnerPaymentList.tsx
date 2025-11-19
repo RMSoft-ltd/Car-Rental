@@ -112,7 +112,6 @@ export function CarOwnerPaymentList({
     const [filters, setFilters] = useState<CarOwnerPaymentFilters>({
         skip: 0,
         limit: 10,
-        depositStatus: "PENDING",
     });
     const [showFilters, setShowFilters] = useState(true);
     const [selectedBookings, setSelectedBookings] = useState<Record<number, number[]>>({});
@@ -221,13 +220,17 @@ export function CarOwnerPaymentList({
         const newFilters = { ...filters, [key]: value };
         setFilters(newFilters);
         onFilterChange?.(newFilters);
+
+        // Auto-close filters when any filter is applied (except pagination)
+        if (key !== "skip" && key !== "limit") {
+            setShowFilters(false);
+        }
     };
 
     const clearFilters = () => {
         const defaultFilters: CarOwnerPaymentFilters = {
             skip: 0,
             limit: 10,
-            depositStatus: "PENDING",
         };
 
         // Preserve ownerId if user is a car owner (not admin)
@@ -453,7 +456,7 @@ export function CarOwnerPaymentList({
                                     <Label htmlFor="ownerId">Car Owner</Label>
                                     <Combobox
                                         options={ownerOptions}
-                                        value={filters.ownerId?.toString()}
+                                        value={filters.ownerId ? filters.ownerId.toString() : undefined}
                                         onChange={(value: string | undefined) => handleFilterChange("ownerId", value ? Number(value) : undefined)}
                                         placeholder="Select car owner"
                                         searchPlaceholder="Search by name or email..."
@@ -468,7 +471,7 @@ export function CarOwnerPaymentList({
                                 <Label htmlFor="carId">Car (Plate Number)</Label>
                                 <Combobox
                                     options={carOptions}
-                                    value={filters.carId?.toString()}
+                                    value={filters.carId ? filters.carId.toString() : undefined}
                                     onChange={(value: string | undefined) => handleFilterChange("carId", value ? Number(value) : undefined)}
                                     placeholder="Select car"
                                     searchPlaceholder="Search by car or plate..."
@@ -481,13 +484,14 @@ export function CarOwnerPaymentList({
                             <div className="space-y-2">
                                 <Label htmlFor="depositStatus">Deposit Status</Label>
                                 <Select
-                                    value={filters.depositStatus || "PENDING"}
-                                    onValueChange={(value) => handleFilterChange("depositStatus", value as DepositStatus)}
+                                    value={filters.depositStatus || "all"}
+                                    onValueChange={(value) => handleFilterChange("depositStatus", value === "all" ? undefined : value as DepositStatus)}
                                 >
                                     <SelectTrigger id="depositStatus" size="md" className="w-full">
                                         <SelectValue placeholder="Select status" />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="all">All Deposit Statuses</SelectItem>
                                         <SelectItem value="PENDING">Pending</SelectItem>
                                         <SelectItem value="PARTIALLY_DEPOSITED">Partially Deposited</SelectItem>
                                         <SelectItem value="DEPOSITED">Deposited</SelectItem>
@@ -563,21 +567,9 @@ export function CarOwnerPaymentList({
                                 />
                             </div>
 
-                            {/* Plate Number Filter */}
-                            <div className="space-y-2">
-                                <Label htmlFor="plateNumber">Plate Number</Label>
-                                <Input
-                                    id="plateNumber"
-                                    type="text"
-                                    placeholder="Enter plate number"
-                                    value={filters.plateNumber || ""}
-                                    onChange={(e) => handleFilterChange("plateNumber", e.target.value || undefined)}
-                                />
-                            </div>
-
                         </div>
 
-                        {(filters.carId || filters.plateNumber || filters.dropOffDateFrom || filters.dropOffDateTo || filters.bookingDateFrom || filters.bookingDateTo || filters.depositStatus || filters.pickUpDateFrom || filters.pickUpDateTo) && (<div className="flex justify-end">
+                        {(filters.ownerId || filters.carId || filters.dropOffDateFrom || filters.dropOffDateTo || filters.bookingDateFrom || filters.bookingDateTo || filters.depositStatus || filters.pickUpDateFrom || filters.pickUpDateTo) && (<div className="flex justify-end">
                             <Button
                                 variant="outline"
                                 onClick={clearFilters}

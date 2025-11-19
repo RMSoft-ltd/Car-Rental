@@ -530,18 +530,6 @@ function FeaturesStep({ control }: { control: Control<any> }) {
                 </div>
             </div>
 
-            {/* Exterior Features */}
-            <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Exterior Features</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormCheckbox name="isFogLightsFront" control={control} label="Fog Lights (Front)" />
-                    <FormCheckbox name="isRainSensingWipe" control={control} label="Rain Sensing Wipers" />
-                    <FormCheckbox name="isRearSpoiler" control={control} label="Rear Spoiler" />
-                    <FormCheckbox name="isSunRoof" control={control} label="Sunroof" />
-                    <FormCheckbox name="isRearWindow" control={control} label="Rear Window Wiper" />
-                </div>
-            </div>
-
             {/* Safety Features */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Safety Features</h3>
