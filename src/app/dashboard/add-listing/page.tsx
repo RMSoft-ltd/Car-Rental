@@ -41,23 +41,21 @@ export default function AddListingPage() {
 
   return (
     <div className="flex-1 p-4 lg:p-8">
-      <div className="container mx-auto">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Create New Listing</h1>
-          <p className="text-gray-600 mt-2">
-            Fill in the details below to list your car for rent
-          </p>
-        </div>
-
-        {/* Car Listing Form */}
-        <CarListingForm
-          mode="create"
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          isSubmitting={createMutation.isPending}
-        />
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Create New Listing</h1>
+        <p className="text-gray-600 mt-2">
+          Fill in the details below to list your car for rent
+        </p>
       </div>
+
+      {/* Car Listing Form */}
+      <CarListingForm
+        mode="create"
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isSubmitting={createMutation.isPending}
+      />
     </div>
   );
 }

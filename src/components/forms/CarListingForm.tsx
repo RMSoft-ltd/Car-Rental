@@ -42,10 +42,10 @@ interface CarListingFormProps {
 // ============================================
 
 const STEPS = [
-    { id: 0, title: 'Listing Information', description: 'Basic details about your car' },
+    { id: 0, title: 'Basic Information', description: 'Basic details about your car' },
     { id: 1, title: 'Features', description: 'Select available features' },
     { id: 2, title: 'Pricing', description: 'Set your rental price' },
-    { id: 3, title: 'Important Info', description: 'Requirements and policies' },
+    { id: 3, title: 'Important Information', description: 'Requirements and policies' },
     { id: 4, title: 'Images', description: 'Upload car photos' },
 ] as const;
 
