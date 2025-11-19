@@ -178,11 +178,10 @@ class AuthService {
   // two factor authentication
   async twoFactorAuthentication(payload: {
     otp: string;
-    token: string;
   }): Promise<AuthResponse> {
     try {
       const response = await apiClient.post(
-        `/auth/2fa-verify/${payload.token}`,
+        `/auth/2fa-verify/`,
         {
           otp: payload.otp,
         }

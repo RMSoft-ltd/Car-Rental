@@ -70,7 +70,7 @@ export default function SignUpPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/");
+      router.push("/auth/signin");
     }
   }, [isAuthenticated, router]);
 
