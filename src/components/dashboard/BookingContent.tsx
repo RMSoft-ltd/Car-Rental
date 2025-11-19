@@ -1,13 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Calendar, Info } from "lucide-react";
 import { useBookingHistory } from "@/hooks/use-booking-history";
 import { useAuth } from "@/contexts/AuthContext";
-import { BookingDetail } from "@/types/payment";
+import { BookingDetail, BookingStatus, PaymentStatus } from "@/types/payment";
+import BookingFilters from "./BookingFilters";
+import BookingLegend from "./Bookinglegend";
 import BookingCalendar from "./Bookingcalendar";
 import BookingDetailsPanel from "./Bookingdetailspanel";
-import BookingLegend from "./Bookinglegend";
+
+interface BookingFiltersState {
+  plateNo?: string;
+  carId?: string;
+  userId?: string;
+  bookingStatus?: BookingStatus | "";
+  paymentStatus?: PaymentStatus | "";
+  search?: string;
+}
 
 export default function BookingContent() {
   const { user } = useAuth();
@@ -15,19 +25,55 @@ export default function BookingContent() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState<'single' | 'double' | 'triple'>('double');
   const [showLegend, setShowLegend] = useState(false);
+  const [filters, setFilters] = useState<BookingFiltersState>({});
 
   // Check if user is admin
   const isAdmin = user?.role?.toLowerCase() === 'admin';
 
-  // Build booking filters based on user role
-  const bookingFilters = isAdmin
-    ? { limit: 100 }
-    : { userId: user?.id, limit: 100 };  
+  const bookingFilters = useMemo(() => {
+    const baseFilters: Record<string, unknown> = { limit: 100 };
 
-  // Fetch booking data
+    if (!isAdmin && user?.id) {
+      baseFilters.userId = user.id;
+    }
+    
+    // Apply search filter
+    if (filters.search) {
+      baseFilters.search = filters.search;
+    }
+    
+    // Apply other filters
+    if (filters.plateNo) baseFilters.plateNo = filters.plateNo;
+    if (filters.carId) baseFilters.carId = filters.carId;
+    if (filters.userId) baseFilters.userId = filters.userId;
+    if (filters.bookingStatus) baseFilters.bookingStatus = filters.bookingStatus;
+    if (filters.paymentStatus) baseFilters.paymentStatus = filters.paymentStatus;
+    
+    return baseFilters;
+  }, [isAdmin, user?.id, filters]);
+
+  // Fetch booking data with filters
   const { data: bookingData, isLoading, error, refetch } = useBookingHistory(bookingFilters);
 
-  const bookings = bookingData?.rows || [];
+  // Filter bookings client-side for additional search capabilities
+  const bookings = useMemo(() => {
+    const rows = bookingData?.rows || [];
+    
+    // If no search filter, return all rows
+    if (!filters.search) return rows;
+ 
+    const searchTerm = filters.search.toLowerCase();
+    return rows.filter(booking => 
+      booking.user?.fName?.toLowerCase().includes(searchTerm) ||
+      booking.user?.lName?.toLowerCase().includes(searchTerm) ||
+      booking.user?.email?.toLowerCase().includes(searchTerm) ||
+      booking.bookingGroupId?.toLowerCase().includes(searchTerm) ||
+      booking.car?.make?.toLowerCase().includes(searchTerm) ||
+      booking.car?.model?.toLowerCase().includes(searchTerm) ||
+      booking.car?.plateNumber?.toLowerCase().includes(searchTerm) ||
+      `${booking.user?.fName} ${booking.user?.lName}`.toLowerCase().includes(searchTerm)
+    );
+  }, [bookingData?.rows, filters.search]);
 
   // Navigate months
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -75,14 +121,25 @@ export default function BookingContent() {
               </div>
             </div>
           </div>
-
-          {/* Legend - Collapsible */}
-          {showLegend && (
-            <div className="mt-4 animate-in slide-in-from-top-2 duration-300">
-              <BookingLegend />
-            </div>
-          )}
         </div>
+
+        {/* Enhanced Filters Component - MOVED ABOVE LEGEND */}
+        <div className="mb-6">
+          <BookingFilters 
+            filters={filters}
+            onFiltersChange={setFilters}
+            isAdmin={isAdmin}
+            bookings={bookings}
+            isLoading={isLoading}
+          />
+        </div>
+
+        {/* Legend - Now comes after filters */}
+        {showLegend && (
+          <div className="mb-6 animate-in slide-in-from-top-2 duration-300">
+            <BookingLegend />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
           {/* Calendar Section */}

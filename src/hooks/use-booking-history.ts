@@ -12,8 +12,10 @@ import { paymentService } from "@/services/payment.service";
  * @param filters.page - Page number for pagination
  * @param filters.limit - Number of items per page
  * @param filters.startDate - Filter by start date
- * @param filters.endDate - Filter by end date
- *
+ * @param filters.endDate - Filter by end 
+ * @param filters.carId - Filter by car ID
+ * @param filters.plateNo- Filter by plate number
+ * 
  * @returns Query result with booking history data
  *
  * @example
