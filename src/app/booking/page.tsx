@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   CalendarDays,
   MapPin,
-  Clock,
   Users,
   Gauge,
   Settings,
