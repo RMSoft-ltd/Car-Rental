@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
@@ -27,6 +27,14 @@ import {
   Key,
   Mail,
 } from "lucide-react";
+import { ApiError } from "@/types/Api";
+import {
+  AuthResponse,
+  LoginRequest,
+  LoginResult,
+  TwoFactorChallenge,
+} from "@/types/auth";
+import { TwoFactorModal } from "@/components/auth/TwoFactorModal";
 
 interface SignInForm {
   email: string;
@@ -34,22 +42,57 @@ interface SignInForm {
   rememberMe: boolean;
 }
 
+const isTwoFactorChallenge = (
+  result: LoginResult
+): result is TwoFactorChallenge => {
+  return (
+    typeof result === "object" &&
+    result !== null &&
+    "requiresTwoFactor" in result &&
+    Boolean((result as TwoFactorChallenge).requiresTwoFactor)
+  );
+};
+
 export default function SignInPage() {
   const router = useRouter();
   const toast = useToast();
   const { isAuthenticated, setUser, setIsAuthenticated } = useAuth();
+  const [twoFactorState, setTwoFactorState] = useState<{
+    open: boolean;
+    token?: string;
+    message?: string;
+    email?: string;
+  }>({ open: false });
+  const [lastLoginEmail, setLastLoginEmail] = useState("");
+  const [lastCredentials, setLastCredentials] = useState<LoginRequest | null>(
+    null
+  );
 
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: { email: string; password: string }) => {
+  const loginMutation = useMutation<LoginResult, ApiError, LoginRequest>({
+    mutationFn: async (credentials) => {
       return await authService.login(credentials);
     },
     onSuccess: (data) => {
+      if (isTwoFactorChallenge(data)) {
+        setTwoFactorState({
+          open: true,
+          token: data.twoFactorToken,
+          message: data.message,
+          email: lastLoginEmail,
+        });
+        toast.info(
+          "Verification required",
+          data.message || "Enter the verification code we sent to your email."
+        );
+        return;
+      }
+
       setUser(data.user);
       setIsAuthenticated(true);
       toast.success("Welcome back!", "You have been successfully signed in.");
       router.push("/");
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast.error("Sign In Failed", error.message || "Invalid credentials");
     },
   });
@@ -67,6 +110,11 @@ export default function SignInPage() {
   }, [isAuthenticated, router]);
 
   const onSubmit = async (data: SignInForm) => {
+    setLastLoginEmail(data.email);
+    setLastCredentials({
+      email: data.email,
+      password: data.password,
+    });
     try {
       await loginMutation.mutateAsync({
         email: data.email,
@@ -77,8 +125,46 @@ export default function SignInPage() {
     }
   };
 
+  const handleResendTwoFactorCode = async () => {
+    if (!lastCredentials) {
+      toast.warning(
+        "Missing credentials",
+        "Please re-enter your email and password to request a new code."
+      );
+      return;
+    }
+    try {
+      const result = await authService.login(lastCredentials);
+      if (isTwoFactorChallenge(result)) {
+        setTwoFactorState((prev) => ({
+          ...prev,
+          token: result.twoFactorToken,
+          message: result.message,
+        }));
+        toast.info(
+          "Verification code resent",
+          result.message || "Check your email for the new verification code."
+        );
+        return;
+      }
+
+      setTwoFactorState({ open: false });
+      setUser(result.user);
+      setIsAuthenticated(true);
+      toast.success("Welcome back!", "You have been successfully signed in.");
+      router.push("/");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to resend verification code. Please try again.";
+      toast.error("Resend failed", message);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex bg-white">
+    <>
+      <div className="min-h-screen flex bg-white">
       {/* Left Side - Enhanced */}
       <div className="hidden lg:flex lg:w-1/2 bg-black text-white flex-col justify-between p-12 relative overflow-hidden">
         {/* Subtle Background Pattern */}
@@ -377,6 +463,27 @@ export default function SignInPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      <TwoFactorModal
+        open={twoFactorState.open}
+        email={twoFactorState.email}
+        message={twoFactorState.message}
+        verificationToken={twoFactorState.token}
+        onClose={() =>
+          setTwoFactorState((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        onVerified={(response: AuthResponse) => {
+          setTwoFactorState({ open: false });
+          setUser(response.user);
+          setIsAuthenticated(true);
+          toast.success("Welcome back!", "Two-factor verification successful.");
+          router.push("/");
+        }}
+        onResendCode={handleResendTwoFactorCode}
+      />
+    </>
   );
 }

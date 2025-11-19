@@ -3,7 +3,9 @@ import { ApiError } from "@/types/Api";
 import {
   AuthResponse,
   LoginRequest,
+  LoginResult,
   RegisterRequest,
+  TwoFactorChallenge,
   User,
 } from "@/types/auth";
 import { TokenService } from "@/utils/token";
@@ -11,10 +13,45 @@ import { AxiosError } from "axios";
 
 class AuthService {
   // Login user
-  async login(credentials: LoginRequest): Promise<AuthResponse> {
+  async login(credentials: LoginRequest): Promise<LoginResult> {
     try {
       const response = await apiClient.post("/auth/login", credentials);
-      const { accessToken, user } = response.data;
+      const {
+        accessToken,
+        refreshToken,
+        user,
+        requiresTwoFactor,
+        twoFactorToken,
+        token: legacyTwoFactorToken,
+        message,
+      } = response.data;
+
+      const normalizedMessage = (message || "").toLowerCase();
+      const challengeToken = twoFactorToken || legacyTwoFactorToken;
+      const hasCompleteSession = Boolean(accessToken && user);
+
+      const shouldChallenge =
+        requiresTwoFactor ||
+        response.status === 202 ||
+        (!hasCompleteSession &&
+          (challengeToken ||
+            (normalizedMessage !== "" &&
+              (normalizedMessage.includes("verification") ||
+                normalizedMessage.includes("otp")))));
+
+      if (shouldChallenge) {
+        const challenge: TwoFactorChallenge = {
+          requiresTwoFactor: true,
+          twoFactorToken: challengeToken,
+          message: message || "Email sent for verification. Please enter the OTP.",
+        };
+
+        return challenge;
+      }
+
+      if (!accessToken || !user) {
+        throw new Error("Invalid authentication payload received from the server.");
+      }
 
       const decodedToken = TokenService.decodeToken(accessToken);
       const completeUser = { ...user, role: decodedToken?.role || "" };
@@ -22,8 +59,8 @@ class AuthService {
       // Store tokens and user data
       TokenService.setToken(accessToken);
       TokenService.setUserData(completeUser);
-      if (response.data.refreshToken) {
-        TokenService.setRefreshToken(response.data.refreshToken);
+      if (refreshToken) {
+        TokenService.setRefreshToken(refreshToken);
       }
 
       return { accessToken, user: completeUser };
@@ -127,11 +164,46 @@ class AuthService {
   }
 
   // Reset password with OTP
-  async resetPasswordWithOTP(otp: string, newPassword: string): Promise<void> {
+  async resetPasswordWithOTP(otp: string, password: string): Promise<void> {
     try {
-      await apiClient.post(`/auth/reset-password/${otp}`, {
-        newPassword,
+      await apiClient.post("/auth/reset-password", {
+        otp,
+        password,
       });
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  // two factor authentication
+  async twoFactorAuthentication(payload: {
+    otp: string;
+    token: string;
+  }): Promise<AuthResponse> {
+    try {
+      const response = await apiClient.post(
+        `/auth/2fa-verify/${payload.token}`,
+        {
+          otp: payload.otp,
+        }
+      );
+
+      const { accessToken, refreshToken, user } = response.data;
+
+      if (!accessToken || !user) {
+        throw new Error("Invalid response from two-factor verification.");
+      }
+
+      const decodedToken = TokenService.decodeToken(accessToken);
+      const completeUser = { ...user, role: decodedToken?.role || "" };
+
+      TokenService.setToken(accessToken);
+      TokenService.setUserData(completeUser);
+      if (refreshToken) {
+        TokenService.setRefreshToken(refreshToken);
+      }
+
+      return { accessToken, user: completeUser };
     } catch (error) {
       throw this.handleError(error as AxiosError);
     }
