@@ -177,18 +177,9 @@ export function CarListingForm({
     const handleFormSubmit = handleSubmit(async (data: CarListingFormData) => {
         const submitData: CarListingFormData = { ...data };
 
-        // Debug: Log the data before transformation
-        console.log('Form data before submission:', data);
-        console.log('availabilityType:', submitData.availabilityType);
-        console.log('customDays from form:', submitData.customDays);
-
-        // Ensure customDays is an empty array if not CUSTOM
         if (submitData.availabilityType !== 'CUSTOM') {
             submitData.customDays = [];
         }
-
-        console.log('Final submit data:', submitData);
-        console.log('customDays in final data:', submitData.customDays);
 
         await onSubmit(submitData);
     });

@@ -77,7 +77,8 @@ export interface BookingDetail {
   carOwnerId: number;
   createdAt: string;
   updatedAt: string;
-  // Nested objects from API response
+  pricePerDay: number;
+  rate: number;
   user?: BookingUser;
   car?: BookingCar;
 }

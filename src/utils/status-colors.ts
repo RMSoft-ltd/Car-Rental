@@ -32,6 +32,7 @@ export type BookingStatus =
  */
 export type PaymentStatus =
   | "UNPAID"
+  | "FAILED"
   | "PARTIALLY_PAID"
   | "PAID"
   | "REFUNDED"
@@ -120,30 +121,35 @@ export function getPaymentStatusConfig(status: string): StatusConfig {
   const configs: Record<PaymentStatus, StatusConfig> = {
     PAID: {
       variant: "default",
-      className: "bg-green-500 hover:bg-green-600 text-white",
+      className: "bg-green-500 hover:bg-green-600 text-white capitalize",
     },
     UNPAID: {
       variant: "destructive",
-      className: "bg-red-100 text-red-800 hover:bg-red-200",
+      className: "bg-red-100 text-red-800 hover:bg-red-200 capitalize",
     },
     PROCESSING: {
       variant: "secondary",
-      className: "bg-blue-100 text-blue-800 hover:bg-blue-200",
+      className: "bg-blue-100 text-blue-800 hover:bg-blue-200 capitalize",
     },
     REFUNDED: {
       variant: "outline",
-      className: "border-purple-400 text-purple-700 hover:bg-purple-50",
+      className:
+        "border-purple-400 text-purple-700 hover:bg-purple-50 capitalize",
     },
     PARTIALLY_PAID: {
       variant: "secondary",
-      className: "bg-orange-100 text-orange-800 hover:bg-orange-200",
+      className: "bg-orange-100 text-orange-800 hover:bg-orange-200 capitalize",
+    },
+    FAILED: {
+      variant: "destructive",
+      className: "bg-red-100 hover:bg-red-200 text-red-500 capitalize",
     },
   };
 
   return (
     configs[normalizedStatus] || {
       variant: "secondary",
-      className: "bg-gray-100 text-gray-800",
+      className: "bg-gray-100 text-gray-800 capitalize",
     }
   );
 }

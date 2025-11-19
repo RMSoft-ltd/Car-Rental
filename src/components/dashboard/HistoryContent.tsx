@@ -97,13 +97,13 @@ export default function HistoryContent({
         // Auto-detect status type and return appropriate variant
         const normalizedStatus = status.toUpperCase();
 
-        if (["CONFIRMED", "COMPLETED", "EXPIRED", "REJECTED"].includes(normalizedStatus)) {
+        if (["CONFIRMED", "COMPLETED", "EXPIRED", "REJECTED", "CANCELLED"].includes(normalizedStatus)) {
             return getBookingStatusConfig(status).variant;
         }
-        if (["PAID", "UNPAID", "PARTIALLY_PAID"].includes(normalizedStatus)) {
+        if (["PAID", "UNPAID", "PARTIALLY_PAID", "FAILED"].includes(normalizedStatus)) {
             return getPaymentStatusConfig(status).variant;
         }
-        if (["DEPOSITED", "PARTIALLY_DEPOSITED"].includes(normalizedStatus)) {
+        if (["DEPOSITED", "PARTIALLY_DEPOSITED", "PENDING"].includes(normalizedStatus)) {
             return getDepositStatusConfig(status).variant;
         }
 
@@ -114,13 +114,13 @@ export default function HistoryContent({
     const getStatusClassName = (status: string) => {
         const normalizedStatus = status.toUpperCase();
 
-        if (["CONFIRMED", "COMPLETED", "EXPIRED", "REJECTED"].includes(normalizedStatus)) {
+        if (["CONFIRMED", "COMPLETED", "EXPIRED", "REJECTED", "CANCELLED"].includes(normalizedStatus)) {
             return getBookingStatusConfig(status).className;
         }
-        if (["PAID", "UNPAID", "PARTIALLY_PAID"].includes(normalizedStatus)) {
+        if (["PAID", "UNPAID", "PARTIALLY_PAID", "FAILED"].includes(normalizedStatus)) {
             return getPaymentStatusConfig(status).className;
         }
-        if (["DEPOSITED", "PARTIALLY_DEPOSITED"].includes(normalizedStatus)) {
+        if (["DEPOSITED", "PARTIALLY_DEPOSITED", "PENDING"].includes(normalizedStatus)) {
             return getDepositStatusConfig(status).className;
         }
 
@@ -199,185 +199,187 @@ export default function HistoryContent({
             </div>
 
             {/* Filters - Modern inline design */}
-            <div className={`space-y-4 flex-shrink-0 bg-white p-4 rounded-lg ${showFilters ? "block" : "hidden"}`}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {(showFilters || data?.rows.length === 0) && (<Card className={`flex-shrink-0`}>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 
-                    {/* Car Filter */}
-                    <div className="space-y-2">
-                        <Label htmlFor="carId" className="text-xs text-muted-foreground">Car</Label>
-                        <Select
-                            value={filters.carId?.toString() || "all"}
-                            onValueChange={(value) =>
-                                handleFilterChange("carId", value === "all" ? undefined : Number(value))
-                            }
-                        >
-                            <SelectTrigger size="md" id="carId" className="h-10 w-full">
-                                <SelectValue placeholder="All Cars" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Cars</SelectItem>
-                                {carsLoading ? (
-                                    <SelectItem value="loading" disabled>Loading...</SelectItem>
-                                ) : carsResponse?.rows?.length === 0 ? (
-                                    <SelectItem value="none" disabled>No cars available</SelectItem>
-                                ) : (
-                                    carsResponse?.rows?.map((car) => (
-                                        <SelectItem key={car.id} value={car.id.toString()}>
-                                            {car.make} {car.model} ({car.year}) - {car.plateNumber}
-                                        </SelectItem>
-                                    ))
-                                )}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                        {/* Car Filter */}
+                        <div className="space-y-2">
+                            <Label htmlFor="carId" className="text-xs text-muted-foreground">Car</Label>
+                            <Select
+                                value={filters.carId?.toString() || "all"}
+                                onValueChange={(value) =>
+                                    handleFilterChange("carId", value === "all" ? undefined : Number(value))
+                                }
+                            >
+                                <SelectTrigger size="md" id="carId" className="h-10 w-full">
+                                    <SelectValue placeholder="All Cars" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Cars</SelectItem>
+                                    {carsLoading ? (
+                                        <SelectItem value="loading" disabled>Loading...</SelectItem>
+                                    ) : carsResponse?.rows?.length === 0 ? (
+                                        <SelectItem value="none" disabled>No cars available</SelectItem>
+                                    ) : (
+                                        carsResponse?.rows?.map((car) => (
+                                            <SelectItem key={car.id} value={car.id.toString()}>
+                                                {car.make} {car.model} ({car.year}) - {car.plateNumber}
+                                            </SelectItem>
+                                        ))
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    {/* Booking Status */}
-                    <div className="space-y-2">
-                        <Label htmlFor="bookingStatus" className="text-xs text-muted-foreground">Booking Status</Label>
-                        <Select
-                            value={filters.bookingStatus || "all"}
-                            onValueChange={(value) =>
-                                handleFilterChange("bookingStatus", value === "all" ? undefined : value)
-                            }
-                        >
-                            <SelectTrigger size="md" id="bookingStatus" className="h-10 w-full">
-                                <SelectValue placeholder="All Statuses" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Booking Statuses</SelectItem>
-                                <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-                                <SelectItem value="PENDING">Pending</SelectItem>
-                                <SelectItem value="PROCESSING">Processing</SelectItem>
-                                <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                                <SelectItem value="COMPLETED">Completed</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                        {/* Booking Status */}
+                        <div className="space-y-2">
+                            <Label htmlFor="bookingStatus" className="text-xs text-muted-foreground">Booking Status</Label>
+                            <Select
+                                value={filters.bookingStatus || "all"}
+                                onValueChange={(value) =>
+                                    handleFilterChange("bookingStatus", value === "all" ? undefined : value)
+                                }
+                            >
+                                <SelectTrigger size="md" id="bookingStatus" className="h-10 w-full">
+                                    <SelectValue placeholder="All Statuses" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Booking Statuses</SelectItem>
+                                    <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                                    <SelectItem value="PENDING">Pending</SelectItem>
+                                    <SelectItem value="PROCESSING">Processing</SelectItem>
+                                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                                    <SelectItem value="COMPLETED">Completed</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    {/* Payment Status */}
-                    <div className="space-y-2 col-span-2">
-                        <Label htmlFor="paymentStatus" className="text-xs text-muted-foreground">Booking Payment Status</Label>
-                        <Select
-                            value={filters.paymentStatus || "all"}
-                            onValueChange={(value) =>
-                                handleFilterChange("paymentStatus", value === "all" ? undefined : value)
-                            }
-                        >
-                            <SelectTrigger size="md" id="paymentStatus" className="h-10 w-full">
-                                <SelectValue placeholder="All Payment Statuses" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Payment Statuses</SelectItem>
-                                <SelectItem value="UNPAID">Unpaid</SelectItem>
-                                <SelectItem value="PARTIALLY_PAID">Partially Paid</SelectItem>
-                                <SelectItem value="PAID">Paid</SelectItem>
-                                <SelectItem value="PROCESSING">Processing</SelectItem>
-                                <SelectItem value="REFUNDED">Refunded</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                        {/* Payment Status */}
+                        <div className="space-y-2 col-span-2">
+                            <Label htmlFor="paymentStatus" className="text-xs text-muted-foreground">Booking Payment Status</Label>
+                            <Select
+                                value={filters.paymentStatus || "all"}
+                                onValueChange={(value) =>
+                                    handleFilterChange("paymentStatus", value === "all" ? undefined : value)
+                                }
+                            >
+                                <SelectTrigger size="md" id="paymentStatus" className="h-10 w-full">
+                                    <SelectValue placeholder="All Payment Statuses" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Payment Statuses</SelectItem>
+                                    <SelectItem value="UNPAID">Unpaid</SelectItem>
+                                    <SelectItem value="PARTIALLY_PAID">Partially Paid</SelectItem>
+                                    <SelectItem value="PAID">Paid</SelectItem>
+                                    <SelectItem value="PROCESSING">Processing</SelectItem>
+                                    <SelectItem value="REFUNDED">Refunded</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    {/* Pick Up Date From */}
-                    <div className="space-y-2 col-span-2">
-                        <Label htmlFor="pickUpDateFrom" className="text-xs text-muted-foreground">Pick Up Date</Label>
-                        <Input
-                            id="pickUpDateFrom"
-                            type="date"
-                            value={filters.pickUpDateFrom || ""}
-                            onChange={(e) => handleFilterChange("pickUpDateFrom", e.target.value || undefined)}
-                            className="h-10"
-                        />
-                    </div>
+                        {/* Pick Up Date From */}
+                        <div className="space-y-2">
+                            <Label htmlFor="pickUpDateFrom" className="text-xs text-muted-foreground">Pick Up Date</Label>
+                            <Input
+                                id="pickUpDateFrom"
+                                type="date"
+                                value={filters.pickUpDateFrom || ""}
+                                onChange={(e) => handleFilterChange("pickUpDateFrom", e.target.value || undefined)}
+                                className="h-10"
+                            />
+                        </div>
 
-                    {/* Pick Up Date To */}
-                    <div className="space-y-2 col-span-2">
-                        <Label htmlFor="pickUpDateTo" className="text-xs text-muted-foreground">Pick Up Date</Label>
-                        <Input
-                            id="pickUpDateTo"
-                            type="date"
-                            value={filters.pickUpDateTo || ""}
-                            onChange={(e) => handleFilterChange("pickUpDateTo", e.target.value || undefined)}
-                            className="h-10"
-                        />
-                    </div>
+                        {/* Pick Up Date To */}
+                        <div className="space-y-2">
+                            <Label htmlFor="pickUpDateTo" className="text-xs text-muted-foreground">Pick Up Date</Label>
+                            <Input
+                                id="pickUpDateTo"
+                                type="date"
+                                value={filters.pickUpDateTo || ""}
+                                onChange={(e) => handleFilterChange("pickUpDateTo", e.target.value || undefined)}
+                                className="h-10"
+                            />
+                        </div>
 
-                    {/* Drop Off Date From */}
-                    <div className="space-y-2 col-span-2">
-                        <Label htmlFor="dropOffDateFrom" className="text-xs text-muted-foreground">Drop Off Date</Label>
-                        <Input
-                            id="dropOffDateFrom"
-                            type="date"
-                            value={filters.dropOffDateFrom || ""}
-                            onChange={(e) => handleFilterChange("dropOffDateFrom", e.target.value || undefined)}
-                            className="h-10"
-                        />
-                    </div>
+                        {/* Drop Off Date From */}
+                        <div className="space-y-2">
+                            <Label htmlFor="dropOffDateFrom" className="text-xs text-muted-foreground">Drop Off Date</Label>
+                            <Input
+                                id="dropOffDateFrom"
+                                type="date"
+                                value={filters.dropOffDateFrom || ""}
+                                onChange={(e) => handleFilterChange("dropOffDateFrom", e.target.value || undefined)}
+                                className="h-10"
+                            />
+                        </div>
 
-                    {/* Drop Off Date To */}
-                    <div className="space-y-2 col-span-2">
-                        <Label htmlFor="dropOffDateTo" className="text-xs text-muted-foreground">Drop Off Date</Label>
-                        <Input
-                            id="dropOffDateTo"
-                            type="date"
-                            value={filters.dropOffDateTo || ""}
-                            onChange={(e) => handleFilterChange("dropOffDateTo", e.target.value || undefined)}
-                            className="h-10"
-                        />
-                    </div>
+                        {/* Drop Off Date To */}
+                        <div className="space-y-2">
+                            <Label htmlFor="dropOffDateTo" className="text-xs text-muted-foreground">Drop Off Date</Label>
+                            <Input
+                                id="dropOffDateTo"
+                                type="date"
+                                value={filters.dropOffDateTo || ""}
+                                onChange={(e) => handleFilterChange("dropOffDateTo", e.target.value || undefined)}
+                                className="h-10"
+                            />
+                        </div>
 
-                    {/* Total Days */}
-                    <div className="space-y-2">
-                        <Label htmlFor="totalDays" className="text-xs text-muted-foreground">Total Days</Label>
-                        <Input
-                            id="totalDays"
-                            type="number"
-                            placeholder="Exact days"
-                            value={filters.totalDays || ""}
-                            onChange={(e) =>
-                                handleFilterChange("totalDays", e.target.value ? Number(e.target.value) : undefined)
-                            }
-                            className="h-10"
-                        />
-                    </div>
+                        {/* Total Days */}
+                        <div className="space-y-2">
+                            <Label htmlFor="totalDays" className="text-xs text-muted-foreground">Total Days</Label>
+                            <Input
+                                id="totalDays"
+                                type="number"
+                                placeholder="Exact days"
+                                value={filters.totalDays || ""}
+                                onChange={(e) =>
+                                    handleFilterChange("totalDays", e.target.value ? Number(e.target.value) : undefined)
+                                }
+                                className="h-10"
+                            />
+                        </div>
 
-                    {/* Total Amount */}
-                    <div className="space-y-2">
-                        <Label htmlFor="totalAmount" className="text-xs text-muted-foreground">Total Booking Amount</Label>
-                        <Input
-                            id="totalAmount"
-                            type="number"
-                            placeholder="Exact amount"
-                            value={filters.totalAmount || ""}
-                            onChange={(e) =>
-                                handleFilterChange("totalAmount", e.target.value ? Number(e.target.value) : undefined)
-                            }
-                            className="h-10"
-                        />
-                    </div>
+                        {/* Total Amount */}
+                        <div className="space-y-2">
+                            <Label htmlFor="totalAmount" className="text-xs text-muted-foreground">Total Booking Amount</Label>
+                            <Input
+                                id="totalAmount"
+                                type="number"
+                                placeholder="Exact amount"
+                                value={filters.totalAmount || ""}
+                                onChange={(e) =>
+                                    handleFilterChange("totalAmount", e.target.value ? Number(e.target.value) : undefined)
+                                }
+                                className="h-10"
+                            />
+                        </div>
 
-                    {/* Is Upcoming */}
-                    <div className="flex items-center space-x-2 pt-6">
-                        <Checkbox
-                            id="isUpcoming"
-                            checked={filters.isUpcoming || false}
-                            onCheckedChange={(checked) =>
-                                handleFilterChange("isUpcoming", checked === true ? true : undefined)
-                            }
-                        />
-                        <Label
-                            htmlFor="isUpcoming"
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                            Upcoming only
-                        </Label>
+                        {/* Is Upcoming */}
+                        <div className="flex items-center space-x-2 pt-6">
+                            <Checkbox
+                                id="isUpcoming"
+                                checked={filters.isUpcoming || false}
+                                onCheckedChange={(checked) =>
+                                    handleFilterChange("isUpcoming", checked === true ? true : undefined)
+                                }
+                            />
+                            <Label
+                                htmlFor="isUpcoming"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                Upcoming only
+                            </Label>
+                        </div>
                     </div>
-                </div>
+                </CardContent>
 
                 {/* Clear Filters Button */}
                 {(filters.carId || filters.bookingStatus || filters.paymentStatus ||
                     filters.pickUpDateFrom || filters.pickUpDateTo || filters.dropOffDateFrom || filters.dropOffDateTo ||
                     filters.totalDays || filters.totalAmount || filters.isUpcoming) && (
-                        <div className="flex justify-end">
+                        <div className="flex justify-end mr-4">
                             <Button
                                 variant="outline"
                                 onClick={clearFilters}
@@ -388,7 +390,7 @@ export default function HistoryContent({
                             </Button>
                         </div>
                     )}
-            </div>
+            </Card>)}
 
             {/* Bookings List - Scrollable Container  overflow-y-auto */}
             <div className="flex-1 pr-2">
@@ -566,28 +568,28 @@ export default function HistoryContent({
                                                                 <div className="flex justify-between items-center">
                                                                     <span className="text-muted-foreground">Booking Status:</span>
                                                                     <Badge
-                                                                        variant={getStatusVariant(booking.bookingStatus)}
-                                                                        className={getStatusClassName(booking.bookingStatus)}
+                                                                        variant={getStatusVariant(booking?.bookingStatus?.toLocaleLowerCase())}
+                                                                        className={getStatusClassName(booking?.bookingStatus?.toLocaleLowerCase())}
                                                                     >
-                                                                        {getBookingStatusLabel(booking.bookingStatus)}
+                                                                        {getBookingStatusLabel(booking?.bookingStatus?.toLocaleLowerCase())}
                                                                     </Badge>
                                                                 </div>
                                                                 <div className="flex justify-between items-center">
                                                                     <span className="text-muted-foreground">Booking Payment Status:</span>
                                                                     <Badge
-                                                                        variant={getStatusVariant(booking.paymentStatus)}
-                                                                        className={getStatusClassName(booking.paymentStatus)}
+                                                                        variant={getStatusVariant(booking?.paymentStatus?.toLocaleLowerCase())}
+                                                                        className={getStatusClassName(booking?.paymentStatus?.toLocaleLowerCase())}
                                                                     >
-                                                                        {getPaymentStatusLabel(booking.paymentStatus)}
+                                                                        {getPaymentStatusLabel(booking?.paymentStatus?.toLocaleLowerCase())}
                                                                     </Badge>
                                                                 </div>
                                                                 <div className="flex justify-between items-center">
                                                                     <span className="text-muted-foreground">Deposit Status:</span>
                                                                     <Badge
-                                                                        variant={getStatusVariant(booking.depositStatus)}
-                                                                        className={getStatusClassName(booking.depositStatus)}
+                                                                        variant={getStatusVariant(booking?.depositStatus?.toLocaleLowerCase())}
+                                                                        className={getStatusClassName(booking?.depositStatus?.toLocaleLowerCase())}
                                                                     >
-                                                                        {getDepositStatusLabel(booking.depositStatus)}
+                                                                        {getDepositStatusLabel(booking?.depositStatus?.toLocaleLowerCase())}
                                                                     </Badge>
                                                                 </div>
                                                             </div>

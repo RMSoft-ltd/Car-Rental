@@ -24,17 +24,14 @@ export default function PaymentsPage() {
         depositStatus: "PENDING",
     });
 
-    // Check if user owns any cars
     const { data: userCarsData } = useCarList({ userId: loggedInUserId });
     const isOwner = (userCarsData?.rows?.length ?? 0) > 0;
     const isAdmin = user?.role === "admin" || loggedInUser?.role?.toLowerCase().includes('admin');
 
-    // Determine initial active tab based on role
     const [activeTab, setActiveTab] = useState<"history" | "payments">("history");
 
     const { data, isLoading } = useCarOwnerPayments(filters);
 
-    // Set mounted to true after component mounts (client-side only)
     useEffect(() => {
         setMounted(true);
     }, []);
@@ -43,12 +40,6 @@ export default function PaymentsPage() {
         setFilters(newFilters);
     };
 
-    const handlePayOwner = async (carOwnerId: number, bookingIds: number[]) => {
-        // Implement your payment logic here
-        console.log("Processing payment:", { carOwnerId, bookingIds });
-    };
-
-    // Avoid hydration mismatch by not rendering role-based content until mounted
     if (!mounted) {
         return (
             <div className="container mx-auto p-6">
@@ -76,14 +67,14 @@ export default function PaymentsPage() {
             </div>
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "history" | "payments")}>
-                <TabsList className="grid w-full grid-cols-2 gap-8 mb-6">
-                    <TabsTrigger value="history" className="flex items-center gap-2 cursor-pointer">
+                <TabsList className={`grid w-full h-12  gap-8 mb-6 border-b p-2 ${!isAdmin ? "grid-cols-1" : "grid-cols-2"}`}>
+                    <TabsTrigger value="history" className="flex items-center gap-2 cursor-pointer h-8">
                         <Receipt className="w-4 h-4" />
                         {isAdmin ? "All Booking History" : "My Booking History"}
                     </TabsTrigger>
 
-                    {(isAdmin || isOwner) && (
-                        <TabsTrigger value="payments" className="flex items-center gap-2">
+                    {isAdmin && (
+                        <TabsTrigger value="payments" className="flex items-center gap-2 cursor-pointer  h-8">
                             <Wallet className="w-4 h-4" />
                             {isAdmin ? "Car Owner Payments" : "My Owner Payments"}
                         </TabsTrigger>
@@ -109,7 +100,6 @@ export default function PaymentsPage() {
                                 <CarOwnerPaymentList
                                     data={data?.data || []}
                                     onFilterChange={handleFilterChange}
-                                    onPayOwner={handlePayOwner}
                                     isLoading={isLoading}
                                     totalPages={data?.totalPages || 1}
                                     currentPage={filters.skip || 0}

@@ -266,7 +266,7 @@ export function Combobox({
                         aria-expanded={open}
                         disabled={disabled || loading}
                         className={cn(
-                            'w-full justify-between h-12 font-normal',
+                            'w-full justify-between h-10 font-normal',
                             !fieldValue && 'text-muted-foreground',
                             error && 'border-destructive'
                         )}
