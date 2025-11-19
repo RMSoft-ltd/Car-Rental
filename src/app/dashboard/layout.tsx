@@ -54,7 +54,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex bg-gray-50">
+    <div className="h-screen w-full overflow-hidden flex bg-gray-50">
       {/* Sidebar */}
       <DashboardSidebar
         activeTab={getActiveTab()}
@@ -64,7 +64,7 @@ export default function DashboardLayout({
         isMobileMenuOpen={isMobileMenuOpen}
         onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       />
-      
+
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
         {/* Header */}
@@ -73,11 +73,9 @@ export default function DashboardLayout({
           onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           isCollapsed={isSidebarCollapsed}
         />
-        
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
-          <div className="min-h-full bg-gray-50">
-            {children}
-          </div>
+
+        <main className="flex-1 flex flex-col h-screen overflow-x-auto bg-gray-50">
+          {children}
         </main>
       </div>
     </div>

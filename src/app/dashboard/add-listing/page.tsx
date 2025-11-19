@@ -40,7 +40,7 @@ export default function AddListingPage() {
   };
 
   return (
-    <div className="flex-1 p-4 lg:p-8">
+    <div className="flex-1 p-4 lg:p-8 h-full overflow-auto custom-scrollbar bg-gray-50">
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Create New Listing</h1>

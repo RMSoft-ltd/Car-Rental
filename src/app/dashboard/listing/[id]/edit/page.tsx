@@ -162,26 +162,24 @@ export default function EditListingPage() {
     }
 
     return (
-        <div className="flex-1 p-4 lg:p-8">
-            <div className="container mx-auto">
-                {/* Page Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Edit Listing</h1>
-                    <p className="text-gray-600 mt-2">
-                        Update the details for {carListing.make} {carListing.model}{" "}
-                        {carListing.year}
-                    </p>
-                </div>
-
-                {/* Car Listing Form */}
-                <CarListingForm
-                    mode="update"
-                    initialData={formInitialData}
-                    onSubmit={handleSubmit}
-                    onCancel={handleCancel}
-                    isSubmitting={updateMutation.isPending}
-                />
+        <div className="flex-1 p-4 lg:p-8 h-full overflow-auto custom-scrollbar bg-gray-50">
+            {/* Page Header */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900">Edit Listing</h1>
+                <p className="text-gray-600 mt-2">
+                    Update the details for {carListing.make} {carListing.model}{" "}
+                    {carListing.year}
+                </p>
             </div>
+
+            {/* Car Listing Form */}
+            <CarListingForm
+                mode="update"
+                initialData={formInitialData}
+                onSubmit={handleSubmit}
+                onCancel={handleCancel}
+                isSubmitting={updateMutation.isPending}
+            />
         </div>
     );
 }

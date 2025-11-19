@@ -329,11 +329,11 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #f8fafc;
+  background: #0963bc;
   border-radius: 3px;
 }
 
@@ -396,6 +396,49 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Global Custom Scrollbar - Disable default browser scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: #64748b;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Optional: Completely hide scrollbars but keep scroll functionality */
+/* Uncomment the section below if you want invisible scrollbars */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 
 /* Tiptap Editor Styles */

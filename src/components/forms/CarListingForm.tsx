@@ -335,6 +335,7 @@ function ProgressStepper({ steps, currentStep }: ProgressStepperProps) {
                                 </p>
                             </div>
                         </div>
+
                         {/* Connector Line */}
                         {index < steps.length - 1 && (
                             <div
