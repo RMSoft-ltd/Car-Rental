@@ -1,292 +1,354 @@
-import { User } from "lucide-react";
-import React, { useState } from "react";
-import { LuHouse } from "react-icons/lu";
+
+"use client";
+
+import Image from "next/image";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  Mail,
+  Phone,
+  ShieldCheck,
+  User as UserIcon,
+} from "lucide-react";
+import { LuCamera } from "react-icons/lu";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/app/shared/ToastProvider";
+import {
+  useConfidentialInfoMutation,
+  useUpdateUserDetailsMutation,
+  useUserDetailsQuery,
+} from "@/hooks/use-user";
+import { ConfidentialInfoForm } from "./ConfidentialInfoForm";
+import { ConfidentialInfoSkeleton } from "./ConfidentialInfoSkeleton";
+import { getErrorMessage } from "@/utils/error-utils";
+import type { ConfidentialInfoPayload } from "@/types/user";
 
 export default function ProfileSettings() {
-  const [isCompany, setIsCompany] = useState(false);
+  const { user } = useAuth();
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const [basicForm, setBasicForm] = useState({
+    fName: "",
+    lName: "",
+    phone: "",
+  });
+  const [basicError, setBasicError] = useState<string | null>(null);
+
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+  } = useUserDetailsQuery(user?.id, {
+    enabled: Boolean(user?.id),
+  });
+
+  const mutation = useConfidentialInfoMutation(user?.id, {
+    onSuccess: () => {
+      toast.success(
+        "Profile updated",
+        "Your confidential information has been saved."
+      );
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["userDetails", user.id] });
+      }
+    },
+    onError: (err) => {
+      toast.error("Update failed", getErrorMessage(err));
+    },
+  });
+
+  const serverError = mutation.error
+    ? getErrorMessage(mutation.error, "Failed to save profile.")
+    : null;
+
+  const updateUserMutation = useUpdateUserDetailsMutation(user?.id, {
+    onSuccess: () => {
+      toast.success("Profile updated", "Your account details have been saved.");
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["userDetails", user.id] });
+      }
+    },
+    onError: (err) => {
+      toast.error("Update failed", getErrorMessage(err));
+    },
+  });
+
+  const profile = data?.user ?? null;
+  const confidentialInfo = data?.confidentialInfo ?? null;
+
+  useEffect(() => {
+    if (!profile) return;
+    setBasicForm({
+      fName: profile.fName ?? "",
+      lName: profile.lName ?? "",
+      phone: profile.phone ?? "",
+    });
+  }, [profile]);
+
+  const profilePicture = useMemo(() => {
+    if (!profile?.picture) return null;
+    if (profile.picture.startsWith("http")) {
+      return profile.picture;
+    }
+    return `${process.env.NEXT_PUBLIC_API_BASE_URL}${profile.picture}`;
+  }, [profile?.picture]);
+
+  const summaryBadges = useMemo(() => {
+    if (!profile) return [];
+    const badges: Array<{ label: string; color: string }> = [];
+    if (profile.isVerified) {
+      badges.push({
+        label: "Verified",
+        color: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+      });
+    }
+    if (profile.is2fa) {
+      badges.push({
+        label: "2FA enabled",
+        color: "bg-gray-100 text-gray-700 border border-gray-200",
+      });
+    }
+    if (!profile.isActive) {
+      badges.push({
+        label: "Inactive account",
+        color: "bg-red-100 text-red-700 border border-red-200",
+      });
+    }
+    return badges;
+  }, [profile]);
+
+  const formattedLastUpdated = useMemo(() => {  
+    const updatedAt = confidentialInfo?.updatedAt ?? profile?.updatedAt;
+    if (!updatedAt) return null;
+    return new Date(updatedAt).toLocaleString();
+  }, [confidentialInfo?.updatedAt, profile?.updatedAt]);
+
+  const hasBasicChanges = useMemo(() => {
+    if (!profile) return false;
+    return (
+      basicForm.fName !== (profile.fName ?? "") ||
+      basicForm.lName !== (profile.lName ?? "") ||
+      basicForm.phone !== (profile.phone ?? "")
+    );
+  }, [basicForm, profile]);
+
+  const handleSubmit = (
+    values: ConfidentialInfoPayload & { recordId?: number }
+  ) => {
+    mutation.mutate(values);
+  };
+
+  const handleBasicInputChange =
+    (field: keyof typeof basicForm) => (event: ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      setBasicForm((prev) => ({ ...prev, [field]: value }));
+    };
+
+  const handleBasicSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!basicForm.fName.trim() || !basicForm.lName.trim()) {
+      setBasicError("First and last name are required.");
+      return;
+    }
+    setBasicError(null);
+    updateUserMutation.mutate({
+      fName: basicForm.fName.trim(),
+      lName: basicForm.lName.trim(),
+      phone: basicForm.phone.trim() || null,
+    });
+  };
+
+  if (!user?.id) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        Please sign in to view your profile settings.
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <ConfidentialInfoSkeleton />;
+  }
+
+  if (isError || !profile) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        Failed to load profile information:{" "}
+        {getErrorMessage(error, "Unable to fetch profile data.")}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Profile Photo */}
-      <div className="flex items-center space-x-4 md:space-x-6">
-        <div className="relative">
-          <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-full flex items-center justify-center">
-            <User className="w-6 h-6 md:w-8 md:h-8 text-gray-600" />
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative h-16 w-16 overflow-hidden rounded-full bg-gray-100">
+              {profilePicture ? (
+                <Image
+                  src={profilePicture}
+                  alt="Profile picture"
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <UserIcon className="h-8 w-8 text-gray-500" />
+              )}
+              <button
+                type="button"
+                className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-black text-white shadow"
+                aria-label="Update profile picture"
+              >
+                <LuCamera className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {profile.fName} {profile.lName}
+              </h2>
+              <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                <span className="flex items-center gap-1">
+                  <Mail className="h-4 w-4" />
+                  {profile.email}
+                </span>
+                {profile.phone && (
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-4 w-4" />
+                    {profile.phone}
+                  </span>
+                )}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {summaryBadges.length === 0 ? (
+                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                    Profile in progress
+                  </span>
+                ) : (
+                  summaryBadges.map((badge) => (
+                    <span
+                      key={badge.label}
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badge.color}`}
+                    >
+                      <ShieldCheck className="mr-1 h-3 w-3" />
+                      {badge.label}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
-          <button className="absolute bottom-0 right-0 w-5 h-5 md:w-6 md:h-6 bg-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-800">
-            <svg
-              className="w-2.5 h-2.5 md:w-3 md:h-3 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-          </button>
-        </div>
-        <div>
-          <h3 className="text-base md:text-lg font-semibold text-gray-900">
-            Profile Photo
-          </h3>
-          <p className="text-sm text-gray-600">Update your profile picture</p>
+          <div className="text-sm text-gray-500">
+            {formattedLastUpdated ? (
+              <>
+                Last updated{" "}
+                <span className="font-semibold text-gray-700 text-nowrap">
+                  {formattedLastUpdated}
+                </span>
+              </>
+            ) : (
+              <span>Complete your profile to unlock full access.</span>
+            )}
+            {isFetching && !isLoading && (
+              <span className="ml-2 text-xs text-gray-400">Refreshing…</span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Account Type Toggle */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3">
-          Account Type
-        </h3>
-        <div className="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0">
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="radio"
-              name="accountType"
-              checked={!isCompany}
-              onChange={() => setIsCompany(false)}
-              className="w-4 h-4 accent-black cursor-pointer focus:ring-black focus:ring-1"
-            />
-            <User className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
-            <span className="text-sm md:text-base text-gray-900">
-              Individual
-            </span>
-          </label>
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="radio"
-              name="accountType"
-              checked={isCompany}
-              onChange={() => setIsCompany(true)}
-              className="w-4 h-4 accent-black cursor-pointer focus:ring-black focus:ring-1"
-            />
-            <LuHouse className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
-            <span className="text-sm md:text-base text-gray-900">Company</span>
-          </label>
+      <form
+        onSubmit={handleBasicSubmit}
+        className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base md:text-lg font-semibold text-gray-900">
+              Account Information
+            </h3>
+            <p className="text-sm text-gray-500">
+              Update how your name and contact appear across the dashboard.
+            </p>
+          </div>
+          {isFetching && !isLoading && (
+            <span className="text-xs text-gray-400">Syncing…</span>
+          )}
         </div>
-      </div>
 
-      {/* Basic Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        {isCompany ? (
-          <>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Company Name
-              </label>
-              <input
-                type="text"
-                placeholder="Enter company name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tax Identification Number (TIN)
-              </label>
-              <input
-                type="text"
-                placeholder="Enter TIN"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Registration Certificate
-              </label>
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none cursor-pointer file:cursor-pointer"
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name
-              </label>
-              <input
-                type="text"
-                placeholder="Enter first name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name
-              </label>
-              <input
-                type="text"
-                placeholder="Enter last name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date of Birth
-              </label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none cursor-pointer"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                National ID
-              </label>
-              <input
-                type="text"
-                placeholder="Enter National ID"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Passport Number
-              </label>
-              <input
-                type="text"
-                placeholder="Enter passport number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Driver License Number
-              </label>
-              <input
-                type="text"
-                placeholder="Enter driver license"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-              />
-            </div>
-          </>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              First name
+            </label>
+            <input
+              type="text"
+              value={basicForm.fName}
+              onChange={handleBasicInputChange("fName")}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-500 focus:ring-1 focus:ring-gray-500"
+              placeholder="Enter first name"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Last name
+            </label>
+            <input
+              type="text"
+              value={basicForm.lName}
+              onChange={handleBasicInputChange("lName")}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-500 focus:ring-1 focus:ring-gray-500"
+              placeholder="Enter last name"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Phone number
+            </label>
+            <input
+              type="tel"
+              value={basicForm.phone}
+              onChange={handleBasicInputChange("phone")}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-500 focus:ring-1 focus:ring-gray-500"
+              placeholder="+123 456 789"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <input
+              type="email"
+              value={profile.email}
+              disabled
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500"
+            />
+          </div>
+        </div>
+
+        {basicError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+            {basicError}
+          </div>
         )}
 
-        {/* Contact Information */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Email
-          </label>
-          <input
-            type="email"
-            placeholder="Enter email address"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Phone
-          </label>
-          <input
-            type="tel"
-            placeholder="Enter phone number"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-          />
-        </div>
-      </div>
-
-      {/* Address Information */}
-      <div>
-        <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">
-          Address Information
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Country
-            </label>
-            <input
-              type="text"
-              placeholder="Enter country"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Province
-            </label>
-            <input
-              type="text"
-              placeholder="Enter province"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              District
-            </label>
-            <input
-              type="text"
-              placeholder="Enter district"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Sector
-            </label>
-            <input
-              type="text"
-              placeholder="Enter sector"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Cell
-            </label>
-            <input
-              type="text"
-              placeholder="Enter cell"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Bio
-        </label>
-        <textarea
-          rows={4}
-          placeholder="Tell us about yourself..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none resize-none"
-        />
-      </div>
-
-      {/* Save Button */}
-      <div className="flex justify-end mt-8 pt-6 border-t border-gray-200">
-        <button className="flex items-center space-x-2 px-4 md:px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors cursor-pointer">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="flex justify-end border-t border-gray-200 pt-4">
+          <button
+            type="submit"
+            disabled={updateUserMutation.isPending || !hasBasicChanges}
+            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"
-            />
-          </svg>
-          <span className="text-sm md:text-base">Save Changes</span>
-        </button>
-      </div>
+            {updateUserMutation.isPending ? "Saving..." : "Save Account Changes"}
+          </button>
+        </div>
+      </form>
+
+      <ConfidentialInfoForm
+        initialData={confidentialInfo}
+        onSubmit={handleSubmit}
+        isSubmitting={mutation.isPending}
+        serverError={serverError}
+      />
     </div>
   );
 }

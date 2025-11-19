@@ -33,7 +33,6 @@ export function TwoFactorModal({
   open,
   email,
   message,
-  verificationToken,
   onClose,
   onVerified,
   codeLength = DEFAULT_CODE_LENGTH,
@@ -94,7 +93,6 @@ export function TwoFactorModal({
     if (!canSubmit) return;
     verificationMutation.mutate({
       otp,
-      token: verificationToken ?? "",
     });
   };
 

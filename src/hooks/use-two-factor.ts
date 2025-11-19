@@ -10,11 +10,10 @@ interface UseTwoFactorOptions {
 }
 
 export function useTwoFactorVerification(options?: UseTwoFactorOptions) {
-  return useMutation<AuthResponse, unknown, { otp: string; token: string }>({
-    mutationFn: (variables: { otp: string; verificationToken?: string }) =>
+  return useMutation<AuthResponse, unknown, { otp: string }>({
+    mutationFn: (variables: { otp: string }) =>
       authService.twoFactorAuthentication({
         otp: variables.otp,
-        token: variables.verificationToken as string,
       }),
     onSuccess: (response) => {
       options?.onSuccess?.(response);
