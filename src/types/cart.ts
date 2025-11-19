@@ -31,6 +31,12 @@ export interface UpdateCartItemDto {
   dropOffDate: string; 
 }
 
+export interface AddToCartDto {
+  carId: number;
+  pickUpDate: string;
+  dropOffDate: string;
+}
+
 
 export interface BookingResponse {
   message: string;

@@ -4,6 +4,7 @@ import {
   UpdateCartItemDto,
   PaymentRequest,
   BookedItem,
+  AddToCartDto,
 } from "@/types/cart";
 
 /**
@@ -13,6 +14,25 @@ import {
  */
 export const getCart = async (userId: number): Promise<CartResponse> => {
   const { data } = await apiClient.get<CartResponse>(`/car-booking/${userId}`);
+  return data;
+};
+
+/**
+ * Add a car to the user's cart
+ * @param userId - The user's ID
+ * @param carId - The car's ID
+ * @param cartData - Cart item data (pickUpDate, dropOffDate)
+ * @returns Cart response with updated items
+ */
+export const addToCart = async (
+  userId: number,
+  carId: number,
+  cartData: Omit<AddToCartDto, "carId">
+): Promise<CartResponse> => {
+  const { data } = await apiClient.post<CartResponse>(
+    `/car-booking/booking-cart/${userId}/${carId}`,
+    cartData
+  );
   return data;
 };
 

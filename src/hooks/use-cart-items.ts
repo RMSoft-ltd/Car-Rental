@@ -16,7 +16,9 @@ import {
   deleteCartItem,
   requestPayment,
   proceedCartToCheckout,
+  addToCart,
 } from "@/services/cart-service";
+import { AddToCartDto } from "@/types/cart";
 
 /**
  * Query key factory for cart items
@@ -67,6 +69,41 @@ export const useCart = (userId: number): UseQueryResult<CartItem[], Error> => {
     refetchOnReconnect: true,
     retry: CART_QUERY_CONFIG.retry,
     retryDelay: CART_QUERY_CONFIG.retryDelay,
+  });
+};
+
+/**
+ * Hook for adding items to cart
+ */
+export const useAddToCart = (
+  userId: number
+): UseMutationResult<
+  CartResponse,
+  Error,
+  { carId: number; pickUpDate: string; dropOffDate: string }
+> => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      carId,
+      pickUpDate,
+      dropOffDate,
+    }: {
+      carId: number;
+      pickUpDate: string;
+      dropOffDate: string;
+    }) => {
+      return await addToCart(userId, carId, { pickUpDate, dropOffDate });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: cartKeys.list(userId),
+      });
+    },
+    onError: (error) => {
+      console.error("Add to cart error:", error);
+    },
   });
 };
 
