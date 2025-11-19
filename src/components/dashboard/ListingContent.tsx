@@ -235,7 +235,7 @@ export default function ListingContent() {
                   <div className="flex items-center justify-around mb-6 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                       <Gauge className="w-4 h-4" />
-                      <span>{car.mileage}</span>
+                      <span>{car.mileage} km</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Fuel className="w-4 h-4" />
