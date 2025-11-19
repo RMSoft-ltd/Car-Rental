@@ -124,6 +124,7 @@ export interface BookingHistoryFilters {
   userId?: number; // Filter by user ID (renter)
   ownerId?: number; // Filter by car owner user ID
   carId?: number; // Filter by car ID
+  plateNumber?: string; // Filter by car plate number
 
   // Date Range Filters (Frontend-friendly)
   pickUpDate?: string; // Filter by exact pick up date (YYYY-MM-DD)
@@ -165,7 +166,7 @@ export interface CarOwnerPaymentFilters {
   // Date Filters
   pickUpDateFrom?: string; // Filter bookings with pick up date from this date (YYYY-MM-DD)
   pickUpDateTo?: string; // Filter bookings with pick up date until this date (YYYY-MM-DD)
-  dropOffDateFrom?: string; // Filter bookings with drop off date from this date (YYYY-MM-DD)
+  dropOffDateFrom?: string; // Filter bookings with drop off date from this date (YYY-MM-DD)
   dropOffDateTo?: string; // Filter bookings with drop off date until this date (YYYY-MM-DD)
   bookingDateFrom?: string; // Filter bookings created from this date (YYYY-MM-DD)
   bookingDateTo?: string; // Filter bookings created until this date (YYYY-MM-DD)

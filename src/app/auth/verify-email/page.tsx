@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import authService from "@/services/auth.service";
@@ -14,16 +14,21 @@ function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { success, error } = useToast();
+  const lastTokenRef = useRef<string | null>(null);
+  const token = searchParams.get("token");
 
   useEffect(() => {
     const verifyToken = async () => {
-      const token = searchParams.get("token");
-
       if (!token) {
         setStatus("error");
         setErrorMessage("No verification token provided.");
         return;
       }
+
+      if (lastTokenRef.current === token) {
+        return;
+      }
+      lastTokenRef.current = token;
 
       try {
         await authService.verifyEmail(token);
@@ -47,7 +52,7 @@ function VerifyEmailContent() {
     };
 
     verifyToken();
-  }, [searchParams, router, success, error]);
+  }, [token, router, success, error]);
 
   const handleReturnToSignIn = () => {
     router.push("/auth/signin");
