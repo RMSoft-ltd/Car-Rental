@@ -181,7 +181,7 @@ export const carListingSchema = z.object({
     .min(5, "Fuel policy is required")
     .max(500, "Fuel policy must not exceed 500 characters"),
 
-  returnCondition: z.string().optional(),
+  returningConditions: z.string().optional(),
 
   availabilityType: z.enum(["FULL", "WEEKDAYS", "WEEKENDS", "CUSTOM"], {
     message: "Please select availability type",
@@ -279,7 +279,7 @@ export const defaultCarListingData: Partial<CarListingFormData> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   securityDepositAmount: "" as any,
   fuelPolicy: "",
-  returnCondition: "",
+  returningConditions: "",
   availabilityType: undefined,
   customDays: [],
 

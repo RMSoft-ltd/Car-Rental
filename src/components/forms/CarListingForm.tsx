@@ -18,7 +18,6 @@ import {
     FormInput,
     FormSelect,
     FormCombobox,
-    FormTextarea,
     FormCheckbox,
     FormFileUpload,
     FormError,
@@ -100,7 +99,7 @@ const getStepFields = (step: number): (keyof CarListingFormData)[] => {
             return ['pricePerDay', 'currency'];
         case 3:
             return ['requiredDocs', 'securityDeposit', 'securityDepositAmount',
-                'fuelPolicy', 'returnCondition', 'pickUpLocation', 'availabilityType', 'customDays'];
+                'fuelPolicy', 'returningConditions', 'pickUpLocation', 'availabilityType', 'customDays'];
         case 4:
             return ['carImages'];
         default:
@@ -709,7 +708,7 @@ function ImportantInfoStep({ control }: { control: Control<any> }) {
                     />
 
                     <Controller
-                        name="returnCondition"
+                        name="returningConditions"
                         control={control}
                         render={({ field, fieldState: { error } }) => (
                             <div className="space-y-2">

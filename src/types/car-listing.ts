@@ -23,7 +23,6 @@ export interface Car {
   cylinders?: number;
   category: string | null;
   color: string;
-  pickUpLocation: string;
   latitude: number | null;
   longitude: number | null;
   description: string;
@@ -186,7 +185,6 @@ export interface CarQueryParams {
   insuranceExpirationDateTo?: string;
 
   search?: string;
-  pickUpLocation?: string;
   sortBy?: string;
   order?: string;
 }

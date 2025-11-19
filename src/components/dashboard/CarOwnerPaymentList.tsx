@@ -61,6 +61,8 @@ import {
 import { Filter, X, ChevronLeft, ChevronRight, Eye, Calendar, CreditCard } from "lucide-react";
 import { useCarList } from "@/hooks/use-car-list";
 import { LuX } from "react-icons/lu";
+import { Combobox, ComboboxOption } from "@/components/forms/FormComponents";
+import { AiOutlineClear } from "react-icons/ai";
 
 // Zod schema for deposit payment form
 const depositPaymentSchema = z.object({
@@ -144,6 +146,35 @@ export function CarOwnerPaymentList({
         label: `${car.make} ${car.model} (${car.year}) - ${car.plateNumber}`,
     })) || [];
 
+    // Prepare car options for Combobox (following FormCombobox pattern)
+    const carOptions: ComboboxOption[] = useMemo(() => {
+        return carsResponse?.rows.map((car) => ({
+            value: car.id.toString(),
+            label: `${car.make} ${car.model} (${car.year})`,
+            description: `Plate: ${car.plateNumber}`,
+        })) || [];
+    }, [carsResponse]);
+
+    // Prepare owner options from current data
+    const ownerOptions: ComboboxOption[] = useMemo(() => {
+        if (!data) return [];
+
+        // Create a map to ensure unique owners
+        const ownersMap = new Map<number, ComboboxOption>();
+
+        data.forEach((owner) => {
+            if (!ownersMap.has(owner.carOwnerId)) {
+                ownersMap.set(owner.carOwnerId, {
+                    value: owner.carOwnerId.toString(),
+                    label: `${owner.carOwnerDetails.fname} ${owner.carOwnerDetails.lname}`,
+                    description: owner.carOwnerDetails.email,
+                });
+            }
+        });
+
+        return Array.from(ownersMap.values());
+    }, [data]);
+
     const totalAmount = useMemo(() => {
         if (!data) return 0;
         const sum = data.map(owner => owner.details.reduce((ownerSum, booking) => {
@@ -198,6 +229,12 @@ export function CarOwnerPaymentList({
             limit: 10,
             depositStatus: "PENDING",
         };
+
+        // Preserve ownerId if user is a car owner (not admin)
+        if (!isAdmin && isOwner && currentUserId) {
+            defaultFilters.ownerId = currentUserId;
+        }
+
         setFilters(defaultFilters);
         onFilterChange?.(defaultFilters);
     };
@@ -409,50 +446,38 @@ export function CarOwnerPaymentList({
                 <Card className="flex-shrink-0">
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                            {/* Car Owner Filter - Combobox (Admin Only) */}
+                            {isAdmin && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="ownerId">Car Owner</Label>
+                                    <Combobox
+                                        options={ownerOptions}
+                                        value={filters.ownerId?.toString()}
+                                        onChange={(value: string | undefined) => handleFilterChange("ownerId", value ? Number(value) : undefined)}
+                                        placeholder="Select car owner"
+                                        searchPlaceholder="Search by name or email..."
+                                        emptyText="No car owners found."
+                                        disabled={!isAdmin}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Car Filter - Combobox with Plate Number */}
                             <div className="space-y-2">
-                                <Label htmlFor="bookingGroupId">Booking Group ID</Label>
-                                <Input
-                                    id="bookingGroupId"
-                                    placeholder="Enter booking group ID"
-                                    value={filters.bookingGroupId || ""}
-                                    onChange={(e) => handleFilterChange("bookingGroupId", e.target.value)}
-                                    className="w-full h-10"
+                                <Label htmlFor="carId">Car (Plate Number)</Label>
+                                <Combobox
+                                    options={carOptions}
+                                    value={filters.carId?.toString()}
+                                    onChange={(value: string | undefined) => handleFilterChange("carId", value ? Number(value) : undefined)}
+                                    placeholder="Select car"
+                                    searchPlaceholder="Search by car or plate..."
+                                    emptyText="No cars found."
+                                    loading={carsLoading}
                                 />
                             </div>
 
-                            {/* Car Filter - Dropdown for better UX */}
-                            <div className="space-y-2">
-                                <Label htmlFor="carId">Car</Label>
-                                <Select
-                                    value={filters.carId?.toString() || "all"}
-                                    onValueChange={(value) =>
-                                        handleFilterChange("carId", value === "all" ? undefined : Number(value))
-                                    }
-                                >
-                                    <SelectTrigger id="carId" size="md" className="w-full">
-                                        <SelectValue placeholder="Select car" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Cars</SelectItem>
-                                        {carsLoading ? (
-                                            <SelectItem value="loading" disabled>
-                                                Loading...
-                                            </SelectItem>
-                                        ) : cars.length === 0 ? (
-                                            <SelectItem value="none" disabled>
-                                                No cars available
-                                            </SelectItem>
-                                        ) : (
-                                            cars.map((car) => (
-                                                <SelectItem key={car.id} value={car.id.toString()}>
-                                                    {car.label}
-                                                </SelectItem>
-                                            ))
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
+                            {/* Deposit Status Filter */}
                             <div className="space-y-2">
                                 <Label htmlFor="depositStatus">Deposit Status</Label>
                                 <Select
@@ -472,42 +497,97 @@ export function CarOwnerPaymentList({
                                 </Select>
                             </div>
 
+                            {/* Pick-Up Date From */}
                             <div className="space-y-2">
-                                <Label htmlFor="totalDays">Exact Total Days</Label>
+                                <Label htmlFor="pickUpDateFrom">Pick-Up Date From</Label>
                                 <Input
-                                    id="totalDays"
-                                    type="number"
-                                    placeholder="Enter exact days"
-                                    value={filters.totalDays || ""}
-                                    onChange={(e) =>
-                                        handleFilterChange("totalDays", e.target.value ? Number(e.target.value) : undefined)
-                                    }
-                                    className="w-full h-10"
+                                    id="pickUpDateFrom"
+                                    type="date"
+                                    value={filters.pickUpDateFrom || ""}
+                                    onChange={(e) => handleFilterChange("pickUpDateFrom", e.target.value || undefined)}
                                 />
                             </div>
 
+                            {/* Pick-Up Date To */}
                             <div className="space-y-2">
-                                <Label htmlFor="totalAmount">Exact Total Amount</Label>
+                                <Label htmlFor="pickUpDateTo">Pick-Up Date To</Label>
                                 <Input
-                                    id="totalAmount"
-                                    type="number"
-                                    placeholder="Enter amount"
-                                    value={filters.totalAmount || ""}
-                                    onChange={(e) =>
-                                        handleFilterChange("totalAmount", e.target.value ? Number(e.target.value) : undefined)
-                                    }
-                                    className="w-full h-10"
+                                    id="pickUpDateTo"
+                                    type="date"
+                                    value={filters.pickUpDateTo || ""}
+                                    onChange={(e) => handleFilterChange("pickUpDateTo", e.target.value || undefined)}
+                                />
+                            </div>
+
+                            {/* Drop-Off Date From */}
+                            <div className="space-y-2">
+                                <Label htmlFor="dropOffDateFrom">Drop-Off Date From</Label>
+                                <Input
+                                    id="dropOffDateFrom"
+                                    type="date"
+                                    value={filters.dropOffDateFrom || ""}
+                                    onChange={(e) => handleFilterChange("dropOffDateFrom", e.target.value || undefined)}
+                                />
+                            </div>
+
+                            {/* Drop-Off Date To */}
+                            <div className="space-y-2">
+                                <Label htmlFor="dropOffDateTo">Drop-Off Date To</Label>
+                                <Input
+                                    id="dropOffDateTo"
+                                    type="date"
+                                    value={filters.dropOffDateTo || ""}
+                                    onChange={(e) => handleFilterChange("dropOffDateTo", e.target.value || undefined)}
+                                />
+                            </div>
+
+                            {/* Booking Date From */}
+                            <div className="space-y-2">
+                                <Label htmlFor="bookingDateFrom">Booking Date From</Label>
+                                <Input
+                                    id="bookingDateFrom"
+                                    type="date"
+                                    value={filters.bookingDateFrom || ""}
+                                    onChange={(e) => handleFilterChange("bookingDateFrom", e.target.value || undefined)}
+                                />
+                            </div>
+
+                            {/* Booking Date To */}
+                            <div className="space-y-2">
+                                <Label htmlFor="bookingDateTo">Booking Date To</Label>
+                                <Input
+                                    id="bookingDateTo"
+                                    type="date"
+                                    value={filters.bookingDateTo || ""}
+                                    onChange={(e) => handleFilterChange("bookingDateTo", e.target.value || undefined)}
+                                />
+                            </div>
+
+                            {/* Plate Number Filter */}
+                            <div className="space-y-2">
+                                <Label htmlFor="plateNumber">Plate Number</Label>
+                                <Input
+                                    id="plateNumber"
+                                    type="text"
+                                    placeholder="Enter plate number"
+                                    value={filters.plateNumber || ""}
+                                    onChange={(e) => handleFilterChange("plateNumber", e.target.value || undefined)}
                                 />
                             </div>
 
                         </div>
 
-                        <div className="mt-4 flex justify-end">
-                            <Button variant="ghost" size="sm" onClick={clearFilters}>
-                                <X className="mr-2 h-4 w-4" />
-                                Clear Filters
+                        {(filters.carId || filters.plateNumber || filters.dropOffDateFrom || filters.dropOffDateTo || filters.bookingDateFrom || filters.bookingDateTo || filters.depositStatus || filters.pickUpDateFrom || filters.pickUpDateTo) && (<div className="flex justify-end">
+                            <Button
+                                variant="outline"
+                                onClick={clearFilters}
+                                className="flex items-center gap-2"
+                            >
+                                <AiOutlineClear className="w-4 h-4" />
+                                Clear All Filters
                             </Button>
-                        </div>
+                        </div>)}
+
                     </CardContent>
                 </Card>
             )}

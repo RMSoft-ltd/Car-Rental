@@ -6,7 +6,7 @@ import { baseUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ArrowLeft, Check, X, MapPin, FileText, Shield, ChevronDown, Car as CarIcon, Settings, Sparkles, Box, User, Download } from "lucide-react";
+import { ArrowLeft, Check, X, MapPin, FileText, Shield, ChevronDown, Car as CarIcon, Settings, Sparkles, Box, User } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";

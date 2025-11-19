@@ -66,11 +66,8 @@ function carToFormData(car: Car): Partial<CarListingFormData> {
         requiredDocs: car.requiredDocs,
         securityDeposit: car.securityDeposit,
         securityDepositAmount: car.securityDepositAmount,
-        damageExcess: car.damageExcess,
         fuelPolicy: car.fuelPolicy,
         availabilityType: car.availabilityType as "FULL" | "WEEKDAYS" | "WEEKENDS" | "CUSTOM",
-        insuranceExpirationDate: car.insuranceExpirationDate,
-        insuranceFile: car.insuranceFile || null,
 
         customDays: (() => {
             if (typeof car.customDays === 'string') {

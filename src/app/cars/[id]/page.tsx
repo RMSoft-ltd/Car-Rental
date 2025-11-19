@@ -7,7 +7,6 @@ import {
   Clock,
   Settings,
   User,
-  Info,
   Share2,
   Heart,
   Briefcase,
@@ -39,10 +38,7 @@ const buildFeatureCategories = (car: CarListing) => {
       title: "Interior",
       items: [
         { label: "Air Conditioner", flag: car.isAirConditioner },
-        { label: "Digital Odometer", flag: car.isDigitalOdometer },
         { label: "Leather Seats", flag: car.isLeatherSeats },
-        { label: "Heater", flag: car.isHeater },
-        { label: "Techometer", flag: car.Techometer }
       ]
     },
     {
@@ -141,9 +137,8 @@ const renderRatingStars = (rating?: number) => {
     return (
       <Star
         key={`review-star-${index}`}
-        className={`h-4 w-4 ${
-          active ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
-        }`}
+        className={`h-4 w-4 ${active ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+          }`}
       />
     );
   });
@@ -158,9 +153,9 @@ const getHostDisplay = (car?: CarListing | null) => {
   const avgRating =
     reviewCount > 0
       ? (
-          reviews.reduce((sum, review) => sum + (review.rating ?? 0), 0) /
-          reviewCount
-        ).toFixed(1)
+        reviews.reduce((sum, review) => sum + (review.rating ?? 0), 0) /
+        reviewCount
+      ).toFixed(1)
       : "9.3";
 
   return {
@@ -245,10 +240,10 @@ export default function CarDetailPage() {
     const formatDisplayDate = (iso: string) =>
       iso
         ? new Date(iso).toLocaleDateString("en-US", {
-            month: "numeric",
-            day: "numeric",
-            year: "numeric",
-          })
+          month: "numeric",
+          day: "numeric",
+          year: "numeric",
+        })
         : "";
 
     return {
@@ -268,13 +263,13 @@ export default function CarDetailPage() {
   const rentalDays =
     pickUpDate && dropOffDate
       ? Math.max(
-          1,
-          Math.ceil(
-            (new Date(dropOffDate).getTime() -
-              new Date(pickUpDate).getTime()) /
-              (1000 * 60 * 60 * 24)
-          )
+        1,
+        Math.ceil(
+          (new Date(dropOffDate).getTime() -
+            new Date(pickUpDate).getTime()) /
+          (1000 * 60 * 60 * 24)
         )
+      )
       : 6;
 
   const totalSelectedAmount =
@@ -446,41 +441,41 @@ export default function CarDetailPage() {
         <section className="grid gap-4 md:grid-cols-2">
           <div className="aspect-video rounded-xl overflow-hidden bg-gray-100">
             {heroImage ? (
-                  <Image
+              <Image
                 src={heroImage}
                 alt={`${car.make} ${car.model}`}
-                    width={600}
-                    height={400}
-                    className="w-full h-full object-cover"
-                  />
+                width={600}
+                height={400}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
                 No image available
               </div>
             )}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
+          </div>
+          <div className="grid grid-cols-2 gap-2">
             {galleryImages.length ? (
               galleryImages.map((img, index) => (
                 <div
                   key={`${img}-${index}`}
                   className="aspect-video rounded-lg overflow-hidden bg-gray-100"
                 >
-                    <Image
+                  <Image
                     src={img}
                     alt={`Gallery ${index + 1}`}
-                      width={300}
-                      height={200}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                    width={300}
+                    height={200}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               ))
             ) : (
               <div className="col-span-2 h-full rounded-lg bg-gray-100 flex items-center justify-center text-sm text-gray-400">
                 No additional images
-                  </div>
+              </div>
             )}
-                  </div>
+          </div>
         </section>
 
         {/* Details */}
@@ -500,7 +495,7 @@ export default function CarDetailPage() {
                   ) : (
                     <User className="w-6 h-6 text-gray-600" />
                   )}
-                  </div>
+                </div>
                 <div className="space-y-1">
                   <h3 className="font-semibold text-gray-900">
                     {hostDisplay?.hostName ?? "Host"}
@@ -538,7 +533,7 @@ export default function CarDetailPage() {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                  <div>
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900">Reviews</h4>
                   <p className="text-sm text-gray-500">
                     {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
@@ -548,7 +543,7 @@ export default function CarDetailPage() {
                   {renderRatingStars(
                     reviews.length
                       ? reviews.reduce((sum, current) => sum + (current.rating ?? 0), 0) /
-                          reviews.length
+                      reviews.length
                       : undefined
                   )}
                 </div>
@@ -661,30 +656,32 @@ export default function CarDetailPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <label htmlFor="pickup-date" className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                     Select Pick-up Date
                   </label>
-                    <input
-                      type="date"
+                  <input
+                    id="pickup-date"
+                    type="date"
                     value={pickUpDate}
                     min={getTodayIso()}
                     onChange={(event) => handlePickUpChange(event.target.value)}
                     className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
-                    />
+                  />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <label htmlFor="dropoff-date" className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                     Select Drop-off Date
                   </label>
-                    <input
-                      type="date"
+                  <input
+                    id="dropoff-date"
+                    type="date"
                     value={dropOffDate}
                     min={dropOffMinDate}
                     onChange={(event) => handleDropOffChange(event.target.value)}
                     className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
-                    />
-                  </div>
+                  />
                 </div>
+              </div>
 
               <div className="space-y-3 text-sm text-gray-700">
                 <p className="font-semibold text-gray-900">Rental Price breakdown</p>
@@ -703,9 +700,9 @@ export default function CarDetailPage() {
                       ? `${totalSelectedAmount.toLocaleString()} ${currency}`
                       : "—"}
                   </span>
-                  </div>
-                <p className="text-xs text-gray-500">Free cancellation</p>
                 </div>
+                <p className="text-xs text-gray-500">Free cancellation</p>
+              </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <button className="rounded-2xl border border-gray-900 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-white transition-colors">

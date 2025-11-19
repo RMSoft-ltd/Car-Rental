@@ -161,6 +161,17 @@ export interface CarOwnerPaymentFilters {
   depositStatus?: DepositStatus; // Filter by deposit status (default: PENDING)
   totalDays?: number; // Filter by exact total days
   totalAmount?: number; // Filter by exact total amount
+
+  // Date Filters
+  pickUpDateFrom?: string; // Filter bookings with pick up date from this date (YYYY-MM-DD)
+  pickUpDateTo?: string; // Filter bookings with pick up date until this date (YYYY-MM-DD)
+  dropOffDateFrom?: string; // Filter bookings with drop off date from this date (YYYY-MM-DD)
+  dropOffDateTo?: string; // Filter bookings with drop off date until this date (YYYY-MM-DD)
+  bookingDateFrom?: string; // Filter bookings created from this date (YYYY-MM-DD)
+  bookingDateTo?: string; // Filter bookings created until this date (YYYY-MM-DD)
+
+  // Additional Filters
+  plateNumber?: string; // Filter by car plate number
 }
 
 // Statistics Types

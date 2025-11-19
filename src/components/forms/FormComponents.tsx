@@ -199,8 +199,172 @@ export function FormSelect({
 interface FormComboboxOption {
     value: string;
     label: string;
+    description?: string; // For non-form contexts like filters
     icon?: React.ComponentType<{ className?: string }>;
 }
+
+// Export option type for use in other components
+export type ComboboxOption = FormComboboxOption;
+
+// ============================================
+// Core Combobox Component (Standalone)
+// Can be used with or without react-hook-form
+// ============================================
+
+interface ComboboxProps {
+    value?: string;
+    onChange: (value: string | undefined) => void;
+    options: FormComboboxOption[];
+    placeholder?: string;
+    searchPlaceholder?: string;
+    emptyText?: string;
+    disabled?: boolean;
+    loading?: boolean;
+    allowCustomValue?: boolean;
+    error?: string;
+    showLabel?: boolean;
+}
+
+export function Combobox({
+    value,
+    onChange,
+    options,
+    placeholder = 'Select an option',
+    searchPlaceholder = 'Search...',
+    emptyText = 'No results found.',
+    disabled = false,
+    loading = false,
+    allowCustomValue = false,
+    error,
+}: ComboboxProps) {
+    const [open, setOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const fieldValue = value || '';
+    const selectedOption = options.find((option) => option.value === fieldValue);
+
+    // Check if search term matches any existing options
+    const hasExactMatch = options.some(
+        (option) => option.value.toLowerCase() === searchTerm.toLowerCase()
+    );
+
+    const showAddOption = allowCustomValue && searchTerm.trim() !== '' && !hasExactMatch;
+
+    // Filter options based on search term (search both label and description)
+    const filteredOptions = options.filter((option) =>
+        option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        option.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <>
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        disabled={disabled || loading}
+                        className={cn(
+                            'w-full justify-between h-12 font-normal',
+                            !fieldValue && 'text-muted-foreground',
+                            error && 'border-destructive'
+                        )}
+                    >
+                        <div className="flex items-center gap-2 truncate">
+                            {selectedOption?.icon && (
+                                <selectedOption.icon className="h-4 w-4 shrink-0" />
+                            )}
+                            <span className="truncate">
+                                {loading
+                                    ? 'Loading...'
+                                    : selectedOption
+                                        ? selectedOption.label
+                                        : fieldValue || placeholder}
+                            </span>
+                        </div>
+                        <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                </PopoverTrigger>
+
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command shouldFilter={false}>
+                        <CommandInput
+                            placeholder={searchPlaceholder}
+                            value={searchTerm}
+                            onValueChange={setSearchTerm}
+                        />
+                        <CommandList>
+                            <CommandEmpty>
+                                {showAddOption ? (
+                                    <div className="text-sm text-muted-foreground py-6 text-center">
+                                        No results found
+                                    </div>
+                                ) : (
+                                    emptyText
+                                )}
+                            </CommandEmpty>
+                            <CommandGroup>
+                                {filteredOptions.map((option) => (
+                                    <CommandItem
+                                        key={option.value}
+                                        value={option.value}
+                                        onSelect={() => {
+                                            onChange(option.value === fieldValue ? undefined : option.value);
+                                            setOpen(false);
+                                            setSearchTerm('');
+                                        }}
+                                    >
+                                        <CheckIcon
+                                            className={cn(
+                                                'mr-2 h-4 w-4',
+                                                fieldValue === option.value ? 'opacity-100' : 'opacity-0'
+                                            )}
+                                        />
+                                        {option.icon && (
+                                            <option.icon className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
+                                        )}
+                                        <div className="flex flex-col">
+                                            <span>{option.label}</span>
+                                            {option.description && (
+                                                <span className="text-xs text-muted-foreground">
+                                                    {option.description}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </CommandItem>
+                                ))}
+                                {showAddOption && (
+                                    <CommandItem
+                                        value={searchTerm}
+                                        onSelect={() => {
+                                            onChange(searchTerm);
+                                            setOpen(false);
+                                            setSearchTerm('');
+                                        }}
+                                        className="border-t"
+                                    >
+                                        <Button variant={'outline'} className='!text-black font-semibold'>
+                                            <Plus className="size-4 shrink-0 opacity-50" />
+                                            <span>Add &quot;{searchTerm}&quot;</span>
+                                        </Button>
+                                    </CommandItem>
+                                )}
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+            {error && (
+                <p className="mt-1.5 text-sm text-destructive">{error}</p>
+            )}
+        </>
+    );
+}
+
+// ============================================
+// FormCombobox Component (react-hook-form wrapper)
+// ============================================
 
 interface FormComboboxProps {
     name: string;
@@ -228,123 +392,28 @@ export function FormCombobox({
     className = '',
     allowCustomValue = false,
 }: FormComboboxProps) {
-    const [open, setOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-
     return (
         <Controller
             name={name}
             control={control}
-            render={({ field: { value, onChange }, fieldState: { error } }) => {
-                const fieldValue = value || '';
-                const selectedOption = options.find((option) => option.value === fieldValue);
-
-                // Check if search term matches any existing options
-                const hasExactMatch = options.some(
-                    (option) => option.value.toLowerCase() === searchTerm.toLowerCase()
-                );
-
-                const showAddOption = allowCustomValue && searchTerm.trim() !== '' && !hasExactMatch;
-
-                return (
-                    <div className={className}>
-                        <Label htmlFor={name} className="block mb-2">
-                            {label}
-                        </Label>
-                        <Popover open={open} onOpenChange={setOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={open}
-                                    disabled={disabled}
-                                    className={cn(
-                                        'w-full justify-between h-12 font-normal',
-                                        !fieldValue && 'text-muted-foreground',
-                                        error && 'border-destructive'
-                                    )}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        {selectedOption?.icon && (
-                                            <selectedOption.icon className="h-4 w-4 shrink-0" />
-                                        )}
-                                        <span>{selectedOption ? selectedOption.label : fieldValue || placeholder}</span>
-                                    </div>
-                                    <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                <Command shouldFilter={false}>
-                                    <CommandInput
-                                        placeholder={searchPlaceholder}
-                                        value={searchTerm}
-                                        onValueChange={setSearchTerm}
-                                    />
-                                    <CommandList>
-                                        <CommandEmpty>
-                                            {showAddOption ? (
-                                                <div className="text-sm text-muted-foreground py-6 text-center">
-                                                    No results found
-                                                </div>
-                                            ) : (
-                                                emptyText
-                                            )}
-                                        </CommandEmpty>
-                                        <CommandGroup>
-                                            {options
-                                                .filter((option) =>
-                                                    option.label.toLowerCase().includes(searchTerm.toLowerCase())
-                                                )
-                                                .map((option) => (
-                                                    <CommandItem
-                                                        key={option.value}
-                                                        value={option.value}
-                                                        onSelect={() => {
-                                                            onChange(option.value);
-                                                            setOpen(false);
-                                                            setSearchTerm('');
-                                                        }}
-                                                    >
-                                                        <CheckIcon
-                                                            className={cn(
-                                                                'mr-2 h-4 w-4',
-                                                                fieldValue === option.value ? 'opacity-100' : 'opacity-0'
-                                                            )}
-                                                        />
-                                                        {option.icon && (
-                                                            <option.icon className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
-                                                        )}
-                                                        {option.label}
-                                                    </CommandItem>
-                                                ))}
-                                            {showAddOption && (
-                                                <CommandItem
-                                                    value={searchTerm}
-                                                    onSelect={() => {
-                                                        onChange(searchTerm);
-                                                        setOpen(false);
-                                                        setSearchTerm('');
-                                                    }}
-                                                    className="border-t"
-                                                >
-                                                    <Button variant={'outline'} className='!text-black font-semibold'>
-                                                        <Plus className="size-4 shrink-0 opacity-50" />
-                                                        <span>Add &quot;{searchTerm}&quot;</span>
-                                                    </Button>
-                                                </CommandItem>
-                                            )}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                        {error && (
-                            <p className="mt-1.5 text-sm text-destructive">{error.message}</p>
-                        )}
-                    </div>
-                );
-            }}
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+                <div className={className}>
+                    <Label htmlFor={name} className="block mb-2">
+                        {label}
+                    </Label>
+                    <Combobox
+                        value={value}
+                        onChange={onChange}
+                        options={options}
+                        placeholder={placeholder}
+                        searchPlaceholder={searchPlaceholder}
+                        emptyText={emptyText}
+                        disabled={disabled}
+                        allowCustomValue={allowCustomValue}
+                        error={error?.message}
+                    />
+                </div>
+            )}
         />
     );
 }
@@ -543,7 +612,7 @@ export function FormFileUpload({
                             disabled={disabled}
                             onChange={(e) => handleFileChange(e, onChange, value)}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            aria-label={label}
+                            aria-label={typeof label === 'string' ? label : 'File upload'}
                         />
                         <div className="flex flex-col items-center space-y-4">
                             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
