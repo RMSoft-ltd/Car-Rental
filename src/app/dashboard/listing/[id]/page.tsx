@@ -8,22 +8,20 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ArrowLeft, Check, X, MapPin, FileText, Shield, ChevronDown, Car as CarIcon, Settings, Sparkles, Box, User } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useUpdateCarStatus } from "@/hooks/use-car-listing-mutations";
-import { toast } from "sonner";
+
 import { getErrorMessage } from "@/utils/error-utils";
 import { TokenService } from "@/utils/token";
 import {
-    AlertDialog,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { carStatusUpdateSchema, type CarStatusUpdateFormData } from "@/schemas/car-status.schema";
@@ -44,12 +42,15 @@ import {
 } from "@/components/ui/select";
 import TiptapEditor from "@/components/shared/TiptapEditor";
 import { HtmlRenderer } from "@/components/shared/HtmlRenderer";
+import { useToast } from "@/app/shared/ToastProvider";
 
 export default function CarListingDetailPage() {
     const params = useParams();
     const router = useRouter();
     const carId = Number(params.id);
+    const [isMounted, setIsMounted] = useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
     const [openSections, setOpenSections] = useState({
         basicInfo: true,
         location: true,
@@ -63,6 +64,11 @@ export default function CarListingDetailPage() {
         driveType: true,
         owner: true,
     });
+    const toast = useToast();
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const loggedInUser = TokenService.getUserData();
     const loggedInUserId = loggedInUser?.id || 0;
@@ -87,52 +93,18 @@ export default function CarListingDetailPage() {
     const onSubmit = (data: CarStatusUpdateFormData) => {
         mutate({ id: carId, status: data.status, changeStatusDescription: data.changeStatusDescription }, {
             onSuccess: () => {
-                toast.success("Car status updated successfully");
+                toast.success("Success", "Car status updated successfully");
                 form.reset();
+                setIsStatusDialogOpen(false);
                 refetch();
+
             },
             onError: (error: unknown) => {
                 const message = getErrorMessage(error, "Failed to Update car listing status");
-                toast.error(`Failed to update car status: ${message}`);
+                toast.error("Failed", `Failed to update car status: ${message}`);
             },
         });
     };
-
-    if (isLoading) {
-        return (
-            <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
-                <div className="max-w-6xl mx-auto">
-                    <div className="text-center py-12">
-                        <p className="text-gray-500 text-lg">Loading car details...</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (isError || !car) {
-        return (
-            <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
-                <div className="max-w-6xl mx-auto">
-                    <div className="text-center py-12">
-                        <p className="text-red-500 text-lg">Failed to load car details.</p>
-                        <Button onClick={() => router.back()} className="mt-4">
-                            Go Back
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // Process images
-    const carImages = car.carImages?.map((img) =>
-        img.startsWith("http") ? img : `${baseUrl}${img}`
-    ) || [];
-
-    const mainImage = carImages[selectedImageIndex] || "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
-
-    const listingStatus = ['pending', 'changeRequested', 'approved', 'rejected'];
 
     // Helper to render boolean feature
     const FeatureItem = ({ label, value }: { label: string; value: boolean }) => (
@@ -145,6 +117,46 @@ export default function CarListingDetailPage() {
             )}
         </div>
     );
+
+    // Early return for loading, error, or no data states
+    if (!isMounted || isLoading) {
+        return (
+            <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
+                <div className="text-center py-12">
+                    <p className="text-gray-500 text-lg">Loading cars...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
+                <div className="text-center py-12">
+                    <p className="text-red-500 text-lg">Failed to load cars. Please try again.</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!car) {
+        return (
+            <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
+                <div className="text-center py-12">
+                    <p className="text-gray-500 text-lg">No cars found matching your search.</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Process images (after car is confirmed to exist)
+    const carImages = car.carImages?.map((img) =>
+        img.startsWith("http") ? img : `${baseUrl}${img}`
+    ) || [];
+
+    const mainImage = carImages[selectedImageIndex] || "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
+
+    const listingStatus = ['pending', 'changeRequested', 'approved', 'rejected'];
 
     return (
         <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
@@ -162,86 +174,95 @@ export default function CarListingDetailPage() {
 
                     <div className="flex items-center gap-3">
                         {isAdmin ? (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button
-                                        variant={"secondary"}
-                                        size={`lg`}
-                                        className="flex-grow-[1] border border-green-600 text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors cursor-pointer"
-                                    >
-                                        Change Status
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Car listing status change </AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action changes listing status of {car.title}.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
+                            <>
+                                <Button
+                                    variant={"secondary"}
+                                    size={`lg`}
+                                    onClick={() => setIsStatusDialogOpen(true)}
+                                    className="flex-grow-[1] border border-green-600 text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors cursor-pointer"
+                                >
+                                    Change Status
+                                </Button>
 
-                                    <Form {...form}>
-                                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                                            <FormField
-                                                control={form.control}
-                                                name="status"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Status</FormLabel>
-                                                        <Select
-                                                            onValueChange={field.onChange}
-                                                            defaultValue={field.value}
-                                                        >
+                                <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Car listing status change</DialogTitle>
+                                            <DialogDescription>
+                                                This action changes listing status of {car.title}.
+                                            </DialogDescription>
+                                        </DialogHeader>
+
+                                        <Form {...form}>
+                                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="status"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Status</FormLabel>
+                                                            <Select
+                                                                onValueChange={field.onChange}
+                                                                defaultValue={field.value}
+                                                            >
+                                                                <FormControl>
+                                                                    <SelectTrigger className="w-full h-12">
+                                                                        <SelectValue placeholder="Select a status" />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent>
+                                                                    {listingStatus.filter(status => status !== car.status).map(status => (
+                                                                        <SelectItem key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <FormField
+                                                    control={form.control}
+                                                    name="changeStatusDescription"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Description</FormLabel>
                                                             <FormControl>
-                                                                <SelectTrigger className="w-full h-12">
-                                                                    <SelectValue placeholder="Select a status" />
-                                                                </SelectTrigger>
+                                                                <TiptapEditor
+                                                                    value={field.value || ''}
+                                                                    onChange={field.onChange}
+                                                                    placeholder="Enter description for status change (minimum 10 characters)"
+                                                                />
                                                             </FormControl>
-                                                            <SelectContent>
-                                                                {listingStatus.filter(status => status !== car.status).map(status => (
-                                                                    <SelectItem key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </form>
+                                        </Form>
 
-                                            <FormField
-                                                control={form.control}
-                                                name="changeStatusDescription"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Description</FormLabel>
-                                                        <FormControl>
-                                                            <TiptapEditor
-                                                                value={field.value || ''}
-                                                                onChange={field.onChange}
-                                                                placeholder="Enter description for status change (minimum 10 characters)"
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </form>
-                                    </Form>
-
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel disabled={isPending}>
-                                            Cancel
-                                        </AlertDialogCancel>
-                                        <Button
-                                            className="bg-black text-white hover:bg-gray-800"
-                                            disabled={isPending}
-                                            onClick={form.handleSubmit(onSubmit)}
-                                        >
-                                            {isPending ? "Updating..." : "Update Status"}
-                                        </Button>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                                        <DialogFooter>
+                                            <Button
+                                                variant="outline"
+                                                disabled={isPending}
+                                                onClick={() => {
+                                                    setIsStatusDialogOpen(false);
+                                                    form.reset();
+                                                }}
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                className="bg-black text-white hover:bg-gray-800"
+                                                disabled={isPending}
+                                                onClick={form.handleSubmit(onSubmit)}
+                                            >
+                                                {isPending ? "Updating..." : "Update Status"}
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            </>
                         ) : null}
 
                         {(isOwner || isAdmin) ? (<Link href={`/dashboard/listing/${car.id}/edit`} className="flex gap-3">
@@ -763,6 +784,7 @@ export default function CarListingDetailPage() {
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     );

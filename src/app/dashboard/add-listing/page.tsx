@@ -22,9 +22,14 @@ export default function AddListingPage() {
     }
 
     try {
+      const priceWithFee = data.pricePerDay + (data.pricePerDay * 0.1);
+
       await createMutation.mutateAsync({
         userId: user?.id,
-        data,
+        data: {
+          ...data,
+          pricePerDay: priceWithFee,
+        },
       });
 
       toast.success("Success", "Car listing created successfully!");

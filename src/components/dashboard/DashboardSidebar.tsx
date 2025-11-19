@@ -15,6 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { TokenService } from "@/utils/token";
+import { useState, useEffect } from "react";
 
 interface SidebarProps {
   activeTab: string;
@@ -33,10 +34,15 @@ export default function DashboardSidebar({
   isMobileMenuOpen,
   onMobileMenuToggle,
 }: SidebarProps) {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
+  useEffect(() => {
     const loggedInUser = TokenService.getUserData();
     const loggedInRole = loggedInUser?.role || 'user';
-    const isAdmin = loggedInRole.toLowerCase().includes('admin');
+    setIsAdmin(loggedInRole.toLowerCase().includes('admin'));
+    setIsMounted(true);
+  }, []);
 
   const sidebarItems = [
     {
@@ -70,7 +76,7 @@ export default function DashboardSidebar({
       href: "/dashboard/history",
     },
     // Only show User Management for admin users
-    ...(isAdmin ? [{
+    ...(isMounted && isAdmin ? [{
       icon: Users,
       label: "User Management",
       key: "users",

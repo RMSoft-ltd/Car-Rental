@@ -10,7 +10,6 @@ import { useSearch } from "@/hooks/use-search";
 import { baseUrl } from "@/lib/api";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,12 +25,15 @@ import { useDeleteCarListing } from "@/hooks/use-car-listing-mutations";
 import { TokenService } from "@/utils/token";
 import { Badge } from "../ui/badge";
 import { HtmlRenderer } from "../shared/HtmlRenderer";
+import { useToast } from "@/app/shared/ToastProvider";
 
 const carsPerPage = 6;
 export default function ListingContent() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [isMounted, setIsMounted] = useState(false);
+  const toast = useToast();
+
 
   const { searchTerm, setSearchTerm, debouncedSearchTerm } = useSearch({
     searchFn: () => {
@@ -111,10 +113,10 @@ export default function ListingContent() {
   const handleDelete = (carId: number) => {
     deleteCarListing(carId, {
       onSuccess: () => {
-        toast.success("Car listing deleted successfully!");
+        toast.success("Success", "Car listing deleted successfully!");
       },
       onError: () => {
-        toast.error("Failed to delete car listing.");
+        toast.error("Failed", "Failed to delete car listing.");
       },
     });
   };

@@ -110,9 +110,14 @@ export default function EditListingPage() {
         }
 
         try {
+            const priceWithFee = data.pricePerDay + (data.pricePerDay * 0.1);
+
             await updateMutation.mutateAsync({
                 id: carId,
-                data,
+                data: {
+                    ...data,
+                    pricePerDay: priceWithFee,
+                },
             });
 
             toast.success("Success", "Car listing updated successfully!");
