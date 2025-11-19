@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useAuth } from "@/contexts/AuthContext";
+import { TokenService } from "@/utils/token";
 
 export default function DashboardLayout({
   children,
@@ -16,6 +17,12 @@ export default function DashboardLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { logout } = useAuth();
   const pathname = usePathname();
+
+    const loggedInUser = TokenService.getUserData();
+    const loggedInUserId = loggedInUser?.id || 0;
+    const loggedInRole = loggedInUser?.role || 'user';
+    
+    const isAdmin = loggedInRole.toLowerCase().includes('admin');
 
   const handleLogout = async () => {
     await logout();
@@ -36,6 +43,8 @@ export default function DashboardLayout({
         return "Payments";
       case "/dashboard/history":
         return "Rental History";
+      case "/dashboard/users":
+        return "Users management";
       case "/dashboard/settings":
         return "Settings";
       default:
@@ -49,6 +58,7 @@ export default function DashboardLayout({
     if (pathname.startsWith("/dashboard/booking")) return "booking";
     if (pathname.startsWith("/dashboard/payments")) return "payments";
     if (pathname.startsWith("/dashboard/history")) return "history";
+    if (pathname.startsWith("/dashboard/users")) return "users";
     if (pathname.startsWith("/dashboard/settings")) return "settings";
     return "dashboard";
   };
