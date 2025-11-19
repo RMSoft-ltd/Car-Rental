@@ -11,6 +11,11 @@ export const carKeys = {
   all: ["cars"] as const,
   lists: () => [...carKeys.all, "list"] as const,
   list: (params?: CarQueryParams) => [...carKeys.lists(), params] as const,
+  userLists: () => [...carKeys.all, "user-list"] as const,
+  userList: (
+    userId: number,
+    params?: Pick<CarQueryParams, "search" | "limit" | "skip">
+  ) => [...carKeys.userLists(), userId, params] as const,
   details: () => [...carKeys.all, "detail"] as const,
   detail: (id: number) => [...carKeys.details(), id] as const,
 };
@@ -82,8 +87,9 @@ export const useUserCarList = (
   params?: Pick<CarQueryParams, "search" | "limit" | "skip">
 ) => {
   return useQuery<CarResponse, Error>({
-    queryKey: carKeys.list(params),
+    queryKey: carKeys.userList(userId, params),
     queryFn: () => getCarByUserId(userId, params),
+    enabled: !!userId && userId > 0, // Only run query if valid user ID
 
     // Cache configuration
     staleTime: CAR_QUERY_CONFIG.staleTime,

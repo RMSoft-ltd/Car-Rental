@@ -43,6 +43,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import TiptapEditor from "@/components/shared/TiptapEditor";
+import { HtmlRenderer } from "@/components/shared/HtmlRenderer";
 
 export default function CarListingDetailPage() {
     const params = useParams();
@@ -352,7 +353,11 @@ export default function CarListingDetailPage() {
                                     <FileText className="w-5 h-5" />
                                     Description
                                 </h2>
-                                <p className="text-gray-700 leading-relaxed">{car.description}</p>
+                                <HtmlRenderer
+                                    content={car.description}
+                                    className="text-sm text-gray-600 mb-4 leading-relaxed"
+                                    maxLength={150}
+                                />
                             </div>
                         )}
 
@@ -487,12 +492,20 @@ export default function CarListingDetailPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="bg-gray-50 p-4 rounded-lg">
                                         <p className="text-sm text-gray-600 mb-1">Security Deposit</p>
-                                        <p className="text-lg font-semibold capitalize">{car.securityDeposit}</p>
                                         {car.securityDepositAmount > 0 && (
-                                            <p className="text-md text-gray-700 mt-1">
+                                            <p className="text-lg font-semibold capitalize">
                                                 {car.currency} {car.securityDepositAmount.toLocaleString()}
                                             </p>
                                         )}
+                                    </div>
+
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <p className="text-sm text-gray-600 mb-1">Security Deposit Usage</p>
+                                        <HtmlRenderer
+                                            content={car.securityDeposit}
+                                            className="text-lg font-semibold capitalize"
+                                            maxLength={150}
+                                        />
                                     </div>
 
                                     <div className="bg-gray-50 p-4 rounded-lg">
@@ -502,7 +515,11 @@ export default function CarListingDetailPage() {
                                     {car.requiredDocs && (
                                         <div className="bg-gray-50 p-4 rounded-lg">
                                             <p className="text-sm text-gray-600 mb-1">Required Documents</p>
-                                            <p className="text-lg font-semibold capitalize">{car.requiredDocs}</p>
+                                            <HtmlRenderer
+                                                content={car.requiredDocs}
+                                                className="text-lg font-semibold capitalize"
+                                                maxLength={150}
+                                            />
                                         </div>
                                     )}
                                 </div>

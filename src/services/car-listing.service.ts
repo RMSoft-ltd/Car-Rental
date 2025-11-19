@@ -17,6 +17,7 @@ export const getCarByUserId = async (
   userId: number,
   params?: Pick<CarQueryParams, "search" | "limit" | "skip">
 ) => {
+  console.log("userId in useUserCarList:", userId, "params:", params);
   const { data } = await apiClient.get<CarResponse>(
     `/car-listing/user/${userId}`,
     {

@@ -25,11 +25,13 @@ import {
 import { useDeleteCarListing } from "@/hooks/use-car-listing-mutations";
 import { TokenService } from "@/utils/token";
 import { Badge } from "../ui/badge";
+import { HtmlRenderer } from "../shared/HtmlRenderer";
 
 const carsPerPage = 6;
 export default function ListingContent() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
+  const [isMounted, setIsMounted] = useState(false);
 
   const { searchTerm, setSearchTerm, debouncedSearchTerm } = useSearch({
     searchFn: () => {
@@ -38,6 +40,10 @@ export default function ListingContent() {
     debounceDelay: 500,
     minSearchLength: 0,
   });
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const [fetchParams, setFetchParams] = useState<{ search?: string, limit?: number, skip?: number }>({
     search: '',
@@ -216,9 +222,11 @@ export default function ListingContent() {
                   </h3>
 
                   {/* Car Description */}
-                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                    {car.description || `${car.body} • ${car.engineSize}L • ${car.doors} Doors`}
-                  </p>
+                  <HtmlRenderer
+                    content={car.description || `${car.body} • ${car.engineSize}L • ${car.doors} Doors`}
+                    className="text-sm text-gray-600 mb-4 leading-relaxed"
+                    maxLength={150}
+                  />
 
                   {/* Divider */}
                   <hr className="border-gray-200 mb-4" />
@@ -334,26 +342,22 @@ export default function ListingContent() {
           </div>
         )}
 
-        {/* No Results */}
-        {cars.length === 0 && !isLoading && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No cars found matching your search.</p>
-          </div>
-        )}
-
         {/* Loading State */}
-        {isLoading && (
+        {!isMounted || isLoading ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">Loading cars...</p>
           </div>
-        )}
-
-        {/* Error State */}
-        {isError && (
+        ) : isError ? (
+          /* Error State */
           <div className="text-center py-12">
             <p className="text-red-500 text-lg">Failed to load cars. Please try again.</p>
           </div>
-        )}
+        ) : cars.length === 0 ? (
+          /* No Results */
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No cars found matching your search.</p>
+          </div>
+        ) : null}
 
 
 

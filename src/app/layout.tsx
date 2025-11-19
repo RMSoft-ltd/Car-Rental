@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Inter } from "next/font/google";
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -17,12 +18,17 @@ const inter = Inter({
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [isMounted, setIsMounted] = useState(false);
   const isAuthPage = pathname?.startsWith("/auth");
   const isDashboardPage = pathname?.startsWith("/dashboard");
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {!isAuthPage && !isDashboardPage && <Navbar />}
+      {isMounted && !isAuthPage && !isDashboardPage && <Navbar />}
       <main>{children}</main>
     </div>
   );
@@ -33,14 +39,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "";
+
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
         <QueryProvider>
           <AuthProvider>
             <NotificationProvider>
               <ToastProvider>
-                <SocketProvider apiUrl={process.env.NEXT_PUBLIC_SOCKET_URL!}>
+                <SocketProvider apiUrl={socketUrl}>
                   <LayoutContent>{children}</LayoutContent>
                 </SocketProvider>
               </ToastProvider>
