@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import authService from "@/services/auth.service";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,8 +53,9 @@ const isTwoFactorChallenge = (
   );
 };
 
-export default function SignInPage() {
+function SignInContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const { isAuthenticated, setUser, setIsAuthenticated } = useAuth();
   const [twoFactorState, setTwoFactorState] = useState<{
@@ -67,6 +68,10 @@ export default function SignInPage() {
   const [lastCredentials, setLastCredentials] = useState<LoginRequest | null>(
     null
   );
+
+  const redirectParam = searchParams?.get("redirect");
+  const safeRedirectPath =
+    redirectParam && redirectParam.startsWith("/") ? redirectParam : "/";
 
   const loginMutation = useMutation<LoginResult, ApiError, LoginRequest>({
     mutationFn: async (credentials) => {
@@ -90,7 +95,7 @@ export default function SignInPage() {
       setUser(data.user);
       setIsAuthenticated(true);
       toast.success("Welcome back!", "You have been successfully signed in.");
-      router.push("/");
+      router.push(safeRedirectPath);
     },
     onError: (error) => {
       toast.error("Sign In Failed", error.message || "Invalid credentials");
@@ -105,9 +110,9 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/");
+      router.push(safeRedirectPath);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, safeRedirectPath]);
 
   const onSubmit = async (data: SignInForm) => {
     setLastLoginEmail(data.email);
@@ -152,7 +157,7 @@ export default function SignInPage() {
       setUser(result.user);
       setIsAuthenticated(true);
       toast.success("Welcome back!", "You have been successfully signed in.");
-      router.push("/");
+      router.push(safeRedirectPath);
     } catch (error) {
       const message =
         error instanceof Error
@@ -485,5 +490,13 @@ export default function SignInPage() {
         onResendCode={handleResendTwoFactorCode}
       />
     </>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <SignInContent />
+    </Suspense>
   );
 }

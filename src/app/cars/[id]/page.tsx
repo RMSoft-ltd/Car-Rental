@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useCarListing } from "@/hooks/use-car-list";
 import { baseUrl } from "@/lib/api";
 import { Car as CarListing } from "@/types/car-listing";
@@ -175,8 +175,21 @@ export default function CarDetailPage() {
   const toast = useToast();
   const carIdParam = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const carId = Number(carIdParam);
-  const currentYear = useMemo(() => new Date().getFullYear(), []);
-  const maxSelectableYear = currentYear + 2;
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const redirectTarget = useMemo(() => {
+    const query = searchParams?.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }, [pathname, searchParams]);
+  const redirectToSignIn = (
+    title = "Sign in required",
+    description = "Please sign in to continue."
+  ) => {
+    toast.info(title, description);
+    const params = new URLSearchParams();
+    params.set("redirect", redirectTarget || "/");
+    router.push(`/auth/signin?${params.toString()}`);
+  };
 
   const { data: car, isLoading, error } = useCarListing(
     Number.isNaN(carId) ? 0 : carId
@@ -384,8 +397,10 @@ export default function CarDetailPage() {
 
   const handleBookNow = () => {
     if (!user) {
-      toast.info("Sign in required", "Please sign in to book this car.");
-      router.push("/login");
+      redirectToSignIn(
+        "Sign in required",
+        "Please sign in to book this car."
+      );
       return;
     }
     if (!car?.id) {
@@ -422,8 +437,10 @@ export default function CarDetailPage() {
 
   const handleAddToCart = () => {
     if (!user) {
-      toast.info("Sign in required", "Please sign in to add items to cart.");
-      router.push("/auth/signin");
+      redirectToSignIn(
+        "Sign in required",
+        "Please sign in to add items to cart."
+      );
       return;
     }
     if (!car?.id) {
