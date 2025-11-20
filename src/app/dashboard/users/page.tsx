@@ -116,7 +116,7 @@ export default function UserManagement() {
   };
 
   // Handle filter changes
-  const handleFilterChange = (key: keyof UsersFilterParams, value: any) => {
+  const handleFilterChange = (key: keyof UsersFilterParams, value: string | number | boolean | undefined) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value || undefined,
@@ -143,12 +143,11 @@ export default function UserManagement() {
         await toggleStatusMutation.mutateAsync(userId);
         toast.success(
           "User status updated",
-          `User has been ${
-            currentStatus ? "deactivated" : "activated"
+          `User has been ${currentStatus ? "deactivated" : "activated"
           } successfully.`
         );
         refetch(); // Refresh the list
-      } catch (error) {
+      } catch {
         toast.error(
           "Update failed",
           "Failed to update user status. Please try again."
@@ -554,11 +553,10 @@ export default function UserManagement() {
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`w-10 h-10 rounded-full font-medium transition-colors ${
-                        currentPage === pageNum
+                      className={`w-10 h-10 rounded-full font-medium transition-colors ${currentPage === pageNum
                           ? "bg-black text-white"
                           : "border border-gray-300 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       {pageNum}
                     </button>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Search, Calendar, Car, User, Filter } from "lucide-react";
+import { Search, Calendar, Car, Filter } from "lucide-react";
 import { useBookingHistory } from "@/hooks/use-booking-history";
 import { formatCurrency, formatDate } from "@/utils/formatter";
 import { Badge } from "@/components/ui/badge";
@@ -74,7 +74,7 @@ export default function RentalHistoryContent() {
   };
 
   // Handle filter changes
-  const handleFilterChange = (key: keyof BookingHistoryFilters, value: any) => {
+  const handleFilterChange = (key: keyof BookingHistoryFilters, value: string | number | undefined) => {
     setFilters(prev => ({
       ...prev,
       [key]: value || undefined,
@@ -528,8 +528,8 @@ export default function RentalHistoryContent() {
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
                     className={`w-10 h-10 rounded-full font-medium transition-colors ${currentPage === pageNum
-                        ? "bg-black text-white"
-                        : "border border-gray-300 hover:bg-gray-50"
+                      ? "bg-black text-white"
+                      : "border border-gray-300 hover:bg-gray-50"
                       }`}
                   >
                     {pageNum}

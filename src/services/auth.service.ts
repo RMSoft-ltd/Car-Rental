@@ -43,14 +43,17 @@ class AuthService {
         const challenge: TwoFactorChallenge = {
           requiresTwoFactor: true,
           twoFactorToken: challengeToken,
-          message: message || "Email sent for verification. Please enter the OTP.",
+          message:
+            message || "Email sent for verification. Please enter the OTP.",
         };
 
         return challenge;
       }
 
       if (!accessToken || !user) {
-        throw new Error("Invalid authentication payload received from the server.");
+        throw new Error(
+          "Invalid authentication payload received from the server."
+        );
       }
 
       const decodedToken = TokenService.decodeToken(accessToken);
@@ -180,12 +183,9 @@ class AuthService {
     otp: string;
   }): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post(
-        `/auth/2fa-verify/`,
-        {
-          otp: payload.otp,
-        }
-      );
+      const response = await apiClient.post(`/auth/2fa-verify/`, {
+        otp: payload.otp,
+      });
 
       const { accessToken, refreshToken, user } = response.data;
 
@@ -288,10 +288,17 @@ class AuthService {
       fName: "",
       lName: "",
       phone: null,
+      password: "",
       isActive: true,
       isTermsAccepted: true,
       lastLogin: null,
-      picture: null,
+      resetToken: null,
+      refreshToken: null,
+      verifyToken: null,
+      is2fa: null,
+      googleId: null,
+      picture: "",
+      isGoogleAuth: null,
       isVerified: true,
       createdAt: "",
       updatedAt: "",

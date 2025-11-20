@@ -192,15 +192,6 @@ export default function CarDetailPage() {
     return `${year}-${month}-${day}`;
   };
 
-  const getNextDayIso = (iso: string) => {
-    const date = new Date(iso + "T00:00:00");
-    date.setDate(date.getDate() + 1);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
   useEffect(() => {
     const todayIso = getTodayIso();
     setPickUpDate(todayIso);
@@ -284,12 +275,12 @@ export default function CarDetailPage() {
         },
         user: user
           ? {
-              id: user.id,
-              name:
-                `${user.fName ?? ""} ${user.lName ?? ""}`.trim() || user.email,
-              email: user.email,
-              phone: user.phone,
-            }
+            id: user.id,
+            name:
+              `${user.fName ?? ""} ${user.lName ?? ""}`.trim() || user.email,
+            email: user.email,
+            phone: user.phone,
+          }
           : null,
       };
       sessionStorage.setItem("directBooking", JSON.stringify(payload));

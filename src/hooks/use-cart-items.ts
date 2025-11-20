@@ -5,11 +5,7 @@ import {
   UseQueryResult,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { 
-  CartItem, 
-  CartResponse, 
-  PaymentRequest,  
-} from "@/types/cart";
+import { CartItem, CartResponse, PaymentRequest } from "@/types/cart";
 import {
   getCart,
   updateCartItem,
@@ -18,7 +14,6 @@ import {
   proceedCartToCheckout,
   addToCart,
 } from "@/services/cart-service";
-import { AddToCartDto } from "@/types/cart";
 
 /**
  * Query key factory for cart items
@@ -37,9 +32,9 @@ export const cartKeys = {
 export const paymentKeys = {
   all: ["payments"] as const,
   details: () => [...paymentKeys.all, "detail"] as const,
-  detail: (bookingGroupId: string) => [...paymentKeys.details(), bookingGroupId] as const,
+  detail: (bookingGroupId: string) =>
+    [...paymentKeys.details(), bookingGroupId] as const,
 };
-
 
 /**
  * Configuration for cart queries
@@ -48,7 +43,8 @@ const CART_QUERY_CONFIG = {
   staleTime: 2 * 60 * 1000, // 2 minutes
   gcTime: 10 * 60 * 1000, // 10 minutes
   retry: 2,
-  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  retryDelay: (attemptIndex: number) =>
+    Math.min(1000 * 2 ** attemptIndex, 30000),
 } as const;
 
 /**
@@ -217,14 +213,15 @@ export const useCartSummary = (userId: number) => {
 
   const totalItems = cartItems?.length ?? 0;
 
-  const totalPrice = cartItems?.reduce((total, item) => {
-    const pickUp = new Date(item.pickUpDate);
-    const dropOff = new Date(item.dropOffDate);
-    const days = Math.ceil(
-      (dropOff.getTime() - pickUp.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    return total + item.car.pricePerDay * Math.max(days, 1);
-  }, 0) ?? 0;
+  const totalPrice =
+    cartItems?.reduce((total, item) => {
+      const pickUp = new Date(item.pickUpDate);
+      const dropOff = new Date(item.dropOffDate);
+      const days = Math.ceil(
+        (dropOff.getTime() - pickUp.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return total + item.car.pricePerDay * Math.max(days, 1);
+    }, 0) ?? 0;
 
   return {
     cartItems,
@@ -234,7 +231,6 @@ export const useCartSummary = (userId: number) => {
     error,
   };
 };
-
 
 /**
  * Hook for processing payment
@@ -261,7 +257,6 @@ export const usePayment = (): UseMutationResult<
       queryClient.invalidateQueries({
         queryKey: paymentKeys.detail(variables.bookingGroupId),
       });
-
     },
 
     onError: (error) => {
@@ -269,7 +264,6 @@ export const usePayment = (): UseMutationResult<
     },
   });
 };
-
 
 // proceed to checkout from cart
 export const useProceedCartToCheckout = (
@@ -284,8 +278,6 @@ export const useProceedCartToCheckout = (
       queryClient.invalidateQueries({
         queryKey: cartKeys.list(userId),
       });
-
-      
     },
     onError: (error) => {
       console.error("Proceed to checkout error:", error);

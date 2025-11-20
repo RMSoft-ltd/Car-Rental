@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { BookingsPerOwnerList, CarOwnerPaymentFilters, BookingDetail, MakeDepositRequest } from "@/types/payment";
+import { BookingsPerOwnerList, CarOwnerPaymentFilters, BookingDetail } from "@/types/payment";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -157,14 +157,6 @@ export function CarOwnerPaymentList({
         return Array.from(ownersMap.values());
     }, [data]);
 
-    const totalAmount = useMemo(() => {
-        if (!data) return 0;
-        const sum = data.map(owner => owner.details.reduce((ownerSum, booking) => {
-            return ownerSum + booking.totalAmount;
-        }, 0));
-        return sum.reduce((a, b) => a + b, 0);
-    }, [data]);
-
     const statistics = useMemo(() => {
         if (!data) return {
             totalOwners: 0,
@@ -174,11 +166,12 @@ export function CarOwnerPaymentList({
         };
 
         const totalOwners = data.length;
+        const calculatedTotalAmount = data.reduce((sum, owner) => sum + owner.totalAmountOwed, 0);
         return {
             totalOwners,
             totalAmountOwed: data.reduce((sum, owner) => sum + owner.totalAmountOwed, 0),
             totalAmountPaid: data.reduce((sum, owner) => sum + owner.totalAmountOwed, 0),
-            totalAmount: totalAmount
+            totalAmount: calculatedTotalAmount
         }
     }, [data]);
 
@@ -319,16 +312,8 @@ export function CarOwnerPaymentList({
         form.reset();
     };
 
-    const onSubmitPayment = async (values: DepositPaymentFormValues) => {
+    const onSubmitPayment = async () => {
         if (!paymentDialog.carOwnerId) return;
-
-        const depositRequest: MakeDepositRequest = {
-            carOwnerId: paymentDialog.carOwnerId,
-            bookingIds: paymentDialog.bookingIds,
-            amount: values.amount,
-            reason: values.reason,
-            mobilephone: values.mobilephone,
-        };
 
         try {
 
@@ -336,7 +321,6 @@ export function CarOwnerPaymentList({
             closePaymentDialog();
         } catch (error) {
             console.error("Payment error:", error);
-            // Handle error (you might want to show a toast notification)
         }
     };
 

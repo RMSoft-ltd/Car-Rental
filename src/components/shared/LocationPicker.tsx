@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { MapPin, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -90,6 +90,7 @@ export default function LocationPicker({
     const [isMapLoaded, setIsMapLoaded] = useState(false);
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [marker, setMarker] = useState<google.maps.Marker | null>(null);
+    const markerRef = useRef<google.maps.Marker | null>(null);
     const [searchInput, setSearchInput] = useState(value);
     const [selectedLocation, setSelectedLocation] = useState<string>(value);
     const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
@@ -108,6 +109,51 @@ export default function LocationPicker({
             setIsMapLoaded(true);
         });
     }, []);
+
+    // Sync marker ref with state
+    useEffect(() => {
+        markerRef.current = marker;
+    }, [marker]);
+
+    // Define updateMarker callback
+    const updateMarker = useCallback((coords: Coordinates) => {
+        if (!map) return;
+
+        if (markerRef.current) {
+            markerRef.current.setPosition(coords);
+        } else {
+            const newMarker = new google.maps.Marker({
+                position: coords,
+                map: map,
+                draggable: true,
+                animation: google.maps.Animation.DROP,
+            });
+
+            setMarker(newMarker);
+        }
+    }, [map]);
+
+    // Define handleMapClick callback
+    const handleMapClick = useCallback((latLng: google.maps.LatLng) => {
+        const coords = {
+            lat: latLng.lat(),
+            lng: latLng.lng(),
+        };
+
+        setCoordinates(coords);
+        updateMarker(coords);
+
+        // Reverse geocode to get address
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: latLng }, (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
+            if (status === 'OK' && results && results[0]) {
+                const address = results[0].formatted_address;
+                setSelectedLocation(address);
+                setSearchInput(address);
+                onChange(address, coords);
+            }
+        });
+    }, [onChange, updateMarker]);
 
     // Initialize Map
     useEffect(() => {
@@ -135,7 +181,7 @@ export default function LocationPicker({
                 handleMapClick(e.latLng);
             }
         });
-    }, [isMapLoaded, map]);
+    }, [isMapLoaded, map, handleMapClick]);
 
     // Initialize Autocomplete
     useEffect(() => {
@@ -174,51 +220,22 @@ export default function LocationPicker({
         });
 
         setAutocomplete(newAutocomplete);
-    }, [isMapLoaded, map, autocomplete, onChange]);
+    }, [isMapLoaded, map, autocomplete, onChange, updateMarker]);
 
-    const handleMapClick = useCallback((latLng: google.maps.LatLng) => {
-        const coords = {
-            lat: latLng.lat(),
-            lng: latLng.lng(),
-        };
+    // Attach dragend listener to marker
+    useEffect(() => {
+        if (!marker) return;
 
-        setCoordinates(coords);
-        updateMarker(coords);
-
-        // Reverse geocode to get address
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ location: latLng }, (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
-            if (status === 'OK' && results && results[0]) {
-                const address = results[0].formatted_address;
-                setSelectedLocation(address);
-                setSearchInput(address);
-                onChange(address, coords);
+        const listener = marker.addListener('dragend', (e: google.maps.MapMouseEvent) => {
+            if (e.latLng) {
+                handleMapClick(e.latLng);
             }
         });
-    }, [onChange]);
 
-    const updateMarker = (coords: Coordinates) => {
-        if (!map) return;
-
-        if (marker) {
-            marker.setPosition(coords);
-        } else {
-            const newMarker = new google.maps.Marker({
-                position: coords,
-                map: map,
-                draggable: true,
-                animation: google.maps.Animation.DROP,
-            });
-
-            newMarker.addListener('dragend', (e: google.maps.MapMouseEvent) => {
-                if (e.latLng) {
-                    handleMapClick(e.latLng);
-                }
-            });
-
-            setMarker(newMarker);
-        }
-    };
+        return () => {
+            google.maps.event.removeListener(listener);
+        };
+    }, [marker, handleMapClick]);
 
     const handleClear = () => {
         setSearchInput('');

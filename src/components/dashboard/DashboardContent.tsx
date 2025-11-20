@@ -150,7 +150,7 @@ export default function DashboardContent() {
   const [allBookings, setAllBookings] = useState<Booking[]>([]);
   const [cars, setCars] = useState<Car[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [stats, setStats] = useState<DashboardStats>(initialStats);
+  const [stats] = useState<DashboardStats>(initialStats);
 
   // Fetch data on mount
   useEffect(() => {
@@ -163,18 +163,18 @@ export default function DashboardContent() {
   const fetchRecentBookings = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${baseUrl}/bookings?limit=5&skip=0`, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch recent bookings: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       setRecentBookings(Array.isArray(data.rows) ? data.rows : []);
     } catch (err) {
@@ -190,18 +190,18 @@ export default function DashboardContent() {
   const fetchAllBookings = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${baseUrl}/bookings`, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch all bookings: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       setAllBookings(Array.isArray(data.rows) ? data.rows : []);
     } catch (err) {
@@ -217,18 +217,18 @@ export default function DashboardContent() {
   const fetchCars = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${baseUrl}/cars`, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch cars: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       setCars(Array.isArray(data.rows) ? data.rows : []);
     } catch (err) {
@@ -244,18 +244,18 @@ export default function DashboardContent() {
   const fetchUsers = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${baseUrl}/users`, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch users: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       setUsers(Array.isArray(data.rows) ? data.rows : []);
     } catch (err) {
@@ -312,7 +312,7 @@ export default function DashboardContent() {
     };
 
     const config = statusConfig[status] || statusConfig.PENDING;
-    
+
     return (
       <Badge variant={config.variant} className={config.className}>
         {status}
@@ -346,10 +346,10 @@ export default function DashboardContent() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={refreshData} 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshData}
             disabled={isLoading}
             aria-label="Refresh dashboard data"
           >
@@ -432,36 +432,36 @@ export default function DashboardContent() {
                 <ResponsiveContainer width="100%" height={350}>
                   <LineChart data={revenueData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="month" 
+                    <XAxis
+                      dataKey="month"
                       stroke="#6b7280"
                       fontSize={12}
                     />
-                    <YAxis 
+                    <YAxis
                       stroke="#6b7280"
                       fontSize={12}
                     />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px'
                       }}
                     />
                     <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="#3b82f6" 
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#3b82f6"
                       strokeWidth={2}
                       name="Revenue ($)"
                       dot={{ fill: '#3b82f6', r: 4 }}
                       activeDot={{ r: 6 }}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="bookings" 
-                      stroke="#10b981" 
+                    <Line
+                      type="monotone"
+                      dataKey="bookings"
+                      stroke="#10b981"
                       strokeWidth={2}
                       name="Bookings"
                       dot={{ fill: '#10b981', r: 4 }}
@@ -528,8 +528,8 @@ export default function DashboardContent() {
                   </div>
                 ) : recentBookings.length > 0 ? (
                   recentBookings.map((booking) => (
-                    <div 
-                      key={booking.id} 
+                    <div
+                      key={booking.id}
                       className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       <div className="flex items-center space-x-4 flex-1">
@@ -776,31 +776,31 @@ export default function DashboardContent() {
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="month" 
+                  <XAxis
+                    dataKey="month"
                     stroke="#6b7280"
                     fontSize={12}
                   />
-                  <YAxis 
+                  <YAxis
                     stroke="#6b7280"
                     fontSize={12}
                   />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'white',
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px'
                     }}
                   />
                   <Legend />
-                  <Bar 
-                    dataKey="revenue" 
-                    fill="#3b82f6" 
+                  <Bar
+                    dataKey="revenue"
+                    fill="#3b82f6"
                     name="Revenue ($)"
                   />
-                  <Bar 
-                    dataKey="bookings" 
-                    fill="#10b981" 
+                  <Bar
+                    dataKey="bookings"
+                    fill="#10b981"
                     name="Bookings"
                   />
                 </BarChart>
@@ -818,33 +818,33 @@ export default function DashboardContent() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col hover:bg-blue-50 hover:border-blue-300 transition-colors" 
+            <Button
+              variant="outline"
+              className="h-20 flex-col hover:bg-blue-50 hover:border-blue-300 transition-colors"
               onClick={() => router.push('/admin/bookings/new')}
             >
               <Calendar className="h-6 w-6 mb-2" />
               <span className="text-sm font-medium">New Booking</span>
             </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col hover:bg-blue-50 hover:border-blue-300 transition-colors" 
+            <Button
+              variant="outline"
+              className="h-20 flex-col hover:bg-blue-50 hover:border-blue-300 transition-colors"
               onClick={() => router.push('/admin/cars/new')}
             >
               <Car className="h-6 w-6 mb-2" />
               <span className="text-sm font-medium">Add Car</span>
             </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col hover:bg-blue-50 hover:border-blue-300 transition-colors" 
+            <Button
+              variant="outline"
+              className="h-20 flex-col hover:bg-blue-50 hover:border-blue-300 transition-colors"
               onClick={() => router.push('/admin/users')}
             >
               <Users className="h-6 w-6 mb-2" />
               <span className="text-sm font-medium">Manage Users</span>
             </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col hover:bg-blue-50 hover:border-blue-300 transition-colors" 
+            <Button
+              variant="outline"
+              className="h-20 flex-col hover:bg-blue-50 hover:border-blue-300 transition-colors"
               onClick={() => router.push('/admin/reports')}
             >
               <Download className="h-6 w-6 mb-2" />
