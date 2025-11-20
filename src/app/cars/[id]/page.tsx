@@ -23,8 +23,8 @@ import { BookedItem } from "@/types/cart";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
-import { useMutation } from "@tanstack/react-query";
-import { bookCarNow } from "@/services/cart-service";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { bookCarNow, getCarBookedDates } from "@/services/cart-service";
 import { AxiosError } from "axios";
 import { useAddToCart } from "@/hooks/use-cart-items";
 import { calculateAmountToBePaidByUser } from "@/utils/pricing";
@@ -175,6 +175,8 @@ export default function CarDetailPage() {
   const toast = useToast();
   const carIdParam = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const carId = Number(carIdParam);
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
+  const maxSelectableYear = currentYear + 2;
 
   const { data: car, isLoading, error } = useCarListing(
     Number.isNaN(carId) ? 0 : carId
@@ -184,6 +186,21 @@ export default function CarDetailPage() {
   const [dropOffDate, setDropOffDate] = useState<string>("");
   const pickUpInputRef = useRef<HTMLInputElement | null>(null);
   const dropOffInputRef = useRef<HTMLInputElement | null>(null);
+
+  const {
+    data: unavailableDates = [],
+    isLoading: isUnavailableDatesLoading,
+  } = useQuery<string[]>({
+    queryKey: ["car-booked-dates", car?.id],
+    queryFn: () => (car?.id ? getCarBookedDates(car.id) : Promise.resolve([])),
+    enabled: Boolean(car?.id),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const unavailableDatesSet = useMemo(
+    () => new Set(unavailableDates),
+    [unavailableDates]
+  );
 
   const getTodayIso = () => {
     const today = new Date();
@@ -309,6 +326,24 @@ export default function CarDetailPage() {
     user?.id ?? 0
   );
 
+  const isDateUnavailable = (iso: string) => unavailableDatesSet.has(iso);
+
+  const rangeIncludesUnavailableDate = (startIso: string, endIso: string) => {
+    if (!startIso || !endIso) return false;
+    const start = new Date(startIso + "T00:00:00");
+    const end = new Date(endIso + "T00:00:00");
+    if (end < start) return false;
+    const cursor = new Date(start);
+    while (cursor <= end) {
+      const iso = cursor.toISOString().split("T")[0];
+      if (unavailableDatesSet.has(iso)) {
+        return true;
+      }
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return false;
+  };
+
   const bookingMutation = useMutation<BookedItem[]>({
     mutationFn: async () => {
       if (!user) {
@@ -365,6 +400,13 @@ export default function CarDetailPage() {
       );
       return;
     }
+    if (rangeIncludesUnavailableDate(pickUpDate, dropOffDate)) {
+      toast.error(
+        "Unavailable dates",
+        "Selected dates include days that are already booked."
+      );
+      return;
+    }
     bookingMutation.mutate();
   };
 
@@ -393,6 +435,13 @@ export default function CarDetailPage() {
       toast.error(
         "Invalid dates",
         "Drop-off date cannot be before the pick-up date."
+      );
+      return;
+    }
+    if (rangeIncludesUnavailableDate(pickUpDate, dropOffDate)) {
+      toast.error(
+        "Unavailable dates",
+        "Selected dates include days that are already booked."
       );
       return;
     }
@@ -426,9 +475,23 @@ export default function CarDetailPage() {
     if (!value) return;
     const todayIso = getTodayIso();
     const normalized = value < todayIso ? todayIso : value;
+    if (isDateUnavailable(normalized)) {
+      toast.info(
+        "Unavailable date",
+        "This pick-up date is already booked. Please choose another date."
+      );
+      return;
+    }
     setPickUpDate(normalized);
     if (dropOffDate && dropOffDate < normalized) {
       setDropOffDate(normalized);
+    }
+    if (dropOffDate && rangeIncludesUnavailableDate(normalized, dropOffDate)) {
+      toast.info(
+        "Adjust date",
+        "This range includes dates that are already booked."
+      );
+      setDropOffDate("");
     }
   };
 
@@ -438,6 +501,20 @@ export default function CarDetailPage() {
       toast.info(
         "Adjust date",
         "Drop-off date cannot be before the pick-up date."
+      );
+      return;
+    }
+    if (isDateUnavailable(value)) {
+      toast.info(
+        "Unavailable date",
+        "This drop-off date is already booked. Please choose another date."
+      );
+      return;
+    }
+    if (pickUpDate && rangeIncludesUnavailableDate(pickUpDate, value)) {
+      toast.info(
+        "Adjust date",
+        "This range includes dates that are already booked."
       );
       return;
     }
@@ -805,6 +882,34 @@ export default function CarDetailPage() {
                   </span>
                 </div>
                 <p className="text-xs text-gray-500">Free cancellation</p>
+              </div>
+
+              <div className="space-y-2 text-xs text-gray-600">
+                <p className="font-semibold text-gray-900 text-sm">
+                  Unavailable dates
+                </p>
+                {isUnavailableDatesLoading ? (
+                  <p className="text-gray-500">Loading unavailable dates...</p>
+                ) : unavailableDates.length ? (
+                  <div className="max-h-24 overflow-y-auto rounded-xl border border-gray-100 bg-gray-50 p-3 flex flex-wrap gap-2">
+                    {unavailableDates.map((date) => (
+                      <span
+                        key={date}
+                        className="rounded-full bg-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-700"
+                      >
+                        {new Date(date + "T00:00:00").toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">
+                    No unavailable dates reported for this car.
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
