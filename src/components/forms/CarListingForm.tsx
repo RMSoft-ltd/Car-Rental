@@ -22,6 +22,7 @@ import { CAR_MAKES, CAR_MODELS, FUEL_TYPES, TRANSMISSION_TYPES, DRIVER_TYPES, CA
 import Button from '../shared/Button';
 import { Asterisk } from 'lucide-react';
 import TiptapEditor from '../shared/TiptapEditor';
+import LocationPicker from '../shared/LocationPicker';
 
 // ============================================
 // Types
@@ -60,19 +61,14 @@ const DAY_LABELS: Record<string, string> = {
     Sun: 'Sunday',
 };
 
-// Helper function to transform customDays array to checkbox fields
-// NOTE: We keep this for backward compatibility but won't use checkbox fields in form state
 const transformCustomDaysToCheckboxes = (data: Partial<CarListingFormData>) => {
-    // Just return data as-is, we'll handle checkboxes differently
     return { ...data };
 };
 
-// Helper function to check if a day is selected
 const isDaySelected = (customDays: string[] | undefined, day: string): boolean => {
     return Array.isArray(customDays) && customDays.includes(day);
 };
 
-// Fields to validate for each step
 const getStepFields = (step: number): (keyof CarListingFormData)[] => {
     switch (step) {
         case 0:
@@ -114,7 +110,6 @@ export function CarListingForm({
 }: CarListingFormProps) {
     const [currentStep, setCurrentStep] = useState(0);
 
-    // Initialize form with complete schema and all default values
     const defaultValues = useMemo(() => {
         const baseData = {
             ...defaultCarListingData,
@@ -125,7 +120,7 @@ export function CarListingForm({
 
     const form = useForm<CarListingFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(carListingSchema) as any, // Type assertion needed due to Zod transform types
+        resolver: zodResolver(carListingSchema) as any,
         defaultValues,
         mode: 'onChange',
     });
@@ -138,7 +133,6 @@ export function CarListingForm({
         reset,
     } = form;
 
-    // Reset form when initialData changes (important for edit mode)
     useEffect(() => {
         if (initialData) {
             const transformedData = transformCustomDaysToCheckboxes({
@@ -199,22 +193,17 @@ export function CarListingForm({
                 </div>
 
                 <form onSubmit={handleFormSubmit}>
-                    {/* Step 0: Listing Information */}
+
                     {currentStep === 0 && <ListingInformationStep control={control} />}
 
-                    {/* Step 1: Features */}
                     {currentStep === 1 && <FeaturesStep control={control} />}
 
-                    {/* Step 2: Pricing */}
                     {currentStep === 2 && <PricingStep control={control} />}
 
-                    {/* Step 3: Important Info */}
-                    {currentStep === 3 && <ImportantInfoStep control={control} />}
+                    {currentStep === 3 && <ImportantInfoStep control={control} form={form} />}
 
-                    {/* Step 4: Images */}
                     {currentStep === 4 && <ImagesStep control={control} />}
 
-                    {/* Form-level errors */}
                     {errors.root?.message && (
                         <FormError
                             error={{ message: errors.root.message }}
@@ -623,7 +612,7 @@ function PricingStep({ control }: { control: Control<any> }) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ImportantInfoStep({ control }: { control: Control<any> }) {
+function ImportantInfoStep({ control, form }: { control: Control<any>; form: any }) {
     const availabilityType = useWatch({
         control,
         name: 'availabilityType',
@@ -708,10 +697,34 @@ function ImportantInfoStep({ control }: { control: Control<any> }) {
                     label="Fuel Policy"
                     options={FUEL_POLICIES.map((policy) => ({ value: policy, label: policy }))}
                 />
+            </div>
 
-                <FormInput name="pickUpLocation" control={control} label="Pickup Location" placeholder="e.g., Kigali Airport Terminal 1" />
+            <div className="md:col-span-2">
+                <Controller
+                    name="pickUpLocation"
+                    control={control}
+                    render={({ field, fieldState: { error } }) => (
+                        <LocationPicker
+                            value={field.value}
+                            onChange={(location, coordinates) => {
+                                field.onChange(location);
 
+                                if (coordinates) {
+                                    form.setValue('pickUpLocationLatitude', coordinates.lat);
+                                    form.setValue('pickUpLocationLongitude', coordinates.lng);
+                                } else {
+                                    form.setValue('pickUpLocationLatitude', undefined);
+                                    form.setValue('pickUpLocationLongitude', undefined);
+                                }
+                            }}
+                            placeholder="Search for pickup location..."
+                            error={error?.message}
+                        />
+                    )}
+                />
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="col-span-2">
                     <div className="space-y-6">
                         <FormSelect

@@ -23,7 +23,6 @@ function convertToFormData(data: CarListingFormData): FormData {
 
   // Fields to exclude from submission (not expected by backend)
   const excludedFields = [
-    "pickUpLocation",
     "existingImages",
     "id",
     "createdAt",

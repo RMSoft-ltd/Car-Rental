@@ -23,8 +23,8 @@ export interface Car {
   cylinders?: number;
   category: string | null;
   color: string;
-  latitude: number | null;
-  longitude: number | null;
+  pickUpLocationLatitude: number | null;
+  pickUpLocationLongitude: number | null;
   description: string;
   isPowerSteering: boolean;
   isNavigation: boolean;
@@ -135,8 +135,8 @@ export interface CarQueryParams {
   color?: string;
   category?: string;
   pickUpLocation?: string;
-  latitude?: number | null;
-  longitude?: number | null;
+  pickUpLocationLatitude?: number | null;
+  pickUpLocationLongitude?: number | null;
 
   pricePerDayMin?: number;
   pricePerDayMax?: number;

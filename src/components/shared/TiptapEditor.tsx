@@ -38,9 +38,9 @@ export default function TiptapEditor({
         onUpdate: ({ editor }) => {
             onChange(editor.getHTML());
         },
+        immediatelyRender: false,
     });
 
-    // Update editor content when value prop changes externally
     useEffect(() => {
         if (editor && value !== editor.getHTML()) {
             editor.commands.setContent(value || '');
@@ -64,11 +64,10 @@ export default function TiptapEditor({
                     type="button"
                     onClick={() => editor.chain().focus().toggleBold().run()}
                     disabled={!editor.can().chain().focus().toggleBold().run()}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                        editor.isActive('bold')
-                            ? 'bg-gray-800 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${editor.isActive('bold')
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                 >
                     <strong>B</strong>
                 </button>
@@ -76,11 +75,10 @@ export default function TiptapEditor({
                     type="button"
                     onClick={() => editor.chain().focus().toggleItalic().run()}
                     disabled={!editor.can().chain().focus().toggleItalic().run()}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                        editor.isActive('italic')
-                            ? 'bg-gray-800 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${editor.isActive('italic')
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                 >
                     <em>I</em>
                 </button>
@@ -88,33 +86,30 @@ export default function TiptapEditor({
                 <button
                     type="button"
                     onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                        editor.isActive('heading', { level: 1 })
-                            ? 'bg-gray-800 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${editor.isActive('heading', { level: 1 })
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                 >
                     H1
                 </button>
                 <button
                     type="button"
                     onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                        editor.isActive('heading', { level: 2 })
-                            ? 'bg-gray-800 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${editor.isActive('heading', { level: 2 })
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                 >
                     H2
                 </button>
                 <button
                     type="button"
                     onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                        editor.isActive('heading', { level: 3 })
-                            ? 'bg-gray-800 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${editor.isActive('heading', { level: 3 })
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                 >
                     H3
                 </button>
@@ -122,22 +117,20 @@ export default function TiptapEditor({
                 <button
                     type="button"
                     onClick={() => editor.chain().focus().toggleBulletList().run()}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                        editor.isActive('bulletList')
-                            ? 'bg-gray-800 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${editor.isActive('bulletList')
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                 >
                     •
                 </button>
                 <button
                     type="button"
                     onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                        editor.isActive('orderedList')
-                            ? 'bg-gray-800 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${editor.isActive('orderedList')
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                 >
                     1.
                 </button>
@@ -145,11 +138,10 @@ export default function TiptapEditor({
                 <button
                     type="button"
                     onClick={() => editor.chain().focus().setParagraph().run()}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                        editor.isActive('paragraph')
-                            ? 'bg-gray-800 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${editor.isActive('paragraph')
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                 >
                     P
                 </button>

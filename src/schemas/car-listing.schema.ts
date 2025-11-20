@@ -93,8 +93,8 @@ export const carListingSchema = z.object({
     .optional(),
 
   pickUpLocation: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  pickUpLocationLatitude: z.number().optional(),
+  pickUpLocationLongitude: z.number().optional(),
 
   description: z.string().optional(),
 
@@ -231,8 +231,8 @@ export const defaultCarListingData: Partial<CarListingFormData> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   largeBags: "" as any,
   pickUpLocation: "",
-  latitude: undefined,
-  longitude: undefined,
+  pickUpLocationLatitude: undefined,
+  pickUpLocationLongitude: undefined,
   description: "",
 
   // Features
