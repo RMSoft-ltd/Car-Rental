@@ -6,6 +6,7 @@ import {
   BookedItem,
   AddToCartDto,
 } from "@/types/cart";
+import { UnavailableDatesResponse } from "@/types/cart";
 
 /**
  * Fetch all cart items for a user
@@ -34,6 +35,13 @@ export const addToCart = async (
     cartData
   );
   return data;
+};
+
+export const getCarBookedDates = async (carId: number) => {
+  const { data } = await apiClient.get<UnavailableDatesResponse>(
+    `/car-booking/car-booked-dates/${carId}`
+  );
+  return data.dates ?? [];
 };
 
 /**

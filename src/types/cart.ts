@@ -86,3 +86,7 @@ export interface FailedItem {
 export interface PaymentRequest {
   mobilephone: string;
 }
+
+export interface UnavailableDatesResponse {
+  dates: string[];
+}
