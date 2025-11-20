@@ -59,9 +59,6 @@ export default function HorizontalCarCard({
             {imageError && (
               <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mb-2 mx-auto">
-                    <Settings className="w-6 h-6 text-gray-500" />
-                  </div>
                   <p className="text-xs text-gray-500">Image unavailable</p>
                 </div>
               </div>
@@ -70,11 +67,8 @@ export default function HorizontalCarCard({
             {/* Main Image */}
             <Image
               src={(() => {
-                const carImage = car.carImages?.[0];
-                if (!carImage) {
-                  return "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
-                }
-                return carImage.startsWith('http') ? carImage : `${baseUrl}${carImage}`;
+                const carImage = car.carImages?.[0] || car.carImages?.[1];
+                return carImage ? carImage : `${baseUrl}${carImage}`;
               })()}
               fill
               className={`object-cover transition-all duration-300 ${
