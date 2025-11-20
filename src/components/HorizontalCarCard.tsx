@@ -68,11 +68,19 @@ export default function HorizontalCarCard({
             <Image
               src={(() => {
                 const carImage = car.carImages?.[0] || car.carImages?.[1];
-                return carImage ? carImage : `${baseUrl}${carImage}`;
+
+                // If carImage is already a full URL (starts with http), return directly.
+                if (carImage?.startsWith("http")) return carImage;
+
+                // If it's a filename or relative path, prefix with baseUrl
+                if (carImage) return `${baseUrl}${carImage}`;
+
+                // Final fallback (optional)
+                return carImage;
               })()}
               fill
               className={`object-cover transition-all duration-300 ${
-                imageLoaded ? 'hover:scale-105 opacity-100' : 'opacity-0'
+                imageLoaded ? "hover:scale-105 opacity-100" : "opacity-0"
               }`}
               alt={`${car.make} ${car.model}`}
               onLoad={() => {
@@ -121,7 +129,9 @@ export default function HorizontalCarCard({
                   </div>
                   <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2 sm:col-span-2">
                     <Settings className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
-                    <span className="font-medium capitalize">{car.transition}</span>
+                    <span className="font-medium capitalize">
+                      {car.transition}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -129,11 +139,18 @@ export default function HorizontalCarCard({
               {/* Right Side - Price and Action */}
               <div className="lg:w-52 flex flex-row lg:flex-col justify-between lg:justify-end items-center lg:items-end gap-4 lg:gap-6">
                 <div className="text-center lg:text-right flex-1 lg:flex-none">
-                  <p className="text-xs sm:text-sm text-gray-500 font-medium">Price Per day</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
-                    {car.pricePerDay.toLocaleString()} <span className="text-lg font-semibold text-gray-600">RWF</span>
+                  <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                    Price Per day
                   </p>
-                  <p className="text-xs sm:text-sm text-black font-medium mt-1">✓ Free cancellation</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+                    {car.pricePerDay.toLocaleString()}{" "}
+                    <span className="text-lg font-semibold text-gray-600">
+                      RWF
+                    </span>
+                  </p>
+                  <p className="text-xs sm:text-sm text-black font-medium mt-1">
+                    ✓ Free cancellation
+                  </p>
                 </div>
                 <Link
                   href={`/cars/${car.id}`}
@@ -156,7 +173,9 @@ export default function HorizontalCarCard({
                 <p className="text-sm font-semibold text-gray-900 line-clamp-1">
                   {hostName}
                 </p>
-                <p className="text-xs text-gray-700 font-medium">Verified Host</p>
+                <p className="text-xs text-gray-700 font-medium">
+                  Verified Host
+                </p>
               </div>
             </div>
 
@@ -168,7 +187,9 @@ export default function HorizontalCarCard({
                   {reviewRating.toFixed(1)}
                 </div>
                 <div className="text-left">
-                  <span className="text-xs text-gray-700">({reviewCount} reviews)</span>
+                  <span className="text-xs text-gray-700">
+                    ({reviewCount} reviews)
+                  </span>
                 </div>
               </div>
 
