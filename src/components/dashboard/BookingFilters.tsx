@@ -5,7 +5,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { BookingStatus, PaymentStatus, BookingDetail } from "@/types/payment";
 
 interface BookingFilters {
-  plateNo?: string;
+  plateNumber?: string;
   carId?: string;
   userId?: string;
   bookingStatus?: BookingStatus | "";
@@ -267,8 +267,8 @@ export default function BookingFilters({
               <input
                 type="text"
                 placeholder="e.g., RAA123A"
-                value={filters.plateNo || ""}
-                onChange={(e) => handleFilterChange("plateNo", e.target.value.toUpperCase())}
+                value={filters.plateNumber || ""}
+                onChange={(e) => handleFilterChange("plateNumber", e.target.value.toUpperCase())}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-500 transition-all uppercase font-mono hover:border-gray-400"
               />
             </div>
@@ -309,7 +309,7 @@ export default function BookingFilters({
                   if (!value) return null;
                   
                   const filterLabels: Record<string, string> = {
-                    plateNo: "License Plate",
+                    plateNumber: "License Plate",
                     carId: "Vehicle", 
                     userId: "Customer",
                     bookingStatus: "Booking Status",

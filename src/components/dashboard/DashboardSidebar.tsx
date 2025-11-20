@@ -126,9 +126,9 @@ export default function DashboardSidebar({
         {/* Logo and Toggle */}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           {!isCollapsed && (
-            <h1 className="text-lg font-bold text-gray-900 transition-opacity duration-200">
+            <Link href="/" className="text-lg font-bold text-gray-900 transition-opacity duration-200 cursor-pointer">
               Car Rental Hub
-            </h1>
+            </Link>
           )}
           <button
             onClick={onToggleCollapse}

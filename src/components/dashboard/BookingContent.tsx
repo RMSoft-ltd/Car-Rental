@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Calendar, Info } from "lucide-react";
 import { useBookingHistory } from "@/hooks/use-booking-history";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +11,7 @@ import BookingCalendar from "./Bookingcalendar";
 import BookingDetailsPanel from "./Bookingdetailspanel";
 
 interface BookingFiltersState {
-  plateNo?: string;
+  plateNumber?: string;
   carId?: string;
   userId?: string;
   bookingStatus?: BookingStatus | "";
@@ -19,13 +19,18 @@ interface BookingFiltersState {
   search?: string;
 }
 
-export default function BookingContent() {
+interface BookingContentProps {
+  initialBookingId?: number | null;
+}
+
+export default function BookingContent({ initialBookingId = null }: BookingContentProps = {}) {
   const { user } = useAuth();
   const [selectedBooking, setSelectedBooking] = useState<BookingDetail | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState<'single' | 'double' | 'triple'>('double');
   const [showLegend, setShowLegend] = useState(false);
   const [filters, setFilters] = useState<BookingFiltersState>({});
+  const [initialSelectionApplied, setInitialSelectionApplied] = useState(false);
 
   // Check if user is admin
   const isAdmin = user?.role?.toLowerCase() === 'admin';
@@ -43,7 +48,7 @@ export default function BookingContent() {
     }
     
     // Apply other filters
-    if (filters.plateNo) baseFilters.plateNo = filters.plateNo;
+    if (filters.plateNumber) baseFilters.plateNumber = filters.plateNumber;
     if (filters.carId) baseFilters.carId = filters.carId;
     if (filters.userId) baseFilters.userId = filters.userId;
     if (filters.bookingStatus) baseFilters.bookingStatus = filters.bookingStatus;
@@ -74,6 +79,34 @@ export default function BookingContent() {
       `${booking.user?.fName} ${booking.user?.lName}`.toLowerCase().includes(searchTerm)
     );
   }, [bookingData?.rows, filters.search]);
+
+  // Automatically select booking when deep-linked via notification / route param
+  useEffect(() => {
+    if (!initialBookingId) {
+      return;
+    }
+    if (initialSelectionApplied) {
+      return;
+    }
+    if (!bookings.length) {
+      return;
+    }
+
+    const targetBooking = bookings.find((booking) => booking.id === initialBookingId);
+    if (targetBooking) {
+      const pickUpDate = new Date(targetBooking.pickUpDate);
+      if (!Number.isNaN(pickUpDate.getTime())) {
+        setCurrentMonth(pickUpDate);
+      }
+
+      setSelectedBooking(targetBooking);
+      setInitialSelectionApplied(true);
+    }
+  }, [initialBookingId, bookings, initialSelectionApplied]);
+
+  useEffect(() => {
+    setInitialSelectionApplied(false);
+  }, [initialBookingId]);
 
   // Navigate months
   const navigateMonth = (direction: 'prev' | 'next') => {

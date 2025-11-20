@@ -159,8 +159,8 @@ export default function CarListingDetailPage() {
     const listingStatus = ['pending', 'changeRequested', 'approved', 'rejected'];
 
     return (
-        <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
-            <div className="max-w-6xl mx-auto">
+        <div className="flex-1 p-4 lg:p-8 h-full overflow-auto custom-scrollbar bg-gray-50">
+            <div className="container mx-auto">
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
                     <Button

@@ -7,20 +7,20 @@ import {
 } from "@tanstack/react-query";
 import { User } from "@/types/auth";
 import {
-  ConfidentialInfo,
-  PaymentChannel,
-  UpdateUserPayload,
-  ChangePasswordPayload,
-  Enable2FAPayload,
-  PaymentChannelPayload,
-  UpdatePaymentChannelPayload,
-  UsersFilterParams,
-  UsersResponse,
-  VerifyEmailResponse,
-  ToggleStatusResponse,
-  Enable2FAResponse,
-  ChangePasswordResponse,
-  SingleUserResponse,
+    ConfidentialInfo,
+    PaymentChannel,
+    UpdateUserPayload,
+    ChangePasswordPayload,
+    Enable2FAPayload,
+    PaymentChannelPayload,
+    UpdatePaymentChannelPayload,
+    UsersFilterParams,
+    UsersResponse,
+    VerifyEmailResponse,
+    ToggleStatusResponse,
+    Enable2FAResponse,
+    ChangePasswordResponse,
+    SingleUserResponse
 } from "@/types/user";
 import {
   getUsers,
@@ -86,20 +86,18 @@ export const useUsers = (
  * Hook for fetching a specific user by ID
  */
 export const useUser = (
-  id: number,
-  options?: { enabled?: boolean }
-): UseQueryResult<SingleUserResponse, Error> => {
-  return useQuery<SingleUserResponse, Error>({
-    queryKey: userKeys.detail(id),
-    queryFn: () => getUserById(id),
-    enabled: options?.enabled !== undefined ? options.enabled && !!id : !!id,
-    staleTime: USER_QUERY_CONFIG.staleTime,
-    gcTime: USER_QUERY_CONFIG.gcTime,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
-    retry: USER_QUERY_CONFIG.retry,
-    retryDelay: USER_QUERY_CONFIG.retryDelay,
-  });
+id: number): UseQueryResult<SingleUserResponse, Error> => {
+    return useQuery<SingleUserResponse, Error>({
+        queryKey: userKeys.detail(id),
+        queryFn: () => getUserById(id),
+        enabled: !!id,
+        staleTime: USER_QUERY_CONFIG.staleTime,
+        gcTime: USER_QUERY_CONFIG.gcTime,
+        refetchOnWindowFocus: false,
+        refetchOnMount: true,
+        retry: USER_QUERY_CONFIG.retry,
+        retryDelay: USER_QUERY_CONFIG.retryDelay,
+    });
 };
 
 /**
@@ -196,15 +194,15 @@ export const useEnable2FA = (): UseMutationResult<
 export const useConfidentialInfo = (
   userId: number
 ): UseQueryResult<ConfidentialInfo, Error> => {
-  return useQuery<ConfidentialInfo, Error>({
-    queryKey: userKeys.confidentialInfo(userId),
-    queryFn: () => getConfidentialInfo(userId),
-    enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes for sensitive data
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
-    retry: 1, // Less retries for sensitive data
-  });
+    return useQuery<ConfidentialInfo, Error>({
+        queryKey: userKeys.confidentialInfo(userId),
+        queryFn: () => getConfidentialInfo(userId),
+        enabled: !!userId,
+        staleTime: 2 * 60 * 1000, 
+        gcTime: 5 * 60 * 1000, 
+        refetchOnWindowFocus: false,
+        retry: 1,
+    });
 };
 
 /**

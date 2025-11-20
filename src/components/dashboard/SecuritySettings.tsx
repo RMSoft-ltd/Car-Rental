@@ -1,16 +1,26 @@
+import { ChangeEvent, FormEvent, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import authService from "@/services/auth.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
-import { Bell, Lock } from "lucide-react";
-import React, { useState } from "react";
+import { useChangePasswordMutation } from "@/hooks/use-userConfidentails";
 
 export default function SecuritySettings() {
   const { user, setUser } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { success: showToast } = useToast();
+  const { success: showSuccessToast, error: showErrorToast } = useToast();
+
+  const [passwordVisibility, setPasswordVisibility] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const enable2FAMutation = useMutation({
     mutationFn: async () => {
@@ -20,91 +30,196 @@ export default function SecuritySettings() {
       if (user) {
         setUser({ ...user, is2fa: true });
       }
-      showToast("Two-Factor Authentication enabled", response.data.message);
+      showSuccessToast(
+        "Two-Factor Authentication enabled",
+        response.data.message
+      );
     },
     onError: (error: Error) => {
       console.error("2FA Enable error:", error);
     },
   });
 
+  const changePasswordMutation = useChangePasswordMutation(user?.id, {
+    onSuccess: (data) => {
+      showSuccessToast(
+        "Password updated",
+        data.message ?? "Your password has been updated."
+      );
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setPasswordError(null);
+    },
+    onError: (message: string) => {
+      setPasswordError(message);
+      showErrorToast("Password update failed", message);
+    },
+  });
+
+  const toggleVisibility = (field: keyof typeof passwordVisibility) => {
+    setPasswordVisibility((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const handlePasswordChange =
+    (field: keyof typeof passwordForm) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setPasswordForm((prev) => ({
+        ...prev,
+        [field]: event.target.value,
+      }));
+    };
+
+  const validatePasswords = () => {
+    if (
+      !passwordForm.currentPassword.trim() ||
+      !passwordForm.newPassword.trim() ||
+      !passwordForm.confirmPassword.trim()
+    ) {
+      return "Please fill in all password fields.";
+    }
+
+    if (passwordForm.newPassword.length < 8) {
+      return "New password must be at least 8 characters long.";
+    }
+
+    if (passwordForm.currentPassword === passwordForm.newPassword) {
+      return "New password must be different from the current password.";
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      return "New password and confirmation do not match.";
+    }
+
+    return null;
+  };
+
+  const handlePasswordSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const validationError = validatePasswords();
+    if (validationError) {
+      setPasswordError(validationError);
+      showErrorToast("Password update failed", validationError);
+      return;
+    }
+    setPasswordError(null);
+    changePasswordMutation.mutate({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+    });
+  };
+
+  const saveDisabled =
+    changePasswordMutation.isPending ||
+    !passwordForm.currentPassword ||
+    !passwordForm.newPassword ||
+    !passwordForm.confirmPassword;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">
-          Change Password
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Current Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your current password"
-                className="w-full pr-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 text-gray-400 cursor-pointer"
-              >
-                {showPassword ? (
-                  <Bell className="w-5 h-5" />
-                ) : (
-                  <Lock className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              New Password
-            </label>
-            <div className="relative">
-              <input
-                type={showNewPassword ? "text" : "password"}
-                placeholder="At least 8 characters"
-                className="w-full pr-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-2.5 text-gray-400 cursor-pointer"
-              >
-                {showNewPassword ? (
-                  <Bell className="w-5 h-5" />
-                ) : (
-                  <Lock className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm New Password
-            </label>
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Re-enter new password"
-                className="w-full pr-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-2.5 text-gray-400 cursor-pointer"
-              >
-                {showConfirmPassword ? (
-                  <Bell className="w-5 h-5" />
-                ) : (
-                  <Lock className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
+      <form onSubmit={handlePasswordSubmit} className="space-y-4">
+        <div>
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">
+            Change Password
+          </h3>
+          <p className="text-sm text-gray-500 mb-6">
+            Ensure your password is unique and contains at least one number or
+            symbol to keep your rentals secure.
+          </p>
         </div>
-      </div>
+
+        <div className="space-y-4">
+          {(
+            [
+              {
+                id: "currentPassword",
+                label: "Current password",
+                placeholder: "Enter your current password",
+                field: "current" as const,
+              },
+              {
+                id: "newPassword",
+                label: "New password",
+                placeholder: "At least 8 characters",
+                field: "next" as const,
+              },
+              {
+                id: "confirmPassword",
+                label: "Confirm new password",
+                placeholder: "Re-enter your new password",
+                field: "confirm" as const,
+              },
+            ] as const
+          ).map((input) => (
+            <div key={input.id}>
+              <label
+                htmlFor={input.id}
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                {input.label}
+              </label>
+              <div className="relative">
+                <input
+                  id={input.id}
+                  type={passwordVisibility[input.field] ? "text" : "password"}
+                  placeholder={input.placeholder}
+                  value={passwordForm[input.id as keyof typeof passwordForm]}
+                  onChange={handlePasswordChange(
+                    input.id as keyof typeof passwordForm
+                  )}
+                  autoComplete={
+                    input.id === "currentPassword" ? "current-password" : "new-password"
+                  }
+                  className="w-full pr-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-500 focus:border-gray-500 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => toggleVisibility(input.field)}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  aria-label={`Toggle ${input.label} visibility`}
+                >
+                  {passwordVisibility[input.field] ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {passwordError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {passwordError}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-gray-500" />
+            <span>Updating your password signs you out of other devices.</span>
+          </div>
+          <span className="text-xs text-gray-400">
+            Last updated {user?.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : "recently"}
+          </span>
+        </div>
+
+        <div className="flex justify-end border-t border-gray-200 pt-4">
+          <button
+            type="submit"
+            disabled={saveDisabled}
+            className="flex items-center space-x-2 px-4 md:px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Lock className="w-4 h-4" />
+            <span className="text-sm md:text-base">
+              {changePasswordMutation.isPending ? "Updating..." : "Save Password"}
+            </span>
+          </button>
+        </div>
+      </form>
 
       <div className="border-t pt-6">
         <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">

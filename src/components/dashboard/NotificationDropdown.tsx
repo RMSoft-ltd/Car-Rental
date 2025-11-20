@@ -9,11 +9,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import type { Notification as NotificationType } from "@/types/notification";
+import { useRouter } from "next/navigation";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const router = useRouter();
   const {
     notifications,
     isNewNotification,
@@ -101,7 +103,7 @@ export default function NotificationDropdown() {
 
       // Show toast notification
       if (latestNotification) {
-        showToast("You have a new notification 🔔", latestNotification.message);
+        showToast("You have a new notification", latestNotification.message || "You have a new notification");
       }
 
       resetNewNotificationFlag();
@@ -150,6 +152,21 @@ export default function NotificationDropdown() {
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  const navigateToNotification = (notification: NotificationType) => {
+    if (!notification.actionUrl) {
+      return;
+    }
+
+    const url = notification.actionUrl;
+    const isInternalLink = url.startsWith("/");
+
+    if (isInternalLink) {
+      router.push(url);
+    } else {
+      window.location.href = url;
+    }
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Notification Bell Button */}
@@ -165,7 +182,7 @@ export default function NotificationDropdown() {
         )}
       </button>
 
-      {/* <audio ref={audioRef} src="sound/notification_sound_1.wav" /> */}
+      <audio ref={audioRef} src="/audio/notification_sound_3.mp3" />
 
       {/* Dropdown Menu */}
       {isOpen && (
@@ -180,7 +197,7 @@ export default function NotificationDropdown() {
                 <button
                   onClick={() => markAllAsReadMutation.mutate()}
                   disabled={markAllAsReadMutation.isPending}
-                  className="text-sm text-gray-800 hover:text-gray-800 font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                  className="text-sm text-gray-800 hover:text-gray-800 font-semibold transition-colors cursor-pointer disabled:opacity-50 hover:bg-gray-100 py-2 px-3 rounded-lg"
                 >
                   {markAllAsReadMutation.isPending ? "Marking..." : "Mark all read"}
                 </button>
@@ -204,13 +221,9 @@ export default function NotificationDropdown() {
                     : ""
                     }`}
                   onClick={async () => {
-                    if (notification.actionUrl || notification.id) {
-                      await markAsReadMutation.mutateAsync(notification.id);
-
-                      if (notification.actionUrl) {
-                        window.location.href = notification.actionUrl;
-                      }
-                    }
+                    if (!notification.id) return;
+                    await markAsReadMutation.mutateAsync(notification.id);
+                    navigateToNotification(notification);
                   }}
                 >
                   <div className="flex items-start space-x-3">
@@ -233,16 +246,11 @@ export default function NotificationDropdown() {
                             {notification.message}
                           </p>
 
-                          <div className="flex items-center mt-2 space-x-2">
-                            <Clock className="w-3 h-3 text-gray-400" />
+                          <div className="flex items-center mt-2">
+                            <Clock className="w-3 h-3 text-gray-400 mr-1" />
                             <span className="text-xs text-gray-500">
                               {formatTime(notification.createdAt)}
                             </span>
-                            {/* {notification.actionRequired && (
-                              <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full font-medium">
-                                Action Required
-                              </span>
-                            )} */}
                           </div>
                         </div>
 
@@ -251,7 +259,7 @@ export default function NotificationDropdown() {
                             e.stopPropagation();
                             removeNotificationFromContext(notification.id);
                           }}
-                          className="ml-2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                          className="ml-2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
                           aria-label="Remove notification"
                         >
                           <X className="w-4 h-4" />
@@ -267,7 +275,7 @@ export default function NotificationDropdown() {
           {/* Footer */}
           {notifications.length > 0 && (
             <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
-              <button className="w-full text-center text-sm text-gray-600 hover:text-gray-800 font-medium transition-colors">
+              <button className="w-full text-center text-sm text-gray-600 hover:text-gray-800 font-medium transition-colors cursor-pointer hover:bg-gray-100 py-2 px-3 rounded-lg">
                 View all notifications
               </button>
             </div>
