@@ -27,6 +27,7 @@ import { useMutation } from "@tanstack/react-query";
 import { bookCarNow } from "@/services/cart-service";
 import { AxiosError } from "axios";
 import { useAddToCart } from "@/hooks/use-cart-items";
+import { calculateAmountToBePaidByUser } from "@/utils/pricing";
 
 const toAbsoluteImage = (path?: string) => {
   if (!path) return null;
@@ -216,8 +217,10 @@ export default function CarDetailPage() {
 
   const pricePerDay = car?.pricePerDay;
   const currency = car?.currency ?? "RWF";
-  const totalForOneDay =
-    typeof pricePerDay === "number" ? pricePerDay * 1 : null;
+  const defaultPricingSummary = useMemo(() => {
+    if (typeof pricePerDay !== "number") return null;
+    return calculateAmountToBePaidByUser(pricePerDay, 1);
+  }, [pricePerDay]);
   const bookingDates = useMemo(() => {
     const formatDisplayDate = (iso: string) =>
       iso
@@ -252,10 +255,23 @@ export default function CarDetailPage() {
       )
       : 1;
 
-  const totalSelectedAmount =
-    typeof pricePerDay === "number" && pickUpDate && dropOffDate
-      ? pricePerDay * rentalDays
-      : totalForOneDay;
+  const activePricingSummary = useMemo(() => {
+    if (
+      typeof pricePerDay !== "number" ||
+      !pickUpDate ||
+      !dropOffDate
+    ) {
+      return null;
+    }
+    return calculateAmountToBePaidByUser(pricePerDay, rentalDays);
+  }, [pricePerDay, pickUpDate, dropOffDate, rentalDays]);
+
+  const pricingSummary = activePricingSummary ?? defaultPricingSummary ?? null;
+
+  const totalSelectedAmount = pricingSummary?.amount ?? null;
+
+  const effectiveRentalDays =
+    pickUpDate && dropOffDate ? rentalDays : 1;
 
   const cacheDirectBookingContext = (bookedItems: BookedItem[]) => {
     if (typeof window === "undefined" || !bookedItems?.length || !car) {
@@ -719,7 +735,8 @@ export default function CarDetailPage() {
                   <span className="text-gray-900 font-semibold">
                     {totalSelectedAmount.toLocaleString()} {currency}
                   </span>{" "}
-                  for {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                  for {effectiveRentalDays}{" "}
+                  {effectiveRentalDays === 1 ? "day" : "days"}
                 </p>
               ) : (
                 <p className="text-sm text-gray-500">
@@ -779,14 +796,6 @@ export default function CarDetailPage() {
 
               <div className="space-y-3 text-sm text-gray-700">
                 <p className="font-semibold text-gray-900">Rental Price breakdown</p>
-                <div className="flex items-center justify-between">
-                  <span>Car Rental</span>
-                  <span className="text-gray-900">
-                    {typeof pricePerDay === "number"
-                      ? `${pricePerDay.toLocaleString()} ${currency}`
-                      : "—"}
-                  </span>
-                </div>
                 <div className="flex items-center justify-between font-semibold text-gray-900">
                   <span>Total Amount</span>
                   <span>
