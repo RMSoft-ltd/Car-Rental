@@ -177,6 +177,7 @@ export default function ListingContent() {
                     alt={`${car.make} ${car.model} ${car.year}`}
                     fill
                     className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     onError={(e) => {
                       e.currentTarget.src = "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
                     }}

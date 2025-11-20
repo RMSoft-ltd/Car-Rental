@@ -289,6 +289,8 @@ export default function CarListingDetailPage() {
                                     alt={`${car.make} ${car.model}`}
                                     fill
                                     className="object-cover"
+                                    sizes="(max-width: 1024px) 100vw, 66vw"
+                                    priority
                                     onError={(e) => {
                                         e.currentTarget.src = "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
                                     }}
@@ -314,6 +316,7 @@ export default function CarListingDetailPage() {
                                         alt={`${car.make} ${car.model} - Image ${index + 1}`}
                                         fill
                                         className="object-cover"
+                                        sizes="96px"
                                         onError={(e) => {
                                             e.currentTarget.src = "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
                                         }}
@@ -751,6 +754,7 @@ export default function CarListingDetailPage() {
                                                         alt={`${car.owner.fName} ${car.owner.lName}`}
                                                         fill
                                                         className="object-cover"
+                                                        sizes="64px"
                                                     />
                                                 </div>
                                             )}

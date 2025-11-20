@@ -28,11 +28,11 @@ import { TokenService } from "@/utils/token";
 
 
 export default function RentalHistoryContent() {
- 
+
   const loggedInUser = TokenService.getUserData();
   const loggedInUserId = loggedInUser?.id || 0;
   const loggedInRole = loggedInUser?.role || 'user';
-  
+
   const isAdmin = loggedInRole.toLowerCase().includes('admin');
 
   const [filters, setFilters] = useState<BookingHistoryFilters>({
@@ -68,7 +68,7 @@ export default function RentalHistoryContent() {
     setFilters(prev => ({
       ...prev,
       search: searchQuery || undefined,
-      skip: 0 
+      skip: 0
     }));
     setCurrentPage(1);
   };
@@ -124,7 +124,7 @@ export default function RentalHistoryContent() {
     ) {
       return getBookingStatusConfig(status).className;
     }
-    if (["PAID", "UNPAID", "PARTIALLY_PAID" ,"DEPOSITED"].includes(normalizedStatus)) {
+    if (["PAID", "UNPAID", "PARTIALLY_PAID", "DEPOSITED"].includes(normalizedStatus)) {
       return getPaymentStatusConfig(status).className;
     }
     return "";
@@ -132,7 +132,7 @@ export default function RentalHistoryContent() {
 
   // Clear all filters
   const handleClearFilters = () => {
-    setFilters({ skip: 0, limit: 25 , userId: isAdmin ? undefined : loggedInUserId});
+    setFilters({ skip: 0, limit: 25, userId: isAdmin ? undefined : loggedInUserId });
     setSearchQuery("");
     setCurrentPage(1);
   };
@@ -354,6 +354,7 @@ export default function RentalHistoryContent() {
                               alt={`${rental.car.make} ${rental.car.model}`}
                               fill
                               className="object-cover"
+                              sizes="64px"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-200">
@@ -526,11 +527,10 @@ export default function RentalHistoryContent() {
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    className={`w-10 h-10 rounded-full font-medium transition-colors ${
-                      currentPage === pageNum
+                    className={`w-10 h-10 rounded-full font-medium transition-colors ${currentPage === pageNum
                         ? "bg-black text-white"
                         : "border border-gray-300 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     {pageNum}
                   </button>
