@@ -86,7 +86,7 @@ export const useUsers = (
  * Hook for fetching a specific user by ID
  */
 export const useUser = (
-id: number): UseQueryResult<SingleUserResponse, Error> => {
+id: number, p0: { enabled: boolean; }): UseQueryResult<SingleUserResponse, Error> => {
     return useQuery<SingleUserResponse, Error>({
         queryKey: userKeys.detail(id),
         queryFn: () => getUserById(id),

@@ -1,8 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  useConfidentialInfoMutation,
-  useUserDetailsQuery,
-} from "./use-user";
+import { useConfidentialInfoMutation, useUserDetailsQuery } from "./use-userConfidentails";
 
 export function useUserConfidentialInfo(userId?: number) {
   const queryClient = useQueryClient();
