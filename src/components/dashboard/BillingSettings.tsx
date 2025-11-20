@@ -77,10 +77,6 @@ export default function BillingSettings() {
           <h3 className="text-lg font-semibold text-gray-900">
             Invoice History
           </h3>
-          <button className="text-sm text-gray-600 hover:text-gray-900 flex items-center space-x-1 cursor-pointer">
-            <Download className="w-4 h-4" />
-            <span>Download All</span>
-          </button>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">

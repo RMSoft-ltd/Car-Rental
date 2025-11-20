@@ -4,16 +4,11 @@ import { useState } from "react";
 import {
   User,
   Lock,
-  Bell,
   Settings,
   CreditCard,
-  Shield,
-  HelpCircle,
   Receipt,
 } from "lucide-react";
 import SecuritySettings from "./SecuritySettings";
-import NotificationSettings from "./NotificationSettings";
-import PreferencesSettings from "./PreferencesSettings";
 import ProfileSettings from "./ProfileSettings";
 import PaymentSettings from "./PaymentSettings";
 import BillingSettings from "./BillingSettings";
@@ -27,10 +22,6 @@ export default function SettingsContent() {
     { id: "payment", label: "Payment Config", icon: CreditCard },
     { id: "security", label: "Security", icon: Lock },
     { id: "billing", label: "Billing", icon: Receipt },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "preferences", label: "Preferences", icon: Settings },
-    { id: "privacy", label: "Privacy", icon: Shield },
-    { id: "help", label: "Help", icon: HelpCircle },
   ];
 
   const renderContent = () => {
@@ -39,14 +30,10 @@ export default function SettingsContent() {
         return <ProfileSettings />;
       case "security":
         return <SecuritySettings />;
-      case "notifications":
-        return <NotificationSettings />;
-      case "preferences":
-        return <PreferencesSettings />;
       case "payment":
         return <PaymentSettings />;
       case "billing":
-        return <BillingSettings />;
+        return <BillingSettings />;;
       default:
         return (
           <div className="text-center text-gray-500 py-8">

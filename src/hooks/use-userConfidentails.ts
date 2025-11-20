@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import userService from "@/services/user.service";
 import {
+  ChangePasswordPayload,
+  ChangePasswordResponse,
   ConfidentialInfoPayload,
   PaymentChannel,
   PaymentChannelPayload,
@@ -10,6 +11,8 @@ import {
 } from "@/types/user";
 import { getErrorMessage } from "@/utils/error-utils";
 import { ApiError } from "@/types/Api";
+import userService from "@/services/userConfidentials.service";
+import { changePassword } from "@/services/users.service";
 
 interface MutationOptions<TData = unknown> {
   onSuccess?: (data: TData) => void;
@@ -116,6 +119,27 @@ export function useUpdateUserDetailsMutation(
     },
     onError: (error) => {
       const message = getErrorMessage(error, "Failed to update profile.");
+      options?.onError?.(message, error);
+    },
+  });
+}
+
+export function useChangePasswordMutation(
+  userId?: number,
+  options?: MutationOptions<ChangePasswordResponse>
+) {
+  return useMutation({
+    mutationFn: async (payload: ChangePasswordPayload) => {
+      if (!userId) {
+        throw new Error("Missing user id. Please sign in and try again.");
+      }
+      return await changePassword(userId, payload);
+    },
+    onSuccess: (data) => {
+      options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      const message = getErrorMessage(error, "Failed to update password.");
       options?.onError?.(message, error);
     },
   });

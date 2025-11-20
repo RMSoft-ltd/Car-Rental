@@ -17,7 +17,7 @@ import {
   useConfidentialInfoMutation,
   useUpdateUserDetailsMutation,
   useUserDetailsQuery,
-} from "@/hooks/use-user";
+} from "@/hooks/use-userConfidentails";
 import { ConfidentialInfoForm } from "./ConfidentialInfoForm";
 import { ConfidentialInfoSkeleton } from "./ConfidentialInfoSkeleton";
 import { getErrorMessage } from "@/utils/error-utils";

@@ -17,7 +17,7 @@ import {
   useAddPaymentChannelMutation,
   useUpdatePaymentChannelMutation,
   usePaymentChannelsQuery,
-} from "@/hooks/use-user";
+} from "@/hooks/use-userConfidentails";
 import DeleteConfirmDialog from "@/components/shared/DeleteConfirmDialog";
 import { PaymentChannel } from "@/types/user";
 

@@ -14,7 +14,7 @@ import { paymentService } from "@/services/payment.service";
  * @param filters.startDate - Filter by start date
  * @param filters.endDate - Filter by end 
  * @param filters.carId - Filter by car ID
- * @param filters.plateNo- Filter by plate number
+ * @param filters.plateNumber- Filter by plate number
  * 
  * @returns Query result with booking history data
  *

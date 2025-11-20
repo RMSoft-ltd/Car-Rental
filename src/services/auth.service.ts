@@ -302,7 +302,7 @@ class AuthService {
       isVerified: true,
       createdAt: "",
       updatedAt: "",
-    } as User;
+    } as unknown as User;
   }
 
   // Handle API errors
