@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import HistoryContent from "@/components/dashboard/HistoryContent";
 import { Receipt, Wallet } from "lucide-react";
-import { useCarOwnerPayments } from "@/hooks/use-car-owner-payments";
+import { MdOutlineAccountBalanceWallet } from "react-icons/md";
+import { useAccoutBalance, useCarOwnerPayments } from "@/hooks/use-car-owner-payments";
 import { CarOwnerPaymentFilters } from "@/types/payment";
 import { CarOwnerPaymentList } from "@/components/dashboard/CarOwnerPaymentList";
 import { useCarList } from "@/hooks/use-car-list";
 import { TokenService } from "@/utils/token";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 
 export default function PaymentsPage() {
     const { user } = useAuth();
@@ -23,6 +25,8 @@ export default function PaymentsPage() {
         limit: 10,
         depositStatus: "PENDING",
     });
+
+    const { data: balanceData, isLoading: isBalanceLoading } = useAccoutBalance();
 
     const { data: userCarsData } = useCarList({ userId: loggedInUserId });
     const isOwner = (userCarsData?.rows?.length ?? 0) > 0;
@@ -64,6 +68,22 @@ export default function PaymentsPage() {
                                 : "View your rental bookings and payment history"}
                     </p>
                 </div>
+                {isAdmin && (
+                    <div className="mt-4 md:mt-0">
+                        <div className="text-lg font-semibold">
+                            {isBalanceLoading ? (
+                                <Spinner />
+                            ) : (
+                                <Alert className="cursor-pointer flex items-center gap-2 bg-green-100 text-green-800 border-green-200">
+                                    <MdOutlineAccountBalanceWallet />
+                                    <AlertTitle>
+                                        {balanceData?.balance?.toFixed(2) || "0.00"} {balanceData?.currency || "RWF"}
+                                    </AlertTitle>
+                                </Alert>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "history" | "payments")}>
@@ -112,6 +132,6 @@ export default function PaymentsPage() {
                     </>
                 )}
             </Tabs>
-        </div>
+        </div >
     );
 }

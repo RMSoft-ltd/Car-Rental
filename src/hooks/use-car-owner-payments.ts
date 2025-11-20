@@ -9,6 +9,15 @@ interface CarOwnerPaymentsResponse {
   currentPage: number;
 }
 
+export const paymentKeys = {
+  all: ["car-owner-payments"] as const,
+  balanceKey: ["account-balance"] as const,
+  lists: () => [...paymentKeys.all, "list"] as const,
+  list: (filters: CarOwnerPaymentFilters) =>
+    [...paymentKeys.lists(), filters] as const,
+  balance: () => [...paymentKeys.balanceKey, "account-balance"] as const,
+};
+
 async function fetchCarOwnerPayments(
   filters: CarOwnerPaymentFilters
 ): Promise<CarOwnerPaymentsResponse> {
@@ -30,8 +39,16 @@ async function fetchCarOwnerPayments(
 
 export function useCarOwnerPayments(filters: CarOwnerPaymentFilters) {
   return useQuery({
-    queryKey: ["car-owner-payments", filters],
+    queryKey: paymentKeys.list(filters),
     queryFn: () => fetchCarOwnerPayments(filters),
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
+  });
+}
+
+export function useAccoutBalance() {
+  return useQuery({
+    queryKey: paymentKeys.balance(),
+    queryFn: () => paymentService.getAdminBalance(),
+    staleTime: 30000,
   });
 }
