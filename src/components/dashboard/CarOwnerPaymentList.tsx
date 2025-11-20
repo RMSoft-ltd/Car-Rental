@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { BookingsPerOwnerList, CarOwnerPaymentFilters, DepositStatus, BookingDetail, MakeDepositRequest } from "@/types/payment";
+import { BookingsPerOwnerList, CarOwnerPaymentFilters, BookingDetail, MakeDepositRequest } from "@/types/payment";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,7 +58,7 @@ import {
     getPaymentStatusLabel,
     getDepositStatusLabel,
 } from "@/utils/status-colors";
-import { Filter, X, ChevronLeft, ChevronRight, Eye, Calendar, CreditCard } from "lucide-react";
+import { Filter, ChevronLeft, ChevronRight, Eye, Calendar, CreditCard } from "lucide-react";
 import { useCarList } from "@/hooks/use-car-list";
 import { LuX } from "react-icons/lu";
 import { Combobox, ComboboxOption } from "@/components/forms/FormComponents";
