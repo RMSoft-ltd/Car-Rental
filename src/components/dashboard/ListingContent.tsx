@@ -226,10 +226,13 @@ export default function ListingContent() {
 
                   {/* Car Description */}
                   <HtmlRenderer
-                    content={car.description || `${car.body} • ${car.engineSize}L • ${car.doors} Doors`}
+                    content={car.description || `No description provided for this car.`}
                     className="text-sm text-gray-600 mb-4 leading-relaxed"
                     maxLength={150}
                   />
+
+                  <p className="text-sm text-gray-600 mb-4 leading-relaxed"
+                  >{car.body} • {car.engineSize}L • {car.doors} Doors</p>
 
                   {/* Divider */}
                   <hr className="border-gray-200 mb-4" />

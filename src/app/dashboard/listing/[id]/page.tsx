@@ -483,10 +483,17 @@ export default function CarListingDetailPage() {
                                         <div className="bg-gray-50 p-4 rounded-lg">
                                             <p className="text-sm text-gray-600 mb-1">Available Days</p>
                                             <p className="text-lg font-semibold">
-                                                {typeof car.customDays === 'string'
-                                                    ? car.customDays.split(',').join(', ')
-                                                    : car.customDays.join(', ')
-                                                }
+                                                {(() => {
+                                                    if (typeof car.customDays === 'string') {
+                                                        try {
+                                                            const parsed = JSON.parse(car.customDays);
+                                                            return Array.isArray(parsed) ? parsed.join(', ') : car.customDays;
+                                                        } catch {
+                                                            return car.customDays.split(',').map(day => day.trim()).join(', ');
+                                                        }
+                                                    }
+                                                    return Array.isArray(car.customDays) ? car.customDays.join(', ') : car.customDays;
+                                                })()}
                                             </p>
                                         </div>
                                     )}
