@@ -225,12 +225,22 @@ export default function CarDetailPage() {
   const hostDisplay = useMemo(() => getHostDisplay(car), [car]);
   const reviews = car?.reviews ?? [];
 
-  const heroImage = toAbsoluteImage(car?.carImages?.[0]);
-  const galleryImages =
+  const fallbackImage =
+    "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center";
+
+  const carImageUrls =
     car?.carImages
-      ?.slice(1)
-      .map((img) => toAbsoluteImage(img))
+      ?.map((img) => toAbsoluteImage(img))
       .filter((img): img is string => Boolean(img)) ?? [];
+
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [car?.id]);
+
+  const selectedImage =
+    carImageUrls[selectedImageIndex] ?? carImageUrls[0] ?? fallbackImage;
 
   const pricePerDay = car?.pricePerDay;
   const currency = car?.currency ?? "RWF";
@@ -626,39 +636,40 @@ export default function CarDetailPage() {
         {/* Gallery */}
         <section className="grid gap-4 md:grid-cols-2">
           <div className="aspect-video rounded-xl overflow-hidden bg-gray-100">
-            {heroImage ? (
-              <Image
-                src={heroImage}
-                alt={`${car.make} ${car.model}`}
-                width={600}
-                height={400}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                No image available
-              </div>
-            )}
+            <Image
+              src={selectedImage}
+              alt={`${car.make} ${car.model}`}
+              width={600}
+              height={400}
+              className="w-full h-full object-cover"
+            />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            {galleryImages.length ? (
-              galleryImages.map((img, index) => (
-                <div
+          <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto">
+            {carImageUrls.length ? (
+              carImageUrls.map((img, index) => (
+                <button
                   key={`${img}-${index}`}
-                  className="aspect-video rounded-lg overflow-hidden bg-gray-100"
+                  type="button"
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`relative aspect-video rounded-lg overflow-hidden border transition-all ${
+                    selectedImageIndex === index
+                      ? "border-gray-900 ring-2 ring-gray-900"
+                      : "border-gray-200 hover:border-gray-400"
+                  }`}
+                  aria-label={`View image ${index + 1}`}
                 >
                   <Image
                     src={img}
                     alt={`Gallery ${index + 1}`}
-                    width={300}
-                    height={200}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="200px"
+                    className="object-cover"
                   />
-                </div>
+                </button>
               ))
             ) : (
               <div className="col-span-2 h-full rounded-lg bg-gray-100 flex items-center justify-center text-sm text-gray-400">
-                No additional images
+                No images available
               </div>
             )}
           </div>
