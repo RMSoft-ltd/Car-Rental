@@ -398,7 +398,7 @@ export default function CarDetailPage() {
 
   const handleBookNow = () => {
     if (!isAuthenticated) {
-      toast.info("Sign in required", "Please sign in to book this car.");
+      toast.warning("Sign in required", "Please sign in to book this car.");
       return;
     }
     if (!user) {
@@ -442,7 +442,7 @@ export default function CarDetailPage() {
 
   const handleAddToCart = () => {
     if (!isAuthenticated) {
-      toast.info("Sign in required", "Please sign in to add items to cart.");
+      toast.warning("Sign in required", "Please sign in to add items to cart.");
       return;
     }
     if (!user || !user.id || user.id <= 0) {
