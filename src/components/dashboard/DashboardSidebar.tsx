@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { TokenService } from "@/utils/token";
 import { useState, useEffect } from "react";
+import { useCarList } from "@/hooks/use-car-list";
 
 interface SidebarProps {
   activeTab: string;
@@ -36,13 +37,18 @@ export default function DashboardSidebar({
 }: SidebarProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const loggedInUser = TokenService.getUserData();
+  const loggedInUserId = loggedInUser?.id || 0;
+  
+  // Check if user has cars (for car owners)
+  const { data: userCarsData } = useCarList({ userId: loggedInUserId });
+  const isOwner = (userCarsData?.rows?.length ?? 0) > 0;
 
   useEffect(() => {
-    const loggedInUser = TokenService.getUserData();
     const loggedInRole = loggedInUser?.role || 'user';
     setIsAdmin(loggedInRole.toLowerCase().includes('admin'));
     setIsMounted(true);
-  }, []);
+  }, [loggedInUser]);
 
   const sidebarItems = [
     {
@@ -63,12 +69,13 @@ export default function DashboardSidebar({
       key: "booking",
       href: "/dashboard/booking",
     },
-    {
+    // Only show Payments for admin users or users with cars (car owners)
+    ...(isMounted && (isAdmin || isOwner) ? [{
       icon: DollarSign,
       label: "Payments",
       key: "payments",
       href: "/dashboard/payments",
-    },
+    }] : []),
     {
       icon: History,
       label: "Rental History",

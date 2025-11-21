@@ -111,6 +111,7 @@ export default function PaymentsPage() {
                         <TabsContent value="history" className="space-y-6">
                             <HistoryContent
                                 userId={!isAdmin ? loggedInUserId : undefined}
+                                ownerId={isOwner && !isAdmin ? loggedInUserId : undefined}
                                 isAdmin={isAdmin}
                             />
                         </TabsContent>

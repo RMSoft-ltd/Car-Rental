@@ -35,31 +35,70 @@ import {
     getStatusIconName,
 } from "@/utils/status-colors";
 import { Calendar, Car, CheckCircle, Clock, CreditCard, Filter, User, XCircle } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useCarList } from "@/hooks/use-car-list";
 import { LuX } from "react-icons/lu";
+import { BookingDetail } from "@/types/payment";
 
 interface PaymentHistoryContentProps {
     userId?: number;
+    ownerId?: number;
     isAdmin?: boolean;
 }
 
 export default function HistoryContent({
     userId,
+    ownerId,
     isAdmin = false
 }: PaymentHistoryContentProps) {
+    // Determine if user is a car owner (has ownerId prop or should filter by ownerId)
+    const isOwner = !!ownerId;
+
     const [filters, setFilters] = useState<BookingHistoryFilters>({
         bookingStatus: undefined,
         paymentStatus: undefined,
-        userId: !isAdmin && userId ? userId : undefined,
+        // If admin: no filters (show all)
+        // If owner (not admin): filter by ownerId (bookings where they are the owner)
+        // If not owner (not admin): filter by userId (bookings where they are the renter)
+        userId: !isAdmin && !isOwner && userId ? userId : undefined,
+        ownerId: !isAdmin && isOwner && ownerId ? ownerId : undefined,
     });
-    const [showFilters, setShowFilters] = useState<boolean>(true);
+    const [showFilters, setShowFilters] = useState<boolean>(false);
+
+    // Update filters when props change
+    useEffect(() => {
+        setFilters(prev => ({
+            ...prev,
+            userId: !isAdmin && !isOwner && userId ? userId : undefined,
+            ownerId: !isAdmin && isOwner && ownerId ? ownerId : undefined,
+        }));
+    }, [isAdmin, isOwner, userId, ownerId]);
 
     // Fetch booking history with filters
     const { data, isLoading } = useBookingHistory(filters);
 
     // Fetch cars for car filter dropdown
     const { data: carsResponse, isLoading: carsLoading } = useCarList({ limit: 1000 });
+
+    // Helper function to check if booking is expired (more than 15 minutes without payment)
+    const isBookingExpired = (booking: BookingDetail): boolean => {
+        if (!booking.expiresAt) return false;
+        if (booking.paymentStatus === "PAID") return false;
+        
+        const expiresAt = new Date(booking.expiresAt);
+        const now = new Date();
+        const diffInMinutes = (now.getTime() - expiresAt.getTime()) / (1000 * 60);
+        
+        return diffInMinutes > 15;
+    };
+
+    // Helper function to get effective booking status (considering expiration)
+    const getEffectiveBookingStatus = (booking: BookingDetail): string => {
+        if (isBookingExpired(booking)) {
+            return "CANCELLED";
+        }
+        return booking.bookingStatus;
+    };
 
     // Calculate statistics from the data
     const statistics = useMemo(() => {
@@ -88,7 +127,8 @@ export default function HistoryContent({
         const defaultFilters: BookingHistoryFilters = {
             bookingStatus: undefined,
             paymentStatus: undefined,
-            userId: !isAdmin && userId ? userId : undefined,
+            userId: !isAdmin && !isOwner && userId ? userId : undefined,
+            ownerId: !isAdmin && isOwner && ownerId ? ownerId : undefined,
         };
         setFilters(defaultFilters);
     };
@@ -199,7 +239,7 @@ export default function HistoryContent({
             </div>
 
             {/* Filters - Modern inline design */}
-            {(showFilters || data?.rows.length === 0) && (<Card className={`flex-shrink-0`}>
+            {(showFilters) && (<Card className={`flex-shrink-0`}>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 
@@ -407,16 +447,22 @@ export default function HistoryContent({
                                 <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                                 <h3 className="text-lg font-semibold mb-2">No Bookings Found</h3>
                                 <p className="text-muted-foreground">
-                                    {!isAdmin
-                                        ? "You haven't made any bookings yet."
-                                        : "No bookings match your current filters."}
+                                    {isOwner
+                                        ? "You don't have any bookings for your cars yet."
+                                        : isAdmin
+                                            ? "No bookings match your current filters."
+                                            : "You haven't made any bookings yet."}
                                 </p>
                             </div>
                         </CardContent>
                     </Card>
                 ) : (
                     <div className="space-y-4 pb-4">
-                        {data.rows.map((booking) => (
+                        {data.rows.map((booking) => {
+                            const effectiveStatus = getEffectiveBookingStatus(booking);
+                            const isExpired = isBookingExpired(booking);
+                            
+                            return (
                             <Card key={booking.id}>
                                 <CardHeader>
                                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -426,11 +472,14 @@ export default function HistoryContent({
                                                     Booking #{booking.id}
                                                 </CardTitle>
                                                 <Badge
-                                                    variant={getStatusVariant(booking.bookingStatus)}
-                                                    className={getStatusClassName(booking.bookingStatus)}
+                                                    variant={getStatusVariant(effectiveStatus)}
+                                                    className={getStatusClassName(effectiveStatus)}
                                                 >
-                                                    {getStatusIcon(booking.bookingStatus)}
-                                                    <span className="ml-1">{getBookingStatusLabel(booking.bookingStatus)}</span>
+                                                    {getStatusIcon(effectiveStatus)}
+                                                    <span className="ml-1">{getBookingStatusLabel(effectiveStatus)}</span>
+                                                    {isExpired && (
+                                                        <span className="ml-1 text-xs">(Expired)</span>
+                                                    )}
                                                 </Badge>
                                                 <Badge
                                                     variant={getStatusVariant(booking.paymentStatus)}
@@ -568,12 +617,21 @@ export default function HistoryContent({
                                                                 <div className="flex justify-between items-center">
                                                                     <span className="text-muted-foreground">Booking Status:</span>
                                                                     <Badge
-                                                                        variant={getStatusVariant(booking?.bookingStatus?.toLocaleLowerCase())}
-                                                                        className={getStatusClassName(booking?.bookingStatus?.toLocaleLowerCase())}
+                                                                        variant={getStatusVariant(getEffectiveBookingStatus(booking))}
+                                                                        className={getStatusClassName(getEffectiveBookingStatus(booking))}
                                                                     >
-                                                                        {getBookingStatusLabel(booking?.bookingStatus?.toLocaleLowerCase())}
+                                                                        {getBookingStatusLabel(getEffectiveBookingStatus(booking))}
+                                                                        {isBookingExpired(booking) && (
+                                                                            <span className="ml-1 text-xs">(Expired)</span>
+                                                                        )}
                                                                     </Badge>
                                                                 </div>
+                                                                {booking.expiresAt && (
+                                                                    <div className="flex justify-between">
+                                                                        <span className="text-muted-foreground">Expires At:</span>
+                                                                        <span className="font-medium">{formatDate(booking.expiresAt)}</span>
+                                                                    </div>
+                                                                )}
                                                                 <div className="flex justify-between items-center">
                                                                     <span className="text-muted-foreground">Booking Payment Status:</span>
                                                                     <Badge
@@ -620,7 +678,8 @@ export default function HistoryContent({
                                     </Accordion>
                                 </CardContent>
                             </Card>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
