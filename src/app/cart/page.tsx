@@ -52,7 +52,7 @@ const EmptyCart = () => {
         Looks like you haven&apos;t added any cars to your cart yet. Start browsing to find your perfect ride!
       </p>
       <button 
-        onClick={() => router.push('/cars')}
+        onClick={() => router.push('/')}
         className="bg-black text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
       >
         Browse Cars
