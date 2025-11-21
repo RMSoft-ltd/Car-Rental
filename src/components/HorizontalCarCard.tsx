@@ -117,7 +117,7 @@ export default function HorizontalCarCard({
                   </div>
                   <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
                     <Briefcase className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
-                    <span className="font-medium">1 Large bag</span>
+                    <span className="font-medium">{car.largeBags} Large bag</span>
                   </div>
                   <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
                     <Clock className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
@@ -125,7 +125,7 @@ export default function HorizontalCarCard({
                   </div>
                   <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
                     <Briefcase className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
-                    <span className="font-medium">2 Small bags</span>
+                    <span className="font-medium">{car.smallBags} Small bags</span>
                   </div>
                   <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2 sm:col-span-2">
                     <Settings className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />

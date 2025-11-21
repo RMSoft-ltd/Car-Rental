@@ -171,9 +171,7 @@ const Cart = () => {
   const router = useRouter();
   const userId = user?.id ?? 0;
   
-  // State to store checkout response
-  // const [checkoutData, setCheckoutData] = useState<BookingResponse | null>(null);
-  
+
   // Fetch cart data
   const { 
     data: cartItems, 

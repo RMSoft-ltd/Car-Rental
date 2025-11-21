@@ -4,7 +4,7 @@ import { Users, Briefcase, Clock, Settings, Trash2, Pencil } from "lucide-react"
 import { baseUrl } from "@/lib/api";
 import Image from "next/image";
 import { CartItem } from "@/types/cart";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { calculatePreviewPrice } from "@/hooks/use-cart-items";
 
 interface CartCardProps {
   item: CartItem;
@@ -36,20 +37,33 @@ export default function CartCard({
   const [dropOffDate, setDropOffDate] = useState(item.dropOffDate);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  
+  // Preview calculation for editing mode
+  const [previewDays, setPreviewDays] = useState(item.totalDays);
+  const [previewPrice, setPreviewPrice] = useState(item.totalAmount);
 
-  // Calculate number of days between dates
-  const calculateDays = () => {
-    const pickUp = new Date(pickUpDate);
-    const dropOff = new Date(dropOffDate);
-    const timeDiff = dropOff.getTime() - pickUp.getTime();
-    const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    return Math.max(days, 1);
-  };
+  // Update preview when dates change in edit mode
+  useEffect(() => {
+    if (isEditing) {
+      const { days, total } = calculatePreviewPrice(
+        item.car.pricePerDay,
+        pickUpDate,
+        dropOffDate
+      );
+      setPreviewDays(days);
+      setPreviewPrice(total);
+    }
+  }, [pickUpDate, dropOffDate, isEditing, item.car.pricePerDay]);
 
-  const days = calculateDays();
-  const totalPrice = item.car.pricePerDay * days;
+  // Use backend-calculated values when not editing
+  const displayPrice = isEditing ? previewPrice : item.totalAmount;
 
   const handleSaveDates = () => {
+    // Validate dates
+    if (new Date(pickUpDate) >= new Date(dropOffDate)) {
+      alert("Drop-off date must be after pick-up date");
+      return;
+    }
     setShowUpdateDialog(true);
   };
 
@@ -60,8 +74,11 @@ export default function CartCard({
   };
 
   const handleCancelEdit = () => {
+    // Reset to original backend values
     setPickUpDate(item.pickUpDate);
     setDropOffDate(item.dropOffDate);
+    setPreviewDays(item.totalDays);
+    setPreviewPrice(item.totalAmount);
     setIsEditing(false);
   };
 
@@ -82,6 +99,11 @@ export default function CartCard({
     setShowDeleteDialog(false);
   };
 
+  // Get best available image
+  const carImageUrl = item.car?.carImages?.length > 0 
+    ? `${baseUrl}${item.car.carImages[0]}`
+    : '/placeholder-car.jpg';
+
   return (
     <>
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative">
@@ -89,11 +111,7 @@ export default function CartCard({
           {/* Car Image */}
           <div className="w-full md:w-64 h-56 flex-shrink-0 relative">
             <Image
-              src={
-                item.car && item.car.carImages.length > 0
-                  ? `${baseUrl}${item.car.carImages[0]}`
-                  : `/placeholder-car.jpg`
-              }
+              src={carImageUrl}
               fill
               className="object-contain p-4"
               alt={`${item.car.make} ${item.car.model}`}
@@ -113,15 +131,15 @@ export default function CartCard({
             <div className="grid grid-cols-2 gap-x-8 gap-y-3">
               <div className="flex items-center text-sm text-gray-700">
                 <Users className="w-4 h-4 mr-2" />
-                <span>{item.car?.engineSize || item.car.doors} Seats</span>
+                <span>{item.car.seats || 4} Seats</span>
               </div>
               <div className="flex items-center text-sm text-gray-700">
                 <Briefcase className="w-4 h-4 mr-2" />
-                <span>{item.car.body} Luggage</span>
+                <span>{item.car.body}</span>
               </div>
               <div className="flex items-center text-sm text-gray-700">
                 <Clock className="w-4 h-4 mr-2" />
-                <span>{item.car.mileage} per rental</span>
+                <span>{item.car.mileage?.toLocaleString()} km</span>
               </div>
               <div className="flex items-center text-sm text-gray-700">
                 <Settings className="w-4 h-4 mr-2" />
@@ -134,11 +152,16 @@ export default function CartCard({
           <div className="border-t md:border-t-0 md:border-l border-gray-200 p-6 md:w-80 flex flex-col justify-between">
             <div className="text-right mb-4">
               <p className="text-2xl font-bold text-gray-900">
-                {totalPrice.toLocaleString()} Rfw
+                {displayPrice.toLocaleString()} RWF
               </p>
               <p className="text-sm text-gray-500">
-                {days} day{days !== 1 ? 's' : ''} • {item.car.pricePerDay.toLocaleString()} Rfw/day
+                {item.totalDays} day{item.totalDays !== 1 ? 's' : ''} • {item.car.pricePerDay.toLocaleString()} RWF/day
               </p>
+              {isEditing && displayPrice !== item.totalAmount && (
+                <p className="text-xs text-orange-600 mt-1">
+                  Preview price (will update on save)
+                </p>
+              )}
             </div>
 
             <div className="border border-gray-900 rounded-lg p-4">
@@ -193,7 +216,7 @@ export default function CartCard({
                   </div>
                 </div>
               ) : (
-                // View Mode
+                // View Mode - Display backend data
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-xs font-semibold text-gray-900 mb-1">PICK-UP DATE</p>
@@ -206,16 +229,16 @@ export default function CartCard({
                   <div className="flex flex-col gap-1">
                     <button 
                       onClick={() => setIsEditing(true)}
-                      disabled={isUpdating}
-                      className="p-1 hover:bg-gray-100 cursor-pointer rounded transition-colors"
+                      disabled={isUpdating || isDeleting}
+                      className="p-1 hover:bg-gray-100 cursor-pointer rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Edit dates"
                     >
                       <Pencil className="w-4 h-4"/>
                     </button>
                     <button 
                       onClick={handleDeleteClick}
-                      disabled={isDeleting}
-                      className="p-1 hover:bg-red-50 cursor-pointer rounded transition-colors text-red-600"
+                      disabled={isDeleting || isUpdating}
+                      className="p-1 hover:bg-red-50 cursor-pointer rounded transition-colors text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Remove item"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -264,7 +287,10 @@ export default function CartCard({
             <AlertDialogTitle>Update rental dates?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to update the rental dates for your {item.car.make} {item.car.model}?
-              This will recalculate the total price based on the new dates.
+              <br />
+              <span className="font-semibold mt-2 block">
+                New total: {previewPrice.toLocaleString()} RWF for {previewDays} day{previewDays !== 1 ? 's' : ''}
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
