@@ -36,28 +36,36 @@ export const paymentKeys = {
     [...paymentKeys.details(), bookingGroupId] as const,
 };
 
-/**
- * Configuration for cart queries
- */
+//  Configuration for cart queries
+ 
 const CART_QUERY_CONFIG = {
-  staleTime: 2 * 60 * 1000, // 2 minutes
-  gcTime: 10 * 60 * 1000, // 10 minutes
+  staleTime: 2 * 60 * 1000, 
+  gcTime: 10 * 60 * 1000, 
   retry: 2,
   retryDelay: (attemptIndex: number) =>
     Math.min(1000 * 2 ** attemptIndex, 30000),
 } as const;
 
-/**
- * Hook for fetching user's cart items
- */
+//  Hook for fetching user's cart items
+ 
 export const useCart = (userId: number): UseQueryResult<CartItem[], Error> => {
   return useQuery<CartItem[], Error>({
     queryKey: cartKeys.list(userId),
     queryFn: async () => {
       const data = await getCart(userId);
-      return data.items;
+      
+      // Validate and return items with backend-calculated values
+      return data.items.map((item: CartItem) => ({
+        ...item,
+        // Ensure dates are properly formatted
+        pickUpDate: new Date(item.pickUpDate).toISOString().split('T')[0],
+        dropOffDate: new Date(item.dropOffDate).toISOString().split('T')[0],
+        // Use backend-calculated values as source of truth
+        totalDays: item.totalDays,
+        totalAmount: item.totalAmount,
+      }));
     },
-    enabled: !!userId,
+    enabled: !!userId && userId > 0,
     staleTime: CART_QUERY_CONFIG.staleTime,
     gcTime: CART_QUERY_CONFIG.gcTime,
     refetchOnWindowFocus: true,
@@ -211,25 +219,52 @@ export const useDeleteCartItem = (
 export const useCartSummary = (userId: number) => {
   const { data: cartItems, isLoading, error } = useCart(userId);
 
+  // Total number of items in cart
   const totalItems = cartItems?.length ?? 0;
 
-  const totalPrice =
-    cartItems?.reduce((total, item) => {
-      const pickUp = new Date(item.pickUpDate);
-      const dropOff = new Date(item.dropOffDate);
-      const days = Math.ceil(
-        (dropOff.getTime() - pickUp.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      return total + item.car.pricePerDay * Math.max(days, 1);
-    }, 0) ?? 0;
+  const totalPrice = cartItems?.reduce((total, item) => {
+    return total + (item.totalAmount || 0);
+  }, 0) ?? 0;
+
+  // Total number of rental days across all items
+  const totalDays = cartItems?.reduce((total, item) => {
+    return total + (item.totalDays || 0);
+  }, 0) ?? 0;
 
   return {
     cartItems,
     totalItems,
     totalPrice,
+    totalDays,
     isLoading,
     error,
   };
+};
+
+export const calculateRentalDays = (pickUpDate: string, dropOffDate: string): number => {
+  const pickUp = new Date(pickUpDate);
+  const dropOff = new Date(dropOffDate);
+  
+  // Reset time to midnight for accurate day calculation
+  pickUp.setHours(0, 0, 0, 0);
+  dropOff.setHours(0, 0, 0, 0);
+  
+  const timeDiff = dropOff.getTime() - pickUp.getTime();
+  const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+  
+  // Minimum 1 day rental
+  return Math.max(days, 1);
+};
+
+export const calculatePreviewPrice = (
+  pricePerDay: number, 
+  pickUpDate: string, 
+  dropOffDate: string
+): { days: number; total: number } => {
+  const days = calculateRentalDays(pickUpDate, dropOffDate);
+  const total = pricePerDay * days;
+  
+  return { days, total };
 };
 
 /**

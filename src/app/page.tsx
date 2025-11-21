@@ -16,9 +16,21 @@ import { useCarList } from "@/hooks/use-car-list";
 import { SelectInput } from "@/components/SelectInput";
 import { LuCar } from "react-icons/lu";
 import Button from "@/components/shared/Button";
-import { CAR_CATEGORIES, DEFAULT_SEARCH_VALUES, FEATURE_MAP, FILTER_SECTIONS, FilterCheckboxProps, HERO_FEATURES, PRICE_RANGE_MAP, SORT_OPTIONS, YEAR_RANGE_MAP } from "@/types/landing-constants";
-
-
+import {
+  CAR_CATEGORIES,
+  DEFAULT_SEARCH_VALUES,
+  FEATURE_MAP,
+  FILTER_SECTIONS,
+  FilterCheckboxProps,
+  HERO_FEATURES,
+  PRICE_RANGE_MAP,
+  SORT_OPTIONS,
+  YEAR_RANGE_MAP,
+} from "@/types/landing-constants";
+import {
+  calculateFilterCounts,
+  getUpdatedFilterSections,
+} from "@/utils/filterCountCalculator";
 
 // ============================================
 // Subcomponents
@@ -69,7 +81,7 @@ const FilterCheckbox = React.memo<FilterCheckboxProps>(
         />
         <span className="ml-2 text-sm text-gray-600">{label}</span>
       </div>
-      <span className="text-sm text-gray-500">({count})</span>
+      <span className="text-sm text-gray-500">{count}</span>
     </label>
   )
 );
@@ -99,31 +111,45 @@ const FilterSection = React.memo<{
 ));
 FilterSection.displayName = "FilterSection";
 
-const EmptyState = React.memo<{ refetch: () => void, reset: () => void }>(({ refetch, reset }) => (
-  <div className="text-center py-16 px-4">
-    <div className="max-w-md mx-auto">
-      <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-        <LuCar className="w-12 h-12 text-gray-400" />
-      </div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">
-        No cars available
-      </h3>
-      <p className="text-gray-600 mb-6">
-        We couldn&apos;t find any cars matching your current filters. Try adjusting your search criteria or clearing some filters to see more options.
-      </p>
-      <div className="space-x-3">
-
-        <Button variant="primary" type="reset" onClick={() => { refetch(); }} >
-          Refresh search
-        </Button>
-        <Button variant="secondary" type="reset" onClick={() => { reset(); }} >
-          Reset search
-        </Button>
-
+const EmptyState = React.memo<{ refetch: () => void; reset: () => void }>(
+  ({ refetch, reset }) => (
+    <div className="text-center py-16 px-4">
+      <div className="max-w-md mx-auto">
+        <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+          <LuCar className="w-12 h-12 text-gray-400" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          No cars available
+        </h3>
+        <p className="text-gray-600 mb-6">
+          We couldn&apos;t find any cars matching your current filters. Try
+          adjusting your search criteria or clearing some filters to see more
+          options.
+        </p>
+        <div className="space-x-3">
+          <Button
+            variant="primary"
+            type="reset"
+            onClick={() => {
+              refetch();
+            }}
+          >
+            Refresh search
+          </Button>
+          <Button
+            variant="secondary"
+            type="reset"
+            onClick={() => {
+              reset();
+            }}
+          >
+            Reset search
+          </Button>
+        </div>
       </div>
     </div>
-  </div>
-));
+  )
+);
 EmptyState.displayName = "EmptyState";
 
 // ============================================
@@ -241,7 +267,15 @@ export default function Home() {
   // Fetch data
   const { data, isLoading, isError, error, refetch } = useCarList(queryParams);
 
-  // Reset to page 1 when any filter changes (except page itself)
+  const cars = data?.rows ?? [];
+
+  const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
+
+  const updatedFilterSections = useMemo(
+    () => getUpdatedFilterSections(FILTER_SECTIONS, filterCounts),
+    [filterCounts]
+  );
+
   const resetPage = useCallback(() => {
     setPage(1);
   }, []);
@@ -324,7 +358,6 @@ export default function Home() {
 
   // Computed values
   const carCount = data?.total ?? 0;
-  const cars = data?.rows ?? [];
   const hasNoCars = !isLoading && carCount === 0;
   const hasCars = cars.length > 0;
 
@@ -424,8 +457,9 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Filter Sidebar */}
+
             <aside className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6 sticky top-4">
+              <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6 ">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-bold text-gray-900">Filter</h3>
                   <button
@@ -439,16 +473,17 @@ export default function Home() {
 
                 <FilterSection
                   title="Car Type"
-                  items={FILTER_SECTIONS.carType}
+                  items={updatedFilterSections.carType}
                   selectedItems={selectedCarTypes}
                   onToggle={toggleArrayFilter(setSelectedCarTypes)}
                 />
+
                 <div className="mb-4 pb-4 border-b border-gray-200">
                   <h4 className="text-sm font-bold text-gray-900 mb-2">
                     Transmission
                   </h4>
                   <div className="space-y-1">
-                    {FILTER_SECTIONS.transmission.map((item) => (
+                    {updatedFilterSections.transmission.map((item) => (
                       <FilterCheckbox
                         key={item.label}
                         label={item.label}
@@ -459,27 +494,31 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
+
                 <FilterSection
                   title="Price Range"
-                  items={FILTER_SECTIONS.priceRange}
+                  items={updatedFilterSections.priceRange}
                   selectedItems={selectedPriceRange ? [selectedPriceRange] : []}
                   onToggle={togglePriceRange}
                 />
+
                 <FilterSection
                   title="Features"
-                  items={FILTER_SECTIONS.features}
+                  items={updatedFilterSections.features}
                   selectedItems={selectedFeatures}
                   onToggle={toggleArrayFilter(setSelectedFeatures)}
                 />
+
                 <FilterSection
                   title="Fuel Type"
-                  items={FILTER_SECTIONS.fuelType}
+                  items={updatedFilterSections.fuelType}
                   selectedItems={selectedFuelTypes}
                   onToggle={toggleArrayFilter(setSelectedFuelTypes)}
                 />
+
                 <FilterSection
                   title="Year"
-                  items={FILTER_SECTIONS.year}
+                  items={updatedFilterSections.year}
                   selectedItems={selectedYearRange ? [selectedYearRange] : []}
                   onToggle={toggleYearRange}
                   showBorder={false}
@@ -491,7 +530,6 @@ export default function Home() {
             <main className="lg:col-span-3">
               <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6 mb-6">
                 <div className="flex flex-col md:flex-row md:justify-between mb-4">
-
                   <h2 className="text-xl md:text-2xl font-bold text-gray-900">
                     {isLoading ? "Loading..." : `${carCount} Cars Available`}
                   </h2>
@@ -516,7 +554,11 @@ export default function Home() {
                 >
                   <TabsList className=" cursor-pointer  ">
                     {CAR_CATEGORIES.map((category) => (
-                      <TabsTrigger className="cursor-pointer" key={category.value} value={category.value}>
+                      <TabsTrigger
+                        className="cursor-pointer"
+                        key={category.value}
+                        value={category.value}
+                      >
                         {category.label}
                       </TabsTrigger>
                     ))}

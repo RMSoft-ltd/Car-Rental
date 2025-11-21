@@ -16,6 +16,8 @@ export interface Car {
   year: number;
   plateNumber: string;
   transition: string;
+  largeBags: string;
+  smallBags: string;
   driverType: string;
   engineSize: number;
   doors: number;
