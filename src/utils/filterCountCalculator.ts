@@ -75,13 +75,13 @@ export function calculateFilterCounts(cars: Car[]): FilterCounts {
     }
 
     // Count features 
-    const featureMapping = {
-      'Air Conditioning': 'isAirConditioner',
-      'GPS Navigation': 'isNavigation',
-      'Bluetooth': 'isBluetooth',
-    };
+    const featureMapping: Array<[string, keyof Car]> = [
+      ['Air Conditioning', 'isAirConditioner'],
+      ['GPS Navigation', 'isNavigation'],
+      ['Bluetooth', 'isRadioBluetoothEnabled'],
+    ];
 
-    Object.entries(featureMapping).forEach(([displayName, fieldName]) => {
+    featureMapping.forEach(([displayName, fieldName]) => {
       if (car[fieldName] === true) {
         counts.features[displayName] = (counts.features[displayName] || 0) + 1;
       }

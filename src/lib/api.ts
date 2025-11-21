@@ -48,10 +48,24 @@ apiClient.interceptors.response.use(
         process.env.NEXT_PUBLIC_REFRESH_TOKEN_KEY || "car_rental_refresh_token"
       );
 
-      // Redirect to login if not already there
+      const publicRoutes = [
+        "/",
+        "/cars/",
+        "/auth/",
+        "/booking",
+        "/cart",
+        "/checkout",
+      ];
+
+      // Check if current pathname is a public route
+      const isPublicRoute =
+        typeof window !== "undefined" &&
+        publicRoutes.some((route) => window.location.pathname.startsWith(route));
+
       if (
         typeof window !== "undefined" &&
-        !window.location.pathname.includes("/auth")
+        !window.location.pathname.includes("/auth") &&
+        !isPublicRoute
       ) {
         window.location.href = "/auth/signin";
       }
