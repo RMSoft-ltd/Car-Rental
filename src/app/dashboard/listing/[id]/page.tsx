@@ -51,6 +51,9 @@ export default function CarListingDetailPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+    const [showFullDescription, setShowFullDescription] = useState(false);
+    const [showFullSecurityDeposit, setShowFullSecurityDeposit] = useState(false);
+    const [showFullRequiredDocs, setShowFullRequiredDocs] = useState(false);
     const [openSections, setOpenSections] = useState({
         basicInfo: true,
         location: true,
@@ -118,6 +121,17 @@ export default function CarListingDetailPage() {
         </div>
     );
 
+    // Helper to get text content length from HTML string
+    const getTextLength = (htmlString: string): number => {
+        if (typeof window === "undefined") {
+            // Server-side: strip HTML tags using regex (simple approach)
+            return htmlString.replace(/<[^>]*>/g, '').length;
+        }
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = htmlString;
+        return (tempDiv.textContent || tempDiv.innerText || "").length;
+    };
+
     // Early return for loading, error, or no data states
     if (!isMounted || isLoading) {
         return (
@@ -173,7 +187,7 @@ export default function CarListingDetailPage() {
                     </Button>
 
                     <div className="flex items-center gap-3">
-                        {isAdmin ? (
+                        {isAdmin && car.status !== "rejected" && car.status !== "approved" ? (
                             <>
                                 <Button
                                     variant={"secondary"}
@@ -265,7 +279,7 @@ export default function CarListingDetailPage() {
                             </>
                         ) : null}
 
-                        {(isOwner || isAdmin) ? (<Link href={`/dashboard/listing/${car.id}/edit`} className="flex gap-3">
+                        {(isOwner || isAdmin) && car.status !== "rejected" && car.status !== "approved" ? (<Link href={`/dashboard/listing/${car.id}/edit`} className="flex gap-3">
                             <Button
                                 size={`lg`}
                                 className="flex-grow-[2] bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors cursor-pointer"
@@ -370,6 +384,20 @@ export default function CarListingDetailPage() {
                             </p>
                         </div>
 
+                        {/* Rejection Reason */}
+                        {car.status === "rejected" && car.changeStatusDescription && (
+                            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <h2 className="text-lg font-semibold mb-2 flex items-center gap-2 text-red-800">
+                                    <X className="w-5 h-5" />
+                                    Rejection Reason
+                                </h2>
+                                <HtmlRenderer
+                                    content={car.changeStatusDescription}
+                                    className="text-sm text-red-700 leading-relaxed"
+                                />
+                            </div>
+                        )}
+
                         {/* Description */}
                         {car.description && (
                             <div className="mb-6">
@@ -377,11 +405,22 @@ export default function CarListingDetailPage() {
                                     <FileText className="w-5 h-5" />
                                     Description
                                 </h2>
-                                <HtmlRenderer
-                                    content={car.description}
-                                    className="text-sm text-gray-600 mb-4 leading-relaxed"
-                                    maxLength={150}
-                                />
+                                <div>
+                                    <HtmlRenderer
+                                        content={car.description}
+                                        className="text-sm text-gray-600 mb-4 leading-relaxed"
+                                        maxLength={showFullDescription ? undefined : 150}
+                                    />
+                                    {getTextLength(car.description) > 150 && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => setShowFullDescription(!showFullDescription)}
+                                            className="text-sm text-blue-600 hover:text-blue-800 p-0 h-auto font-normal"
+                                        >
+                                            {showFullDescription ? "Show Less" : "View All"}
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -479,20 +518,25 @@ export default function CarListingDetailPage() {
                                         </div>
                                     )}
 
-                                    {car.availabilityType === "CUSTOM" && car.customDays && car.customDays.length > 0 && (
+                                    {car.availabilityType === "CUSTOM" && car.customDays && (
                                         <div className="bg-gray-50 p-4 rounded-lg">
                                             <p className="text-sm text-gray-600 mb-1">Available Days</p>
                                             <p className="text-lg font-semibold">
                                                 {(() => {
+                                                    let daysString = '';
                                                     if (typeof car.customDays === 'string') {
                                                         try {
                                                             const parsed = JSON.parse(car.customDays);
-                                                            return Array.isArray(parsed) ? parsed.join(', ') : car.customDays;
+                                                            daysString = Array.isArray(parsed) ? parsed.join(', ') : car.customDays;
                                                         } catch {
-                                                            return car.customDays.split(',').map(day => day.trim()).join(', ');
+                                                            daysString = car.customDays.split(',').map(day => day.trim()).join(', ');
                                                         }
+                                                    } else if (Array.isArray(car.customDays)) {
+                                                        daysString = car.customDays.join(', ');
+                                                    } else {
+                                                        daysString = String(car.customDays);
                                                     }
-                                                    return Array.isArray(car.customDays) ? car.customDays.join(', ') : car.customDays;
+                                                    return daysString;
                                                 })()}
                                             </p>
                                         </div>
@@ -532,11 +576,22 @@ export default function CarListingDetailPage() {
 
                                     <div className="bg-gray-50 p-4 rounded-lg">
                                         <p className="text-sm text-gray-600 mb-1">Security Deposit Usage</p>
-                                        <HtmlRenderer
-                                            content={car.securityDeposit}
-                                            className="text-lg font-semibold capitalize"
-                                            maxLength={150}
-                                        />
+                                        <div>
+                                            <HtmlRenderer
+                                                content={car.securityDeposit}
+                                                className="text-lg font-semibold capitalize"
+                                                maxLength={showFullSecurityDeposit ? undefined : 150}
+                                            />
+                                            {getTextLength(car.securityDeposit) > 150 && (
+                                                <Button
+                                                    variant="ghost"
+                                                    onClick={() => setShowFullSecurityDeposit(!showFullSecurityDeposit)}
+                                                    className="text-sm text-blue-600 hover:text-blue-800 p-0 h-auto font-normal mt-2"
+                                                >
+                                                    {showFullSecurityDeposit ? "Show Less" : "View All"}
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="bg-gray-50 p-4 rounded-lg">
@@ -546,11 +601,22 @@ export default function CarListingDetailPage() {
                                     {car.requiredDocs && (
                                         <div className="bg-gray-50 p-4 rounded-lg">
                                             <p className="text-sm text-gray-600 mb-1">Required Documents</p>
-                                            <HtmlRenderer
-                                                content={car.requiredDocs}
-                                                className="text-lg font-semibold capitalize"
-                                                maxLength={150}
-                                            />
+                                            <div>
+                                                <HtmlRenderer
+                                                    content={car.requiredDocs}
+                                                    className="text-lg font-semibold capitalize"
+                                                    maxLength={showFullRequiredDocs ? undefined : 150}
+                                                />
+                                                {getTextLength(car.requiredDocs) > 150 && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        onClick={() => setShowFullRequiredDocs(!showFullRequiredDocs)}
+                                                        className="text-sm text-blue-600 hover:text-blue-800 p-0 h-auto font-normal mt-2"
+                                                    >
+                                                        {showFullRequiredDocs ? "Show Less" : "View All"}
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
