@@ -28,6 +28,7 @@ import { bookCarNow, getCarBookedDates } from "@/services/cart-service";
 import { AxiosError } from "axios";
 import { useAddToCart } from "@/hooks/use-cart-items";
 import { calculateAmountToBePaidByUser } from "@/utils/pricing";
+import { Button } from "@/components/ui/button";
 
 const toAbsoluteImage = (path?: string) => {
   if (!path) return null;
@@ -171,7 +172,7 @@ const getHostDisplay = (car?: CarListing | null) => {
 export default function CarDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const toast = useToast();
   const carIdParam = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const carId = Number(carIdParam);
@@ -346,7 +347,7 @@ export default function CarDetailPage() {
   };
 
   const { mutate: addToCartMutation, isPending: isAddingToCart } = useAddToCart(
-    user?.id ?? 0
+    user?.id && user.id > 0 ? user.id : 0
   );
 
   const isDateUnavailable = (iso: string) => unavailableDatesSet.has(iso);
@@ -396,6 +397,10 @@ export default function CarDetailPage() {
   });
 
   const handleBookNow = () => {
+    if (!isAuthenticated) {
+      toast.info("Sign in required", "Please sign in to book this car.");
+      return;
+    }
     if (!user) {
       redirectToSignIn(
         "Sign in required",
@@ -436,7 +441,11 @@ export default function CarDetailPage() {
   };
 
   const handleAddToCart = () => {
-    if (!user) {
+    if (!isAuthenticated) {
+      toast.info("Sign in required", "Please sign in to add items to cart.");
+      return;
+    }
+    if (!user || !user.id || user.id <= 0) {
       redirectToSignIn(
         "Sign in required",
         "Please sign in to add items to cart."
@@ -473,11 +482,15 @@ export default function CarDetailPage() {
       return;
     }
 
+    // Ensure dates are in YYYY-MM-DD format
+    const formattedPickUpDate = pickUpDate.split('T')[0];
+    const formattedDropOffDate = dropOffDate.split('T')[0];
+
     addToCartMutation(
       {
         carId: car.id,
-        pickUpDate,
-        dropOffDate,
+        pickUpDate: formattedPickUpDate,
+        dropOffDate: formattedDropOffDate,
       },
       {
         onSuccess: () => {
@@ -486,9 +499,17 @@ export default function CarDetailPage() {
         onError: (error: unknown) => {
           let message = "Something went wrong while adding to cart.";
           if (error instanceof AxiosError) {
-            message =
-              (error.response?.data as { message?: string })?.message ??
-              error.message;
+            const errorData = error.response?.data as { message?: string; error?: string } | undefined;
+            message = errorData?.message ?? errorData?.error ?? error.message ?? message;
+            
+            // Provide more specific error messages
+            if (error.response?.status === 400) {
+              message = errorData?.message ?? errorData?.error ?? "Invalid request. Please check your dates and try again.";
+            } else if (error.response?.status === 401) {
+              message = "Your session has expired. Please sign in again.";
+            } else if (error.response?.status === 403) {
+              message = "You don't have permission to perform this action.";
+            }
           } else if (error instanceof Error) {
             message = error.message;
           }
@@ -941,23 +962,26 @@ export default function CarDetailPage() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <button
+                <Button
                   onClick={handleAddToCart}
                   disabled={isAddingToCart || !pickUpDate || !dropOffDate}
-                  className="rounded-2xl border border-gray-900 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  variant="outline"
+                  size="sm"
                 >
                   {isAddingToCart ? "Adding..." : "Add To Cart"}
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleBookNow}
                   disabled={
                     bookingMutation.isPending || !pickUpDate || !dropOffDate
                   }
-                  className="rounded-2xl bg-black px-6 py-3 text-center text-sm font-semibold text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed hover:bg-gray-900"
+                  variant="default"
+                  size="sm"
                 >
                   {bookingMutation.isPending ? "Booking..." : "Book Now"}
-                </button>
+                </Button>
               </div>
+
             </div>
           </div>
         </section>
