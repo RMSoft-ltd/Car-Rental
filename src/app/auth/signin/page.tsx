@@ -10,20 +10,9 @@ import { useToast } from "@/app/shared/ToastProvider";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Car,
   Lock,
   CheckCircle,
   Sparkles,
-  Route,
-  MapPin,
-  Clock,
-  Star,
-  Users,
-  ShieldCheck,
-  BadgeCheck,
-  Zap,
-  Globe,
-  Award,
   Key,
   Mail,
 } from "lucide-react";
@@ -35,6 +24,7 @@ import {
   TwoFactorChallenge,
 } from "@/types/auth";
 import { TwoFactorModal } from "@/components/auth/TwoFactorModal";
+import LeftSide from "@/components/auth/LeftSide";
 
 interface SignInForm {
   email: string;
@@ -171,114 +161,7 @@ function SignInContent() {
     <>
       <div className="min-h-screen flex bg-white">
       {/* Left Side - Enhanced */}
-      <div className="hidden lg:flex lg:w-1/2 bg-black text-white flex-col justify-between p-12 relative overflow-hidden">
-        {/* Subtle Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-20 left-20 w-32 h-32 bg-white rounded-full"></div>
-          <div className="absolute bottom-32 right-32 w-24 h-24 bg-white rounded-full"></div>
-          <div className="absolute top-1/2 left-1/3 w-16 h-16 bg-white rounded-full"></div>
-        </div>
-
-        <div className="relative z-10">
-          {/* Enhanced Icon Grid */}
-          <div className="grid grid-cols-4 gap-8 mb-16">
-            {/* Row 1 */}
-            <div className="w-20 h-20 bg-gray-800 rounded-2xl flex items-center justify-center group hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:rotate-6">
-              <Car className="w-8 h-8 text-white group-hover:text-blue-400 transition-colors" />
-            </div>
-            <div className="w-20 h-20 bg-gray-700 rounded-2xl flex items-center justify-center group hover:bg-gray-600 transition-all duration-300 hover:scale-110 hover:-rotate-6">
-              <Route className="w-8 h-8 text-white group-hover:text-green-400 transition-colors" />
-            </div>
-            <div className="w-20 h-20 bg-gray-800 rounded-2xl flex items-center justify-center group hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:rotate-12">
-              <MapPin className="w-8 h-8 text-white group-hover:text-red-400 transition-colors" />
-            </div>
-            <div className="w-20 h-20 bg-gray-700 rounded-2xl flex items-center justify-center group hover:bg-gray-600 transition-all duration-300 hover:scale-110 hover:-rotate-12">
-              <Clock className="w-8 h-8 text-white group-hover:text-yellow-400 transition-colors" />
-            </div>
-
-            {/* Row 2 */}
-            <div className="w-20 h-20 bg-gray-700 rounded-2xl flex items-center justify-center group hover:bg-gray-600 transition-all duration-300 hover:scale-110 hover:-rotate-6">
-              <ShieldCheck className="w-8 h-8 text-white group-hover:text-purple-400 transition-colors" />
-            </div>
-            <div className="w-20 h-20 bg-gray-800 rounded-2xl flex items-center justify-center group hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:rotate-6">
-              <Star className="w-8 h-8 text-white group-hover:text-amber-400 transition-colors" />
-            </div>
-            <div className="w-20 h-20 bg-gray-700 rounded-2xl flex items-center justify-center group hover:bg-gray-600 transition-all duration-300 hover:scale-110 hover:-rotate-12">
-              <Users className="w-8 h-8 text-white group-hover:text-cyan-400 transition-colors" />
-            </div>
-            <div className="w-20 h-20 bg-gray-800 rounded-2xl flex items-center justify-center group hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:rotate-12">
-              <Zap className="w-8 h-8 text-white group-hover:text-orange-400 transition-colors" />
-            </div>
-
-            {/* Row 3 */}
-            <div className="w-20 h-20 bg-gray-800 rounded-2xl flex items-center justify-center group hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:rotate-6">
-              <Globe className="w-8 h-8 text-white group-hover:text-emerald-400 transition-colors" />
-            </div>
-            <div className="w-20 h-20 bg-gray-700 rounded-2xl flex items-center justify-center group hover:bg-gray-600 transition-all duration-300 hover:scale-110 hover:-rotate-6">
-              <Award className="w-8 h-8 text-white group-hover:text-pink-400 transition-colors" />
-            </div>
-            <div className="w-20 h-20 bg-gray-800 rounded-2xl flex items-center justify-center group hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:rotate-12">
-              <BadgeCheck className="w-8 h-8 text-white group-hover:text-indigo-400 transition-colors" />
-            </div>
-            <div className="w-20 h-20 bg-gray-700 rounded-2xl flex items-center justify-center group hover:bg-gray-600 transition-all duration-300 hover:scale-110 hover:-rotate-12">
-              <Sparkles className="w-8 h-8 text-white group-hover:text-yellow-300 transition-colors" />
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="max-w-md">
-            <div className="flex items-center gap-3 mb-6">
-             
-              <h1 className="text-4xl font-bold text-white">
-                Drive your way, rent with ease.
-              </h1>
-            </div>
-            
-            <p className="text-gray-300 text-lg leading-relaxed mb-12 bg-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
-              A modern car rental platform that offers customers flexible
-              vehicle options with the choice of professional drivers. Whether
-              for business, travel, or daily use, it ensures convenience,
-              safety, and comfort in every journey.
-            </p>
-
-            {/* Trust Indicators */}
-            <div className="flex items-center space-x-8 bg-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-500/20 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                </div>
-                <span className="text-sm text-gray-300 font-medium">Secure</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-blue-400" />
-                </div>
-                <span className="text-sm text-gray-300 font-medium">Verified</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-purple-500/20 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-purple-400" />
-                </div>
-                <span className="text-sm text-gray-300 font-medium">Trusted</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom CTA */}
-        <div className="relative z-10 flex items-center justify-between bg-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
-          <div>
-            <span className="text-gray-300 block text-sm">You don&apos;t have an account?</span>
-            <span className="text-white font-semibold block text-sm">Join thousands of car renters</span>
-          </div>
-          <Link
-            href="/auth/signup"
-            className="bg-white text-black px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 hover:scale-105 transform transition-all duration-300 cursor-pointer flex items-center gap-2 shadow-lg hover:shadow-xl"
-          >
-            Sign up
-          </Link>
-        </div>
-      </div>
+      <LeftSide isSignInPage={true} />
 
       {/* Right Side - Enhanced Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
@@ -290,7 +173,7 @@ function SignInContent() {
                 <Key className="w-8 h-8 text-white" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
               Welcome Back
             </h2>
             <p className="text-gray-600 text-lg">
@@ -468,6 +351,7 @@ function SignInContent() {
           </div>
         </div>
       </div>
+
       </div>
       <TwoFactorModal
         open={twoFactorState.open}

@@ -8,17 +8,7 @@ import authService from "@/services/auth.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
 import Link from "next/link";
-import {
-  CreditCard,
-  Edit3,
-  Hash,
-  Coffee,
-  ArrowLeft,
-  Car,
-  Lock,
-  Shield,
-  CheckCircle,
-} from "lucide-react";
+import LeftSide from "@/components/auth/LeftSide";
 
 interface SignUpForm {
   firstName: string;
@@ -91,95 +81,10 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-black text-white flex-col justify-between p-12">
-        <div>
-          {/* Icon Grid */}
-          <div className="grid grid-cols-3 gap-8 mb-16">
-            {/* Row 1 */}
-            <div className="w-20 h-20 bg-gray-800 rounded-lg flex items-center justify-center">
-              <CreditCard className="w-8 h-8 text-white" />
-            </div>
-            <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center">
-              <div className="w-12 h-12 bg-gray-600 rounded-full"></div>
-            </div>
-            <div className="w-20 h-20"></div>
-
-            {/* Row 2 */}
-            <div className="w-20 h-20 flex items-center justify-center">
-              <Edit3 className="w-10 h-10 text-white" />
-            </div>
-            <div className="w-20 h-20 flex items-center justify-center">
-              <Hash className="w-12 h-12 text-white" />
-            </div>
-            <div className="w-20 h-20 flex items-center justify-center">
-              <Coffee className="w-10 h-10 text-white" />
-            </div>
-
-            {/* Row 3 */}
-            <div className="w-20 h-20 flex items-center justify-center">
-              <ArrowLeft className="w-10 h-10 text-white" />
-            </div>
-            <div className="w-20 h-20 flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-white transform rotate-45"></div>
-            </div>
-            <div className="w-20 h-20"></div>
-
-            {/* Row 4 */}
-            <div className="w-20 h-20 flex items-center justify-center">
-              <Car className="w-10 h-10 text-white" />
-            </div>
-            <div className="w-20 h-20 flex items-center justify-center">
-              <Lock className="w-10 h-10 text-white" />
-            </div>
-            <div className="w-20 h-20 flex items-center justify-center">
-              <Shield className="w-10 h-10 text-white" />
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="max-w-md">
-            <h1 className="text-4xl font-bold mb-6">
-              Drive your way, ride with ease.
-            </h1>
-            <p className="text-gray-300 text-lg leading-relaxed mb-12">
-              A modern car rental platform that offers customers flexible
-              vehicle options with the choice of professional drivers. Whether
-              for business, travel, or daily use, it ensures convenience,
-              safety, and comfort in every journey.
-            </p>
-
-            {/* Trust Indicators */}
-            <div className="flex items-center space-x-8">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-gray-300">Secure</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-gray-300">Verified</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-gray-300">Trusted</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom CTA */}
-        <div className="flex items-center justify-between">
-          <span className="text-gray-300">Do you have an account already?</span>
-          <Link
-            href="/auth/signin"
-            className="bg-white text-black px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-          >
-            Sign in
-          </Link>
-        </div>
-      </div>
+      <LeftSide isSignInPage={false} />
 
       {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white">
         <div className="max-w-md w-full">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
