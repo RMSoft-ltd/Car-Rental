@@ -242,18 +242,17 @@ export const useCartSummary = (userId: number) => {
 };
 
 export const calculateRentalDays = (pickUpDate: string, dropOffDate: string): number => {
-  const pickUp = new Date(pickUpDate);
-  const dropOff = new Date(dropOffDate);
+  const [pickYear, pickMonth, pickDay] = pickUpDate.split('-').map(Number);
+  const [dropYear, dropMonth, dropDay] = dropOffDate.split('-').map(Number);
   
-  // Reset time to midnight for accurate day calculation
-  pickUp.setHours(0, 0, 0, 0);
-  dropOff.setHours(0, 0, 0, 0);
+  const pickUp = new Date(pickYear, pickMonth - 1, pickDay);
+  const dropOff = new Date(dropYear, dropMonth - 1, dropDay);
   
   const timeDiff = dropOff.getTime() - pickUp.getTime();
-  const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+  const days = Math.round(timeDiff / (1000 * 60 * 60 * 24));
   
-  // Minimum 1 day rental
-  return Math.max(days, 1);
+ 
+  return Math.max(days + 1, 1);
 };
 
 export const calculatePreviewPrice = (

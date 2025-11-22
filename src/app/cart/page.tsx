@@ -13,6 +13,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { BookingResponse } from "@/types/cart";
+import Link from "next/link";
 
 // Loading Skeleton Component
 const CartCardSkeleton = () => {
@@ -119,9 +120,9 @@ const OrderSummary = ({
           onChange={(e) => setAgreedToTerms(e.target.checked)}
           className="w-5 h-5 rounded border-gray-300 text-black focus:ring-black mt-0.5"
         />
-        <span className="text-sm text-gray-700">
+        <Link href={'../terms'} className="text-sm text-gray-700">
           I agree to the <span className="font-semibold underline">terms and conditions</span>
-        </span>
+        </Link>
       </label>
 
       <button
