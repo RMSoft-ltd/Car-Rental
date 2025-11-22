@@ -62,12 +62,13 @@ export default function Navbar() {
           <div className="flex justify-between items-center h-16 sm:h-20">
             <div className="flex-shrink-0">
               <Link href="/" className="block group">
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-black group-hover:text-black transition-colors duration-200">
-                  <span className="hidden sm:inline">
-                    Car & Driver Rental Hub
-                  </span>
-                  <span className="sm:hidden">Car Rental</span>
-                </span>
+                <Image
+                  src="/logo1.png"
+                  alt="KwickCar Logo"
+                  width={120}
+                  height={32}
+                  className="w-24 sm:w-32 lg:w-40 h-auto transition-all duration-200"
+                />
               </Link>
             </div>
             <div className="animate-pulse h-8 w-32 bg-gray-200 rounded"></div>
@@ -78,17 +79,19 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-white border-b border-gray-200 sticky overflow-hidden top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 sm:h-20">
           <div className="flex-shrink-0">
             <Link href="/" className="block group">
-              <span className="text-lg sm:text-xl lg:text-2xl font-bold text-black group-hover:text-black transition-colors duration-200">
-                <span className="hidden sm:inline">
-                  Car & Driver Rental Hub
-                </span>
-                <span className="sm:hidden">Car Rental</span>
-              </span>
+              <Image
+                src="/logo1.png"
+                alt="KwickCar Logo"
+                width={120}
+                height={32} 
+                unoptimized
+                className="w-24 object-cover sm:w-32 lg:w-40 h-auto transition-all duration-200"
+              />
             </Link>
           </div>
 
@@ -128,7 +131,6 @@ export default function Navbar() {
                 <div className="h-8 w-px bg-gray-300"></div>
               </>
             )}
-
 
             {/* Profile / Auth Section */}
             {isAuthenticated && user ? (

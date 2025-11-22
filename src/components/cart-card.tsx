@@ -37,6 +37,8 @@ export default function CartCard({
   const [dropOffDate, setDropOffDate] = useState(item.dropOffDate);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   // Preview calculation for editing mode
   const [previewDays, setPreviewDays] = useState(item.totalDays);
@@ -57,6 +59,7 @@ export default function CartCard({
 
   // Use backend-calculated values when not editing
   const displayPrice = isEditing ? previewPrice : item.totalAmount;
+  
 
   const handleSaveDates = () => {
     // Validate dates
@@ -99,27 +102,51 @@ export default function CartCard({
     setShowDeleteDialog(false);
   };
 
-  // Get best available image
-  const carImageUrl = item.car?.carImages?.length > 0 
-    ? `${baseUrl}${item.car.carImages[0]}`
-    : '/placeholder-car.jpg';
+  // Get best available image with proper URL handling
+  const getImageSrc = () => {
+    const carImage = item.car?.carImages?.[0] || item.car?.carImages?.[1];
+    if (!carImage) return '/placeholder-car.jpg';
+    return carImage.startsWith('http') ? carImage : `${baseUrl}${carImage}`;
+  };
 
   return (
     <>
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative">
         <div className="flex flex-col md:flex-row">
           {/* Car Image */}
-          <div className="w-full md:w-64 h-56 flex-shrink-0 relative">
-            <Image
-              src={carImageUrl}
-              fill
-              className="object-contain p-4"
-              alt={`${item.car.make} ${item.car.model}`}
-              onError={(e) => {
-                e.currentTarget.src = '/placeholder-car.jpg';
-              }}
-              sizes="(max-width: 768px) 100vw, 256px"
-            />
+          <div className="w-full md:w-64 h-56 flex-shrink-0 relative bg-gray-100">
+            {!imageError && (
+              <Image
+                src={getImageSrc()}
+                fill
+                className={`object-contain p-4 transition-all duration-300 ${
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
+                alt={`${item.car.make} ${item.car.model}`}
+                onLoad={() => {
+                  setImageLoaded(true);
+                  setImageError(false);
+                }}
+                onError={() => {
+                  setImageError(true);
+                  setImageLoaded(false);
+                }}
+                sizes="(max-width: 768px) 100vw, 256px"
+              />
+            )}
+            {imageError && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center text-gray-400">
+                  <div className="text-4xl mb-2">🚗</div>
+                  <p className="text-xs">Image not available</p>
+                </div>
+              </div>
+            )}
+            {!imageLoaded && !imageError && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+              </div>
+            )}
           </div>
 
           {/* Car Details */}
@@ -151,16 +178,30 @@ export default function CartCard({
           {/* Price and Dates Section */}
           <div className="border-t md:border-t-0 md:border-l border-gray-200 p-6 md:w-80 flex flex-col justify-between">
             <div className="text-right mb-4">
-              <p className="text-2xl font-bold text-gray-900">
-                {displayPrice.toLocaleString()} RWF
-              </p>
-              <p className="text-sm text-gray-500">
-                {item.totalDays} day{item.totalDays !== 1 ? 's' : ''} • {item.car.pricePerDay.toLocaleString()} RWF/day
-              </p>
-              {isEditing && displayPrice !== item.totalAmount && (
-                <p className="text-xs text-orange-600 mt-1">
-                  Preview price (will update on save)
-                </p>
+              {isEditing && displayPrice !== item.totalAmount ? (
+                <>
+                  <p className="text-sm text-gray-400 line-through">
+                    {item.totalAmount.toLocaleString()} RWF
+                  </p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {displayPrice.toLocaleString()} RWF
+                  </p>
+                  <p className="text-xs text-orange-600 mt-1">
+                    New preview price
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {previewDays} day{previewDays !== 1 ? 's' : ''} • {item.car.pricePerDay.toLocaleString()} RWF/day
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {displayPrice.toLocaleString()} RWF
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {item.totalDays} day{item.totalDays !== 1 ? 's' : ''} • {item.car.pricePerDay.toLocaleString()} RWF/day
+                  </p>
+                </>
               )}
             </div>
 
@@ -168,8 +209,8 @@ export default function CartCard({
               {isEditing ? (
                 // Edit Mode
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center gap-2">
-                    <div className="flex-1">
+                  <div className="flex flex-col w-full justify-between items-center gap-2">
+                    <div className="flex-1 w-full">
                       <label className="text-xs font-semibold text-gray-900 mb-1 block">
                         PICK-UP DATE
                       </label>
@@ -181,7 +222,7 @@ export default function CartCard({
                         min={new Date().toISOString().split('T')[0]}
                       />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 w-full">
                       <label className="text-xs font-semibold text-gray-900 mb-1 block">
                         DROP-OFF DATE
                       </label>
@@ -289,6 +330,9 @@ export default function CartCard({
               Are you sure you want to update the rental dates for your {item.car.make} {item.car.model}?
               <br />
               <span className="font-semibold mt-2 block">
+                Previous: {item.totalAmount.toLocaleString()} RWF for {item.totalDays} day{item.totalDays !== 1 ? 's' : ''}
+              </span>
+              <span className="font-semibold text-orange-600">
                 New total: {previewPrice.toLocaleString()} RWF for {previewDays} day{previewDays !== 1 ? 's' : ''}
               </span>
             </AlertDialogDescription>
