@@ -193,7 +193,20 @@ export const carListingSchema = z.object({
     .array(z.union([z.instanceof(File), z.string()]))
     .min(1, "At least one car image is required")
     .max(10, "Maximum 10 images allowed"),
-});
+})
+.refine(
+  (data) => {
+    // If availabilityType is CUSTOM, customDays must be provided and have at least one day
+    if (data.availabilityType === "CUSTOM") {
+      return Array.isArray(data.customDays) && data.customDays.length > 0;
+    }
+    return true;
+  },
+  {
+    message: "Please select at least one available day when using Custom Days",
+    path: ["customDays"],
+  }
+);
 
 // ============================================
 // TypeScript Type

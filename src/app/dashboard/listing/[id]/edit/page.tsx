@@ -10,13 +10,14 @@ import { useToast } from "@/app/shared/ToastProvider";
 import type { CarListingFormData } from "@/schemas/car-listing.schema";
 import type { Car } from "@/types/car-listing";
 import { getErrorMessage } from "@/utils/error-utils";
+import { CUSTOM_DAYS } from "@/constants/car-listing";
 
 /**
  * Convert Car API response to CarListingFormData format
  * Handles type conversions and ensures compatibility with form schema
  */
 function carToFormData(car: Car): Partial<CarListingFormData> {
-    return {
+    const formData: Partial<CarListingFormData> = {
         // Listing Information
         title: car.title,
         make: car.make,
@@ -67,19 +68,43 @@ function carToFormData(car: Car): Partial<CarListingFormData> {
         securityDeposit: car.securityDeposit,
         securityDepositAmount: car.securityDepositAmount,
         fuelPolicy: car.fuelPolicy,
+        returningConditions: (car as any).returningConditions || "",
         availabilityType: car.availabilityType as "FULL" | "WEEKDAYS" | "WEEKENDS" | "CUSTOM",
 
         customDays: (() => {
-            if (typeof car.customDays === 'string') {
-                // Handle comma-separated string format: "Mon,Wed,Fri"
-                return car.customDays.split(',').map(day => day.trim()).filter(day => day.length > 0);
+            if (!car.customDays) {
+                return [];
             }
-            return Array.isArray(car.customDays) ? car.customDays : [];
+            
+            let daysArray: string[] = [];
+            
+            if (typeof car.customDays === 'string') {
+                try {
+                    const parsed = JSON.parse(car.customDays);
+                    if (Array.isArray(parsed)) {
+                        daysArray = parsed;
+                    } else {
+                        daysArray = car.customDays.split(',').map(day => day.trim()).filter(day => day.length > 0);
+                    }
+                } catch {
+                    daysArray = car.customDays.split(',').map(day => day.trim()).filter(day => day.length > 0);
+                }
+            } else if (Array.isArray(car.customDays)) {
+                daysArray = car.customDays;
+            }
+            
+            return daysArray.filter(day => CUSTOM_DAYS.includes(day));
         })(),
 
 
-        carImages: car.carImages || [],
     };
+    
+    // Add carImages separately to avoid type issues
+    if (car.carImages && car.carImages.length > 0) {
+        formData.carImages = car.carImages as (File | string)[];
+    }
+    
+    return formData;
 }
 
 export default function EditListingPage() {

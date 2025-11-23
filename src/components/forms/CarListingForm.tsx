@@ -62,7 +62,11 @@ const DAY_LABELS: Record<string, string> = {
 };
 
 const transformCustomDaysToCheckboxes = (data: Partial<CarListingFormData>) => {
-    return { ...data };
+    return {
+        ...data,
+        // Ensure customDays is always an array
+        customDays: Array.isArray(data.customDays) ? data.customDays : [],
+    };
 };
 
 const isDaySelected = (customDays: string[] | undefined, day: string): boolean => {
@@ -133,6 +137,8 @@ export function CarListingForm({
         reset,
     } = form;
 
+    const [isInitialized, setIsInitialized] = useState(false);
+
     useEffect(() => {
         if (initialData) {
             const transformedData = transformCustomDaysToCheckboxes({
@@ -140,8 +146,32 @@ export function CarListingForm({
                 ...initialData,
             });
             reset(transformedData);
+            setIsInitialized(true);
         }
     }, [initialData, reset]);
+
+    // Watch for availabilityType changes and clear customDays when not CUSTOM
+    const availabilityType = useWatch({
+        control,
+        name: 'availabilityType',
+    });
+
+    useEffect(() => {
+        // Only handle availabilityType changes after initial load
+        if (!isInitialized) return;
+
+        if (availabilityType) {
+            if (availabilityType !== 'CUSTOM') {
+                form.setValue('customDays', []);
+            } else {
+                // Ensure customDays is an array when switching to CUSTOM
+                const currentCustomDays = form.getValues('customDays');
+                if (!Array.isArray(currentCustomDays)) {
+                    form.setValue('customDays', []);
+                }
+            }
+        }
+    }, [availabilityType, form, isInitialized]);
 
     // Validate current step fields
     const validateStep = async (): Promise<boolean> => {

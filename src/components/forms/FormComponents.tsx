@@ -588,7 +588,7 @@ export function FormFileUpload({
     // Helper to get file name
     const getFileName = (item: File | string, index: number): string => {
         if (typeof item === 'string') {
-            return `Existing image ${index + 1}`;
+            return `Image ${index + 1}`;
         }
         return item.name;
     };
