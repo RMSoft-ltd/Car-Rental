@@ -212,17 +212,17 @@ export function CarListingForm({
     const isLastStep = currentStep === STEPS.length - 1;
 
     return (
-        <div className="container mx-auto">
+        <div className="container mx-auto max-w-7xl pb-8">
             <ProgressStepper steps={STEPS} currentStep={currentStep} />
 
             {/* Form Content */}
-            <div className="bg-white rounded-lg shadow-md p-8">
+            <div className="bg-white rounded-lg shadow-md p-8 w-full">
                 <div className="mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">{STEPS[currentStep].title}</h2>
                     <p className="text-gray-600 mt-1">{STEPS[currentStep].description}</p>
                 </div>
 
-                <form onSubmit={handleFormSubmit}>
+                <form onSubmit={handleFormSubmit} className="w-full">
 
                     {currentStep === 0 && <ListingInformationStep control={control} />}
 
@@ -242,7 +242,7 @@ export function CarListingForm({
                     )}
 
                     {/* Navigation Buttons */}
-                    <div className="flex justify-between mt-8 pt-6 border-t">
+                    <div className="flex justify-between mt-8 pt-6 border-t pb-0">
                         <div>
                             {!isFirstStep && (
                                 <Button
@@ -372,7 +372,7 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
     });
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormInput
                     name="title"
@@ -501,7 +501,7 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function FeaturesStep({ control }: { control: Control<any> }) {
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 w-full">
             {/* Comfort Features */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Comfort Features</h3>
@@ -649,7 +649,7 @@ function ImportantInfoStep({ control, form }: { control: Control<any>; form: any
     });
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div className="md:col-span-2 space-y-6">
                     <Controller

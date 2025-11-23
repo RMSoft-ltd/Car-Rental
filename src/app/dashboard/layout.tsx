@@ -77,7 +77,7 @@ export default function DashboardLayout({
           isCollapsed={isSidebarCollapsed}
         />
 
-        <main className="flex-1 flex flex-col h-screen overflow-x-auto bg-gray-50">
+        <main className="flex-1 flex flex-col overflow-hidden bg-gray-50">
           {children}
         </main>
       </div>

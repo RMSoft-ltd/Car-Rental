@@ -68,7 +68,6 @@ function carToFormData(car: Car): Partial<CarListingFormData> {
         securityDeposit: car.securityDeposit,
         securityDepositAmount: car.securityDepositAmount,
         fuelPolicy: car.fuelPolicy,
-        returningConditions: (car as any).returningConditions || "",
         availabilityType: car.availabilityType as "FULL" | "WEEKDAYS" | "WEEKENDS" | "CUSTOM",
 
         customDays: (() => {
