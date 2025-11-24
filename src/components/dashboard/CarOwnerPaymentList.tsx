@@ -419,9 +419,15 @@ export function CarOwnerPaymentList({
                     <Button
                         variant="outline"
                         size="lg"
-                        onClick={() => {
-                            const filename = `car-owner-payments-${new Date().toISOString().split('T')[0]}.xlsx`;
-                            exportPaymentsToExcel(data, filename);
+                        onClick={async () => {
+                            try {
+                                const filename = `car-owner-payments-${new Date().toISOString().split('T')[0]}.xlsx`;
+                                await exportPaymentsToExcel(data, filename);
+                                success("Success", "Payments exported successfully");
+                            } catch (err) {
+                                console.error("Export error:", err);
+                                error("Error", "Failed to export payments. Please try again.");
+                            }
                         }}
                     >
                         <Download className="mr-2 h-4 w-4" />

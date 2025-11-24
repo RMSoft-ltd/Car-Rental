@@ -40,6 +40,7 @@ import { useCarList } from "@/hooks/use-car-list";
 import { LuX } from "react-icons/lu";
 import { BookingDetail } from "@/types/payment";
 import { exportBookingHistoryToExcel } from "@/utils/excel-export";
+import { useToast } from "@/app/shared/ToastProvider";
 
 interface PaymentHistoryContentProps {
     userId?: number;
@@ -53,6 +54,7 @@ export default function HistoryContent({
     isAdmin = false
 }: PaymentHistoryContentProps) {
     const isOwner = !!ownerId;
+    const { success, error: showError } = useToast();
 
     const [filters, setFilters] = useState<BookingHistoryFilters>({
         bookingStatus: undefined,
@@ -232,9 +234,15 @@ export default function HistoryContent({
                     <Button
                         variant="outline"
                         size="lg"
-                        onClick={() => {
-                            const filename = `booking-history-${new Date().toISOString().split('T')[0]}.xlsx`;
-                            exportBookingHistoryToExcel(data.rows, filename);
+                        onClick={async () => {
+                            try {
+                                const filename = `booking-history-${new Date().toISOString().split('T')[0]}.xlsx`;
+                                await exportBookingHistoryToExcel(data.rows, filename);
+                                success("Success", "Booking history exported successfully");
+                            } catch (err) {
+                                console.error("Export error:", err);
+                                showError("Error", "Failed to export booking history. Please try again.");
+                            }
                         }}
                     >
                         <Download className="mr-2 h-4 w-4" />
