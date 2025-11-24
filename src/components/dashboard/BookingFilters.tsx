@@ -7,7 +7,7 @@ import { BookingStatus, PaymentStatus, BookingDetail } from "@/types/payment";
 interface BookingFilters {
   plateNumber?: string;
   carId?: string;
-  userId?: string;
+  ownerId?: string;
   bookingStatus?: BookingStatus | "";
   paymentStatus?: PaymentStatus | "";
   search?: string;
@@ -117,22 +117,23 @@ export default function BookingFilters({
 }: BookingFiltersProps) {
   const [showFilters, setShowFilters] = useState(false);
 
-  const { cars, users } = useMemo(() => {
+  const { cars, owners } = useMemo(() => {
     const carMap = new Map();
-    const userMap = new Map();
+    const ownerMap = new Map();
 
     bookings.forEach(booking => {
       if (booking.car && !carMap.has(booking.car.id)) {
         carMap.set(booking.car.id, booking.car);
       }
-      if (booking.user && !userMap.has(booking.user.id)) {
-        userMap.set(booking.user.id, booking.user);
+      const carOwner = booking.car?.owner;
+      if (carOwner && !ownerMap.has(carOwner.id)) {
+        ownerMap.set(carOwner.id, carOwner);
       }
     });
 
     return {
       cars: Array.from(carMap.values()),
-      users: Array.from(userMap.values())
+      owners: Array.from(ownerMap.values())
     };
   }, [bookings]);
 
@@ -160,12 +161,12 @@ export default function BookingFilters({
     }))
   ];
 
-  const userOptions = [
-    { value: "", label: "All Customers" },
-    ...users.map(user => ({
-      value: user.id.toString(),
-      label: `${user.fName} ${user.lName}`,
-      subtitle: user.email
+  const ownerOptions = [
+    { value: "", label: "All Owners" },
+    ...owners.map(owner => ({
+      value: owner.id.toString(),
+      label: `${owner.fName} ${owner.lName}`,
+      subtitle: owner.email
     }))
   ];
 
@@ -241,18 +242,18 @@ export default function BookingFilters({
               />
             </div>
 
-            {/* User Selection - Admin Only */}
+            {/* Owner Selection - Admin Only */}
             {isAdmin && (
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                   <User className="w-4 h-4" />
-                  Customer
+                  Car Owner
                 </label>
                 <CustomSelect
-                  value={filters.userId || ""}
-                  onChange={(value) => handleFilterChange("userId", value)}
-                  options={userOptions}
-                  placeholder="All Customers"
+                  value={filters.ownerId || ""}
+                  onChange={(value) => handleFilterChange("ownerId", value)}
+                  options={ownerOptions}
+                  placeholder="All Owners"
                   disabled={isLoading}
                   icon={<User className="w-4 h-4" />}
                 />
@@ -311,7 +312,7 @@ export default function BookingFilters({
                   const filterLabels: Record<string, string> = {
                     plateNumber: "License Plate",
                     carId: "Vehicle", 
-                    userId: "Customer",
+                    ownerId: "Car Owner",
                     bookingStatus: "Booking Status",
                     paymentStatus: "Payment Status",
                     search: "Search"
@@ -322,9 +323,9 @@ export default function BookingFilters({
                   if (key === 'carId') {
                     const car = cars.find(c => c.id === parseInt(value));
                     displayValue = car ? `${car.make} ${car.model} • ${car.plateNumber}` : value;
-                  } else if (key === 'userId') {
-                    const user = users.find(u => u.id === parseInt(value));
-                    displayValue = user ? `${user.fName} ${user.lName}` : value;
+                  } else if (key === 'ownerId') {
+                    const owner = owners.find(o => o.id === parseInt(value));
+                    displayValue = owner ? `${owner.fName} ${owner.lName}` : value;
                   }
 
                   return (

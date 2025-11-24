@@ -13,7 +13,7 @@ import BookingDetailsPanel from "./Bookingdetailspanel";
 interface BookingFiltersState {
   plateNumber?: string;
   carId?: string;
-  userId?: string;
+  ownerId?: string;
   bookingStatus?: BookingStatus | "";
   paymentStatus?: PaymentStatus | "";
   search?: string;
@@ -39,7 +39,7 @@ export default function BookingContent({ initialBookingId = null }: BookingConte
     const baseFilters: Record<string, unknown> = { limit: 100 };
 
     if (!isAdmin && user?.id) {
-      baseFilters.userId = user.id;
+      baseFilters.ownerId = user.id;
     }
     
     // Apply search filter
@@ -50,7 +50,7 @@ export default function BookingContent({ initialBookingId = null }: BookingConte
     // Apply other filters
     if (filters.plateNumber) baseFilters.plateNumber = filters.plateNumber;
     if (filters.carId) baseFilters.carId = filters.carId;
-    if (filters.userId) baseFilters.userId = filters.userId;
+    if (filters.ownerId) baseFilters.ownerId = filters.ownerId;
     if (filters.bookingStatus) baseFilters.bookingStatus = filters.bookingStatus;
     if (filters.paymentStatus) baseFilters.paymentStatus = filters.paymentStatus;
     
