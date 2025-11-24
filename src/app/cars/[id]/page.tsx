@@ -11,24 +11,43 @@ import {
   Heart,
   Briefcase,
   CheckCircle2,
-  Star
+  Star,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  Calendar
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
-import { useCarListing } from "@/hooks/use-car-list";
+import { useCarListing, carKeys } from "@/hooks/use-car-list";
 import { baseUrl } from "@/lib/api";
-import { Car as CarListing } from "@/types/car-listing";
+import { Car as CarListing, CarReview, CarReviewPayload } from "@/types/car-listing";
 import { BookedItem } from "@/types/cart";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { bookCarNow, getCarBookedDates } from "@/services/cart-service";
 import { AxiosError } from "axios";
 import { useAddToCart } from "@/hooks/use-cart-items";
 import { calculateAmountToBePaidByUser } from "@/utils/pricing";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { createCarReview } from "@/services/car-review.service";
+import ImportantInfoModal from "@/components/ImportantInfoModal";
+
+const REVIEW_DEFAULTS = {
+  interiorDesign: 10,
+  exteriorDesign: 10,
+  comfort: 10,
+  reliability: 10,
+  comment: "",
+};
+
+type ReviewFormState = typeof REVIEW_DEFAULTS;
+type ReviewScoreField = Exclude<keyof ReviewFormState, "comment">;
 
 const toAbsoluteImage = (path?: string) => {
   if (!path) return null;
@@ -135,7 +154,9 @@ const formatTimeAgo = (dateString?: string) => {
 };
 
 const renderRatingStars = (rating?: number) => {
-  const normalized = Math.round(Number.isFinite(rating ?? NaN) ? rating ?? 0 : 0);
+  const raw = Number.isFinite(rating ?? NaN) ? rating ?? 0 : 0;
+  const normalizedValue = raw > 5 ? raw / 2 : raw;
+  const normalized = Math.round(Math.max(0, Math.min(5, normalizedValue)));
   return Array.from({ length: 5 }, (_, index) => {
     const active = index < normalized;
     return (
@@ -154,19 +175,38 @@ const getHostDisplay = (car?: CarListing | null) => {
     : "Host";
   const reviews = car?.reviews ?? [];
   const reviewCount = reviews.length;
-  const avgRating =
+  const avgScore =
     reviewCount > 0
       ? (
-        reviews.reduce((sum, review) => sum + (review.rating ?? 0), 0) /
+        reviews.reduce((sum, review) => sum + (getReviewScore(review) ?? 0), 0) /
         reviewCount
       ).toFixed(1)
-      : "9.3";
+      : "0";
 
   return {
     hostName: hostName || "Host",
     reviewCount,
-    rating: avgRating
+    rating: avgScore
   };
+};
+
+const getReviewScore = (review?: CarReview | null) => {
+  if (!review) return undefined;
+  const preferred = review.reviewAverage;
+  if (typeof preferred === "number") return preferred;
+  if (typeof review.rating === "number") {
+    return review.rating;
+  }
+  const chunks = [
+    review.interiorDesign,
+    review.exteriorDesign,
+    review.comfort,
+    review.reliability,
+  ].filter((value): value is number => typeof value === "number");
+  if (!chunks.length) return undefined;
+  return (
+    chunks.reduce((total, current) => total + current, 0) / chunks.length
+  );
 };
 
 export default function CarDetailPage() {
@@ -174,6 +214,7 @@ export default function CarDetailPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const carIdParam = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const carId = Number(carIdParam);
   const pathname = usePathname();
@@ -198,6 +239,12 @@ export default function CarDetailPage() {
 
   const [pickUpDate, setPickUpDate] = useState<string>("");
   const [dropOffDate, setDropOffDate] = useState<string>("");
+  const [reviewForm, setReviewForm] = useState<ReviewFormState>({
+    ...REVIEW_DEFAULTS,
+  });
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState<boolean>(false);
+  const [showAllReviews, setShowAllReviews] = useState<boolean>(false);
+  const [isImportantInfoModalOpen, setIsImportantInfoModalOpen] = useState<boolean>(false);
   const pickUpInputRef = useRef<HTMLInputElement | null>(null);
   const dropOffInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -251,6 +298,7 @@ export default function CarDetailPage() {
 
   useEffect(() => {
     setSelectedImageIndex(0);
+    setShowAllReviews(false);
   }, [car?.id]);
 
   const selectedImage =
@@ -569,6 +617,72 @@ export default function CarDetailPage() {
     setDropOffDate(value);
   };
 
+  const ratingFields: { key: ReviewScoreField; label: string }[] = [
+    { key: "interiorDesign", label: "Interior design" },
+    { key: "exteriorDesign", label: "Exterior design" },
+    { key: "comfort", label: "Comfort" },
+    { key: "reliability", label: "Reliability" },
+  ];
+
+  const reviewMutation = useMutation({
+    mutationFn: (payload: CarReviewPayload) => createCarReview(payload),
+    onSuccess: () => {
+      toast.success("Review submitted", "Thanks for sharing your experience.");
+      setReviewForm({ ...REVIEW_DEFAULTS });
+      setIsReviewFormOpen(false);
+      queryClient.invalidateQueries({ queryKey: carKeys.detail(carId) });
+    },
+    onError: (error: unknown) => {
+      let message = "Unable to submit review right now.";
+      if (error instanceof AxiosError) {
+        message =
+          (error.response?.data as { message?: string })?.message ??
+          error.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      toast.error("Review failed", message);
+    },
+  });
+
+  const handleReviewScoreChange = (key: ReviewScoreField, value: string) => {
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return;
+    const bounded = Math.min(10, Math.max(1, numeric));
+    setReviewForm((prev) => ({ ...prev, [key]: bounded }));
+  };
+
+  const handleReviewCommentChange = (value: string) => {
+    setReviewForm((prev) => ({ ...prev, comment: value }));
+  };
+
+  const handleReviewSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!isAuthenticated || !user) {
+      redirectToSignIn(
+        "Sign in to review",
+        "Please sign in to share your experience."
+      );
+      return;
+    }
+    if (!car?.id) {
+      toast.error("Review unavailable", "Car information is missing.");
+      return;
+    }
+    if (!reviewForm.comment.trim()) {
+      toast.info("Add a comment", "Please share at least a few words.");
+      return;
+    }
+    reviewMutation.mutate({
+      carId: car.id,
+      interiorDesign: reviewForm.interiorDesign,
+      exteriorDesign: reviewForm.exteriorDesign,
+      comfort: reviewForm.comfort,
+      reliability: reviewForm.reliability,
+      comment: reviewForm.comment.trim(),
+    });
+  };
+
   const openPickUpPicker = () => {
     const input = pickUpInputRef.current;
     if (!input) return;
@@ -777,7 +891,10 @@ export default function CarDetailPage() {
                 <div className="flex items-center gap-1">
                   {renderRatingStars(
                     reviews.length
-                      ? reviews.reduce((sum, current) => sum + (current.rating ?? 0), 0) /
+                      ? reviews.reduce(
+                        (sum, current) => sum + (getReviewScore(current) ?? 0),
+                        0
+                      ) /
                       reviews.length
                       : undefined
                   )}
@@ -786,9 +903,13 @@ export default function CarDetailPage() {
 
               {reviews.length > 0 ? (
                 <div className="space-y-5">
-                  {reviews.map((review, index) => {
+                  {(showAllReviews ? reviews : reviews.slice(0, 2)).map((review, index) => {
                     const reviewerName =
-                      hostDisplay?.hostName ?? `Guest ${index + 1}`;
+                      review.user
+                        ? `${review.user.fName ?? ""} ${review.user.lName ?? ""}`.trim() ||
+                          review.user.fName ||
+                          "Guest"
+                        : `Guest ${index + 1}`;
                     const comment =
                       review.comment ||
                       "The guest left no written feedback for this trip.";
@@ -808,15 +929,52 @@ export default function CarDetailPage() {
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
-                            {renderRatingStars(review.rating)}
+                            {renderRatingStars(getReviewScore(review))}
                           </div>
                         </div>
                         <p className="text-sm leading-relaxed text-gray-600">
                           {comment}
                         </p>
+                        <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                          {ratingFields.map((field) => {
+                            const value = review[field.key];
+                            if (typeof value !== "number") return null;
+                            return (
+                              <span
+                                key={`${review.id ?? index}-${field.key}`}
+                                className="rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-700"
+                              >
+                                {field.label}: {value}/10
+                              </span>
+                            );
+                          })}
+                        </div>
                       </article>
                     );
                   })}
+                  {reviews.length > 2 && (
+                    <div className="flex justify-center pt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowAllReviews(!showAllReviews)}
+                        className="flex items-center gap-2"
+                      >
+                        {showAllReviews ? (
+                          <>
+                            <ChevronUp className="w-4 h-4" />
+                            Show less
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-4 h-4" />
+                            Show more ({reviews.length - 2} more)
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500">
@@ -824,6 +982,115 @@ export default function CarDetailPage() {
                   experience.
                 </div>
               )}
+
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h5 className="text-base font-semibold text-gray-900">
+                      Share your experience
+                    </h5>
+                    <p className="text-sm text-gray-600">
+                      Rate the car across key categories and leave a short comment.
+                    </p>
+                  </div>
+                  {isAuthenticated && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsReviewFormOpen(!isReviewFormOpen)}
+                      className="flex items-center gap-2"
+                    >
+                      {isReviewFormOpen ? (
+                        <>
+                          <ChevronUp className="w-4 h-4" />
+                          Collapse
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          Write a review
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+                {isReviewFormOpen && isAuthenticated ? (
+                  <form className="space-y-4" onSubmit={handleReviewSubmit}>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {ratingFields.map((field) => (
+                        <label key={field.key} className="space-y-2 text-sm font-medium text-gray-700">
+                          {field.label}
+                          <Input
+                            type="number"
+                            min={1}
+                            max={10}
+                            value={reviewForm[field.key]}
+                            onChange={(event) =>
+                              handleReviewScoreChange(field.key, event.target.value)
+                            }
+                            className="text-base font-semibold"
+                          />
+                          <span className="text-xs font-normal text-gray-500">
+                            Score from 1 (poor) to 10 (excellent)
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Comment
+                      </label>
+                      <Textarea
+                        value={reviewForm.comment}
+                        onChange={(event) => handleReviewCommentChange(event.target.value)}
+                        rows={4}
+                        placeholder="Tell others about the ride quality, cleanliness, fuel economy..."
+                      />
+                      <span className="text-xs text-gray-500">
+                        Minimum of a few words to help future guests.
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        disabled={reviewMutation.isPending}
+                        onClick={() => {
+                          setReviewForm({ ...REVIEW_DEFAULTS });
+                          setIsReviewFormOpen(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={reviewMutation.isPending}
+                      >
+                        {reviewMutation.isPending ? "Submitting..." : "Submit Review"}
+                      </Button>
+                    </div>
+                  </form>
+                ) : !isAuthenticated ? (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <p className="text-sm text-gray-600 flex-1">
+                      Sign in to add your review for this car.
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() =>
+                        redirectToSignIn(
+                          "Sign in to review",
+                          "Please sign in to share your experience."
+                        )
+                      }
+                    >
+                      Sign in to review
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
 
@@ -855,6 +1122,18 @@ export default function CarDetailPage() {
               </div>
             </div>
 
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsImportantInfoModalOpen(true)}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Info className="w-4 h-4" />
+                Important Info
+              </Button>
+            </div>
+
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
               {typeof totalSelectedAmount === "number" ? (
                 <p className="text-sm text-gray-500">
@@ -870,54 +1149,66 @@ export default function CarDetailPage() {
                 </p>
               )}
 
-              <div className="relative flex items-center rounded-2xl border border-gray-900 px-5 py-4 text-sm font-semibold text-gray-900">
-                <button
-                  type="button"
-                  className="flex flex-1 flex-col text-left focus:outline-none"
-                  onClick={openPickUpPicker}
-                >
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                    Pick-up Date
-                  </p>
-                  <p className="text-lg text-gray-900">
-                    {bookingDates.pickUpDateLabel}
-                  </p>
-                </button>
-                <div className="mx-4 h-10 w-px bg-gray-200" />
-                <button
-                  type="button"
-                  className="flex flex-1 flex-col text-right focus:outline-none"
-                  onClick={openDropOffPicker}
-                >
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                    Drop-off Date
-                  </p>
-                  <p className="text-lg text-gray-900">
-                    {bookingDates.dropOffDateLabel}
-                  </p>
-                </button>
-                <input
-                  ref={pickUpInputRef}
-                  id="pickup-date"
-                  type="date"
-                  value={pickUpDate}
-                  min={getTodayIso()}
-                  onChange={(event) => handlePickUpChange(event.target.value)}
-                  className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
-                  tabIndex={-1}
-                  aria-hidden="true"
-                />
-                <input
-                  ref={dropOffInputRef}
-                  id="dropoff-date"
-                  type="date"
-                  value={dropOffDate}
-                  min={dropOffMinDate}
-                  onChange={(event) => handleDropOffChange(event.target.value)}
-                  className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
-                  tabIndex={-1}
-                  aria-hidden="true"
-                />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  <span>Select your rental dates</span>
+                </div>
+                <div className="relative flex items-center rounded-2xl border border-gray-900 px-5 py-4 text-sm font-semibold text-gray-900 hover:border-gray-700 transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    className="flex flex-1 flex-col text-left focus:outline-none"
+                    onClick={openPickUpPicker}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                        Pick-up Date
+                      </p>
+                    </div>
+                    <p className="text-lg text-gray-900">
+                      {bookingDates.pickUpDateLabel}
+                    </p>
+                  </button>
+                  <div className="mx-4 h-10 w-px bg-gray-200" />
+                  <button
+                    type="button"
+                    className="flex flex-1 flex-col text-right focus:outline-none"
+                    onClick={openDropOffPicker}
+                  >
+                    <div className="flex items-center justify-end gap-2 mb-1">
+                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                        Drop-off Date
+                      </p>
+                    </div>
+                    <p className="text-lg text-gray-900">
+                      {bookingDates.dropOffDateLabel}
+                    </p>
+                  </button>
+                  <input
+                    ref={pickUpInputRef}
+                    id="pickup-date"
+                    type="date"
+                    value={pickUpDate}
+                    min={getTodayIso()}
+                    onChange={(event) => handlePickUpChange(event.target.value)}
+                    className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                  <input
+                    ref={dropOffInputRef}
+                    id="dropoff-date"
+                    type="date"
+                    value={dropOffDate}
+                    min={dropOffMinDate}
+                    onChange={(event) => handleDropOffChange(event.target.value)}
+                    className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                </div>
               </div>
 
               <div className="space-y-3 text-sm text-gray-700">
@@ -986,6 +1277,24 @@ export default function CarDetailPage() {
           </div>
         </section>
       </main>
+
+      {/* Important Info Modal */}
+      <ImportantInfoModal
+        isOpen={isImportantInfoModalOpen}
+        onClose={() => setIsImportantInfoModalOpen(false)}
+        carData={{
+          make: car.make,
+          model: car.model,
+          year: car.year,
+          mileage: car.mileage,
+          securityDepositAmount: car.securityDepositAmount,
+          securityDeposit: car.securityDeposit,
+          damageExcess: car.damageExcess,
+          fuelPolicy: car.fuelPolicy,
+          currency: car.currency,
+          requiredDocs: car.requiredDocs,
+        }}
+      />
     </div>
   );
 }

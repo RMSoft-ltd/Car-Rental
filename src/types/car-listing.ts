@@ -97,10 +97,29 @@ export interface CarOwner {
 export interface CarReview {
   id?: number;
   rating?: number;
+  reviewAverage?: number;
+  interiorDesign?: number;
+  exteriorDesign?: number;
+  comfort?: number;
+  reliability?: number;
   comment?: string;
   userId?: number;
   carId?: number;
   createdAt?: string;
+  user?: {
+    id?: number;
+    fName?: string;
+    lName?: string;
+  } | null;
+}
+
+export interface CarReviewPayload {
+  carId: number;
+  interiorDesign: number;
+  exteriorDesign: number;
+  comfort: number;
+  reliability: number;
+  comment: string;
 }
 
 /** ================================
