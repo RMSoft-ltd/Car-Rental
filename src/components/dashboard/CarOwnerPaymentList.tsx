@@ -58,7 +58,7 @@ import {
     getPaymentStatusLabel,
     getDepositStatusLabel,
 } from "@/utils/status-colors";
-import { Filter, ChevronLeft, ChevronRight, Eye, Calendar, CreditCard } from "lucide-react";
+import { Filter, ChevronLeft, ChevronRight, Eye, Calendar, CreditCard, Download } from "lucide-react";
 import { useCarList, useCarOwnerList } from "@/hooks/use-car-list";
 import { LuX } from "react-icons/lu";
 import { Combobox, ComboboxOption } from "@/components/forms/FormComponents";
@@ -66,6 +66,7 @@ import { AiOutlineClear } from "react-icons/ai";
 import { depositPaymentSchema } from "@/schemas/payment.schema";
 import { useInitiateDeposit } from "@/hooks/use-car-owner-payments";
 import { useToast } from "@/app/shared/ToastProvider";
+import { exportPaymentsToExcel } from "@/utils/excel-export";
 
 type DepositPaymentFormValues = z.infer<typeof depositPaymentSchema>;
 
@@ -399,7 +400,7 @@ export function CarOwnerPaymentList({
                 </Card>
             </div>
             {/* Show and Hide Filters Button */}
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
                 <Button
                     variant="outline"
                     size="lg"
@@ -414,6 +415,19 @@ export function CarOwnerPaymentList({
                         Show
                     </>} Filters
                 </Button>
+                {data && data.length > 0 && (
+                    <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => {
+                            const filename = `car-owner-payments-${new Date().toISOString().split('T')[0]}.xlsx`;
+                            exportPaymentsToExcel(data, filename);
+                        }}
+                    >
+                        <Download className="mr-2 h-4 w-4" />
+                        Export to Excel
+                    </Button>
+                )}
             </div>
 
             {(showFilters) && (<Card className="flex-shrink-0">

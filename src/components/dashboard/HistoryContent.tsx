@@ -34,11 +34,12 @@ import {
     getDepositStatusLabel,
     getStatusIconName,
 } from "@/utils/status-colors";
-import { Calendar, Car, CheckCircle, Clock, CreditCard, Filter, User, XCircle } from "lucide-react";
+import { Calendar, Car, CheckCircle, Clock, CreditCard, Filter, User, XCircle, Download } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useCarList } from "@/hooks/use-car-list";
 import { LuX } from "react-icons/lu";
 import { BookingDetail } from "@/types/payment";
+import { exportBookingHistoryToExcel } from "@/utils/excel-export";
 
 interface PaymentHistoryContentProps {
     userId?: number;
@@ -212,7 +213,7 @@ export default function HistoryContent({
             </div>
 
             {/* Show and Hide Filters Button */}
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
                 <Button
                     variant="outline"
                     size="lg"
@@ -227,6 +228,19 @@ export default function HistoryContent({
                         Show
                     </>} Filters
                 </Button>
+                {data?.rows && data.rows.length > 0 && (
+                    <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => {
+                            const filename = `booking-history-${new Date().toISOString().split('T')[0]}.xlsx`;
+                            exportBookingHistoryToExcel(data.rows, filename);
+                        }}
+                    >
+                        <Download className="mr-2 h-4 w-4" />
+                        Export to Excel
+                    </Button>
+                )}
             </div>
 
             {(showFilters) && (<Card className={`flex-shrink-0`}>
