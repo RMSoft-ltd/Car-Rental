@@ -41,8 +41,6 @@ export default function HorizontalCarCard({
   reviewCount: propReviewCount,
   reviewRating: propReviewRating,
 }: HorizontalCarCardProps) {
-  const reviews = car?.reviews ?? [];
-  
   const { reviewCount, reviewRating } = useMemo(() => {
     if (propReviewCount !== undefined && propReviewRating !== undefined) {
       return {
@@ -51,6 +49,7 @@ export default function HorizontalCarCard({
       };
     }
     
+    const reviews = car?.reviews ?? [];
     const count = reviews.length;
     if (count === 0) {
       return {
@@ -76,7 +75,7 @@ export default function HorizontalCarCard({
       reviewCount: count,
       reviewRating: average,
     };
-  }, [reviews, propReviewCount, propReviewRating]);
+  }, [car?.reviews, propReviewCount, propReviewRating]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);

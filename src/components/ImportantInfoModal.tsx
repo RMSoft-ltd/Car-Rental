@@ -1,5 +1,5 @@
 import React from "react";
-import { X, User, Shield, Settings, Fuel, MapPin, Check } from "lucide-react";
+import { X, User, Shield, Settings, Fuel, MapPin } from "lucide-react";
 
 interface ImportantInfoModalProps {
   isOpen: boolean;

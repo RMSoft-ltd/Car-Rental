@@ -14,7 +14,8 @@ import {
   Star,
   ChevronDown,
   ChevronUp,
-  Info
+  Info,
+  Calendar
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -1148,54 +1149,66 @@ export default function CarDetailPage() {
                 </p>
               )}
 
-              <div className="relative flex items-center rounded-2xl border border-gray-900 px-5 py-4 text-sm font-semibold text-gray-900">
-                <button
-                  type="button"
-                  className="flex flex-1 flex-col text-left focus:outline-none"
-                  onClick={openPickUpPicker}
-                >
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                    Pick-up Date
-                  </p>
-                  <p className="text-lg text-gray-900">
-                    {bookingDates.pickUpDateLabel}
-                  </p>
-                </button>
-                <div className="mx-4 h-10 w-px bg-gray-200" />
-                <button
-                  type="button"
-                  className="flex flex-1 flex-col text-right focus:outline-none"
-                  onClick={openDropOffPicker}
-                >
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                    Drop-off Date
-                  </p>
-                  <p className="text-lg text-gray-900">
-                    {bookingDates.dropOffDateLabel}
-                  </p>
-                </button>
-                <input
-                  ref={pickUpInputRef}
-                  id="pickup-date"
-                  type="date"
-                  value={pickUpDate}
-                  min={getTodayIso()}
-                  onChange={(event) => handlePickUpChange(event.target.value)}
-                  className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
-                  tabIndex={-1}
-                  aria-hidden="true"
-                />
-                <input
-                  ref={dropOffInputRef}
-                  id="dropoff-date"
-                  type="date"
-                  value={dropOffDate}
-                  min={dropOffMinDate}
-                  onChange={(event) => handleDropOffChange(event.target.value)}
-                  className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
-                  tabIndex={-1}
-                  aria-hidden="true"
-                />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  <span>Select your rental dates</span>
+                </div>
+                <div className="relative flex items-center rounded-2xl border border-gray-900 px-5 py-4 text-sm font-semibold text-gray-900 hover:border-gray-700 transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    className="flex flex-1 flex-col text-left focus:outline-none"
+                    onClick={openPickUpPicker}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                        Pick-up Date
+                      </p>
+                    </div>
+                    <p className="text-lg text-gray-900">
+                      {bookingDates.pickUpDateLabel}
+                    </p>
+                  </button>
+                  <div className="mx-4 h-10 w-px bg-gray-200" />
+                  <button
+                    type="button"
+                    className="flex flex-1 flex-col text-right focus:outline-none"
+                    onClick={openDropOffPicker}
+                  >
+                    <div className="flex items-center justify-end gap-2 mb-1">
+                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                        Drop-off Date
+                      </p>
+                    </div>
+                    <p className="text-lg text-gray-900">
+                      {bookingDates.dropOffDateLabel}
+                    </p>
+                  </button>
+                  <input
+                    ref={pickUpInputRef}
+                    id="pickup-date"
+                    type="date"
+                    value={pickUpDate}
+                    min={getTodayIso()}
+                    onChange={(event) => handlePickUpChange(event.target.value)}
+                    className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                  <input
+                    ref={dropOffInputRef}
+                    id="dropoff-date"
+                    type="date"
+                    value={dropOffDate}
+                    min={dropOffMinDate}
+                    onChange={(event) => handleDropOffChange(event.target.value)}
+                    className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                </div>
               </div>
 
               <div className="space-y-3 text-sm text-gray-700">
