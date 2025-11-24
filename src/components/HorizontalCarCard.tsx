@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Users, Briefcase, Clock, Settings, Info } from "lucide-react";
 import ImportantInfoModal from "./ImportantInfoModal";
 import Link from "next/link";
-import { Car } from "@/types/car-listing";
+import { Car, CarReview } from "@/types/car-listing";
 import { baseUrl } from "@/lib/api";
 import Image from "next/image";
 import { UserAvatar } from "./Avator";
@@ -15,13 +15,68 @@ interface HorizontalCarCardProps {
   reviewRating?: number;
 }
 
+const getReviewScore = (review?: CarReview | null) => {
+  if (!review) return undefined;
+  const preferred = review.reviewAverage;
+  if (typeof preferred === "number") return preferred;
+  if (typeof review.rating === "number") {
+    return review.rating;
+  }
+  const chunks = [
+    review.interiorDesign,
+    review.exteriorDesign,
+    review.comfort,
+    review.reliability,
+  ].filter((value): value is number => typeof value === "number");
+  if (!chunks.length) return undefined;
+  return (
+    chunks.reduce((total, current) => total + current, 0) / chunks.length
+  );
+};
+
 export default function HorizontalCarCard({
   car,
   isTopPick = false,
   hostName = car.owner.fName + " " + car.owner.lName || car.owner.email,
-  reviewCount = 111,
-  reviewRating = 9.3,
+  reviewCount: propReviewCount,
+  reviewRating: propReviewRating,
 }: HorizontalCarCardProps) {
+  const reviews = car?.reviews ?? [];
+  
+  const { reviewCount, reviewRating } = useMemo(() => {
+    if (propReviewCount !== undefined && propReviewRating !== undefined) {
+      return {
+        reviewCount: propReviewCount,
+        reviewRating: propReviewRating,
+      };
+    }
+    
+    const count = reviews.length;
+    if (count === 0) {
+      return {
+        reviewCount: 0,
+        reviewRating: 0,
+      };
+    }
+    
+    const scores = reviews
+      .map((review) => getReviewScore(review))
+      .filter((score): score is number => typeof score === "number");
+    
+    if (scores.length === 0) {
+      return {
+        reviewCount: count,
+        reviewRating: 0,
+      };
+    }
+    
+    const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    
+    return {
+      reviewCount: count,
+      reviewRating: average,
+    };
+  }, [reviews, propReviewCount, propReviewRating]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -182,16 +237,26 @@ export default function HorizontalCarCard({
             {/* Rating and Important Info */}
             <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
               {/* Rating */}
-              <div className="flex items-center bg-white rounded-lg px-3 py-2">
-                <div className="bg-black text-white px-3 py-1 rounded-md text-sm font-bold mr-3">
-                  {reviewRating.toFixed(1)}
+              {reviewCount > 0 ? (
+                <div className="flex items-center bg-white rounded-lg px-3 py-2">
+                  <div className="bg-black text-white px-3 py-1 rounded-md text-sm font-bold mr-3">
+                    {reviewRating.toFixed(1)}
+                  </div>
+                  <div className="text-left">
+                    <span className="text-xs text-gray-700">
+                      ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+                    </span>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <span className="text-xs text-gray-700">
-                    ({reviewCount} reviews)
-                  </span>
+              ) : (
+                <div className="flex items-center bg-white rounded-lg px-3 py-2">
+                  <div className="text-left">
+                    <span className="text-xs text-gray-500">
+                      No reviews yet
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Important Info */}
               <button
@@ -215,6 +280,12 @@ export default function HorizontalCarCard({
           model: car.model,
           year: car.year,
           mileage: car.mileage,
+          securityDepositAmount: car.securityDepositAmount,
+          securityDeposit: car.securityDeposit,
+          damageExcess: car.damageExcess,
+          fuelPolicy: car.fuelPolicy,
+          currency: car.currency,
+          requiredDocs: car.requiredDocs,
         }}
       />
     </>
