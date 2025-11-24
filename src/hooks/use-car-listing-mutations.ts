@@ -11,6 +11,7 @@ import {
   deleteCarListing,
   deleteCarImage,
   updateCarStatus,
+  userChangeCarListingStatus,
 } from "@/services/car-listing.service";
 import { getErrorMessage } from "@/utils/error-utils";
 
@@ -172,6 +173,15 @@ export function useDeleteCarImage() {
   });
 }
 
+type UpdateCarStatusParams = {
+  id: number;
+  status: "pending" | "changeRequested" | "approved" | "rejected";
+  changeStatusDescription?: string;
+  userId?: number;
+  isAdmin?: boolean;
+  isOwner?: boolean;
+};
+
 export function useUpdateCarStatus() {
   const queryClient = useQueryClient();
 
@@ -180,12 +190,21 @@ export function useUpdateCarStatus() {
       id,
       status,
       changeStatusDescription = "",
-    }: {
-      id: number;
-      status: "pending" | "changeRequested" | "approved" | "rejected";
-      changeStatusDescription?: string;
-    }) => {
-      // Assuming updateCarStatus is defined in car-listing.service
+      userId,
+      isAdmin,
+      isOwner,
+    }: UpdateCarStatusParams) => {
+      const userRequestsChange =
+        status === "changeRequested" && !isAdmin && isOwner;
+
+      if (userRequestsChange) {
+        if (!userId) {
+          throw new Error("User ID is required to request a status change.");
+        }
+        return userChangeCarListingStatus({ carId: id, userId });
+      }
+
+      // Admin or system-driven status updates
       return updateCarStatus(id, { status, changeStatusDescription });
     },
     onSuccess: (_, variables) => {

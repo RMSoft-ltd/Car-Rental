@@ -70,6 +70,7 @@ export interface BookingDetail {
   expiresAt: string | null;
   totalDays: number;
   totalAmount: number;
+  depositAmount?: number;
   bookingStatus: BookingStatus;
   paymentStatus: PaymentStatus;
   depositStatus: DepositStatus;
@@ -94,24 +95,13 @@ export interface BookingPerOwner {
 export type BookingsPerOwnerList = BookingPerOwner[];
 
 // Deposit Types
-export interface DepositRequest {
-  carOwnerId: number;
-  amount: number;
-  bookingIds: number[];
-  paymentMethod: "BANK_TRANSFER" | "MOBILE_MONEY";
-  notes?: string;
-}
-
 export interface Deposit {
-  id: number;
-  carOwnerId: number;
-  amount: number;
-  bookingIds: number[];
-  paymentMethod: string;
-  status: DepositStatus;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
+  status: string;
+  referenceid: string;
+  success: boolean;
+  responsecode: string;
+  transactionid: string;
+  statusdesc: string;
 }
 
 // Booking History Types
@@ -197,10 +187,9 @@ export interface BalanceResponse {
 }
 
 // Make Deposit To Car Owner Request
-export interface MakeDepositRequest {
+export interface InitiateDepositRequest {
   carOwnerId: number;
   bookingIds: number[];
-  amount: number;
   reason: string;
   mobilephone: string;
 }

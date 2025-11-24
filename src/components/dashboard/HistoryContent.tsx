@@ -51,21 +51,17 @@ export default function HistoryContent({
     ownerId,
     isAdmin = false
 }: PaymentHistoryContentProps) {
-    // Determine if user is a car owner (has ownerId prop or should filter by ownerId)
     const isOwner = !!ownerId;
 
     const [filters, setFilters] = useState<BookingHistoryFilters>({
         bookingStatus: undefined,
         paymentStatus: undefined,
-        // If admin: no filters (show all)
-        // If owner (not admin): filter by ownerId (bookings where they are the owner)
-        // If not owner (not admin): filter by userId (bookings where they are the renter)
+
         userId: !isAdmin && !isOwner && userId ? userId : undefined,
         ownerId: !isAdmin && isOwner && ownerId ? ownerId : undefined,
     });
     const [showFilters, setShowFilters] = useState<boolean>(false);
 
-    // Update filters when props change
     useEffect(() => {
         setFilters(prev => ({
             ...prev,
@@ -74,13 +70,10 @@ export default function HistoryContent({
         }));
     }, [isAdmin, isOwner, userId, ownerId]);
 
-    // Fetch booking history with filters
     const { data, isLoading } = useBookingHistory(filters);
 
-    // Fetch cars for car filter dropdown
     const { data: carsResponse, isLoading: carsLoading } = useCarList({ limit: 1000 });
 
-    // Helper function to check if booking is expired (more than 15 minutes without payment)
     const isBookingExpired = (booking: BookingDetail): boolean => {
         if (!booking.expiresAt) return false;
         if (booking.paymentStatus === "PAID") return false;
@@ -92,7 +85,6 @@ export default function HistoryContent({
         return diffInMinutes > 15;
     };
 
-    // Helper function to get effective booking status (considering expiration)
     const getEffectiveBookingStatus = (booking: BookingDetail): string => {
         if (isBookingExpired(booking)) {
             return "CANCELLED";
@@ -100,7 +92,6 @@ export default function HistoryContent({
         return booking.bookingStatus;
     };
 
-    // Calculate statistics from the data
     const statistics = useMemo(() => {
         if (!data?.rows) return {
             totalBookings: 0,
@@ -238,7 +229,6 @@ export default function HistoryContent({
                 </Button>
             </div>
 
-            {/* Filters - Modern inline design */}
             {(showFilters) && (<Card className={`flex-shrink-0`}>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -415,7 +405,6 @@ export default function HistoryContent({
                     </div>
                 </CardContent>
 
-                {/* Clear Filters Button */}
                 {(filters.carId || filters.bookingStatus || filters.paymentStatus ||
                     filters.pickUpDateFrom || filters.pickUpDateTo || filters.dropOffDateFrom || filters.dropOffDateTo ||
                     filters.totalDays || filters.totalAmount || filters.isUpcoming) && (
@@ -432,7 +421,6 @@ export default function HistoryContent({
                     )}
             </Card>)}
 
-            {/* Bookings List - Scrollable Container  overflow-y-auto */}
             <div className="flex-1">
                 {isLoading ? (
                     <Card>

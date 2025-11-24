@@ -94,7 +94,14 @@ export default function CarListingDetailPage() {
     });
 
     const onSubmit = (data: CarStatusUpdateFormData) => {
-        mutate({ id: carId, status: data.status, changeStatusDescription: data.changeStatusDescription }, {
+        mutate({
+            id: carId,
+            status: data.status,
+            changeStatusDescription: data.changeStatusDescription,
+            userId: loggedInUserId,
+            isAdmin,
+            isOwner,
+        }, {
             onSuccess: () => {
                 toast.success("Success", "Car status updated successfully");
                 form.reset();

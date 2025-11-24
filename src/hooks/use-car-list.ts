@@ -1,8 +1,9 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { Car, CarQueryParams, CarResponse } from "@/types/car-listing";
+import { Car, CarOwnerListResponse, CarQueryParams, CarResponse } from "@/types/car-listing";
 import {
   getCarById,
   getCarByUserId,
+  getCarOwnerList,
   getCars,
 } from "@/services/car-listing.service";
 
@@ -18,6 +19,8 @@ export const carKeys = {
   ) => [...carKeys.userLists(), userId, params] as const,
   details: () => [...carKeys.all, "detail"] as const,
   detail: (id: number) => [...carKeys.details(), id] as const,
+  ownerLists: () => [...carKeys.all, "owner-list"] as const,
+  ownerList: () => [...carKeys.ownerLists()] as const,
 };
 
 /** Configuration for car listing query */
@@ -103,5 +106,19 @@ export const useUserCarList = (
     // Performance optimizations
     retry: CAR_QUERY_CONFIG.retry,
     retryDelay: CAR_QUERY_CONFIG.retryDelay,
+  });
+};
+
+/**
+ * @param limit - Number of cars to fetch
+ * @param skip - Number of cars to skip
+ * @returns React Query result with car owners list , loading state, and error handling
+ */
+
+export const useCarOwnerList = () => {
+  return useQuery<CarOwnerListResponse, Error>({
+    queryKey: carKeys.ownerList(),
+    queryFn: () => getCarOwnerList(),
+    enabled: true,
   });
 };

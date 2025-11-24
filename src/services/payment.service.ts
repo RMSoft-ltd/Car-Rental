@@ -1,13 +1,13 @@
 import apiClient from "@/lib/api";
 import {
   Deposit,
-  DepositRequest,
   BookingsPerOwnerList,
   BookingPerOwner,
   BookingHistoryResponse,
   BookingHistoryFilters,
   CarOwnerPaymentFilters,
   BalanceResponse,
+  InitiateDepositRequest,
 } from "@/types/payment";
 
 export const paymentService = {
@@ -28,9 +28,9 @@ export const paymentService = {
   },
 
   // Initiate deposit to car owner (admin only)
-  async initiateDeposit(depositData: DepositRequest): Promise<Deposit> {
+  async initiateDeposit(depositData: InitiateDepositRequest): Promise<Deposit> {
     const response = await apiClient.post(
-      "/payments/admin/deposit",
+      "/payments/deposit",
       depositData
     );
     return response.data;

@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { CarOwnerPaymentFilters, BookingsPerOwnerList } from "@/types/payment";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { CarOwnerPaymentFilters, BookingsPerOwnerList, InitiateDepositRequest } from "@/types/payment";
 import { paymentService } from "@/services/payment.service";
+import { getErrorMessage } from "@/utils/error-utils";
 
 interface CarOwnerPaymentsResponse {
   data: BookingsPerOwnerList;
@@ -50,5 +51,19 @@ export function useAccoutBalance() {
     queryKey: paymentKeys.balance(),
     queryFn: () => paymentService.getAdminBalance(),
     staleTime: 30000,
+  });
+}
+
+// Initiate Deposit
+export function useInitiateDeposit() {
+  return useMutation({
+    mutationFn: (depositData: InitiateDepositRequest) => paymentService.initiateDeposit(depositData),
+    onSuccess: (data) => {
+      console.log("Initiate deposit successful:", data);
+    },
+    onError: (error) => {
+      const message = getErrorMessage(error, "Failed to initiate deposit.");
+      console.error("Failed to initiate deposit:", message, error);
+    },
   });
 }

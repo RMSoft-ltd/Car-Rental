@@ -1,9 +1,15 @@
 import apiClient from "@/lib/api";
-import { Car, CarQueryParams, CarResponse } from "@/types/car-listing";
+import { Car, CarOwnerListResponse, CarQueryParams, CarResponse } from "@/types/car-listing";
 
 export const getCars = async (params?: CarQueryParams) => {
   const { data } = await apiClient.get<Promise<CarResponse>>("/car-listing", {
     params,
+  });
+  return data;
+};
+
+export const getCarOwnerList = async () => {
+  const { data } = await apiClient.get<CarOwnerListResponse>(`/car-listing/get-all/car-owners`, {
   });
   return data;
 };
@@ -95,5 +101,14 @@ export const updateCarStatus = async (
     `/admin-panel/status/${id}`,
     payload
   );
+  return data;
+};
+
+// User Submit requested changes & Update car status to pending
+export const userChangeCarListingStatus = async (payload: { carId: number; userId?: number }) => {
+  const { carId, userId,  } = payload;
+
+  const { data } = await apiClient.put<CarResponse>(
+    `/car-listing/change-status/${userId}/${carId}`);
   return data;
 };

@@ -94,6 +94,29 @@ export interface CarOwner {
   picture: string | null;
 }
 
+export interface CarListingSummary {
+  id: number;
+  title: string;
+  plateNumber: string;
+}
+
+export interface CarOwnerList {
+  id: number;
+  fName: string;
+  lName: string;
+  phone: string | null;
+  email: string;
+  picture: string | null;
+  carListings: CarListingSummary[];
+}
+
+export interface CarOwnerListResponse {
+  limit: number;
+  offset: number;
+  count: number;
+  data: CarOwnerList[];
+}
+
 export interface CarReview {
   id?: number;
   rating?: number;

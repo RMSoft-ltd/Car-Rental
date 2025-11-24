@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { BookingsPerOwnerList, CarOwnerPaymentFilters, BookingDetail } from "@/types/payment";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,11 +59,13 @@ import {
     getDepositStatusLabel,
 } from "@/utils/status-colors";
 import { Filter, ChevronLeft, ChevronRight, Eye, Calendar, CreditCard } from "lucide-react";
-import { useCarList } from "@/hooks/use-car-list";
+import { useCarList, useCarOwnerList } from "@/hooks/use-car-list";
 import { LuX } from "react-icons/lu";
 import { Combobox, ComboboxOption } from "@/components/forms/FormComponents";
 import { AiOutlineClear } from "react-icons/ai";
 import { depositPaymentSchema } from "@/schemas/payment.schema";
+import { useInitiateDeposit } from "@/hooks/use-car-owner-payments";
+import { useToast } from "@/app/shared/ToastProvider";
 
 type DepositPaymentFormValues = z.infer<typeof depositPaymentSchema>;
 
@@ -107,36 +109,49 @@ export function CarOwnerPaymentList({
         ownerName: string;
         ownerEmail: string;
         bookingIds: number[];
-        totalAmount: number;
+        depositAmount: number;
     }>({
         open: false,
         carOwnerId: null,
         ownerName: "",
         ownerEmail: "",
         bookingIds: [],
-        totalAmount: 0,
+        depositAmount: 0,
     });
+    const {success, error} = useToast();
 
     const { data: carsResponse, isLoading: carsLoading } = useCarList({ limit: 1000 });
+    const { data: carOwnersResponse, isLoading: carOwnersLoading } = useCarOwnerList();
+    const { mutate: initiateDeposit, isPending: initiateDepositPending } = useInitiateDeposit();
 
     const ownerOptions: ComboboxOption[] = useMemo(() => {
-        if (!data) return [];
+        if (!carOwnersResponse?.data) return [];
 
-        // Create a map to ensure unique owners
+        // Create a map to ensure unique owners from useCarOwnerList
         const ownersMap = new Map<number, ComboboxOption>();
 
-        data.forEach((owner) => {
-            if (!ownersMap.has(owner.carOwnerId)) {
-                ownersMap.set(owner.carOwnerId, {
-                    value: owner.carOwnerId.toString(),
-                    label: `${owner.carOwnerDetails.fname} ${owner.carOwnerDetails.lname}`,
-                    description: owner.carOwnerDetails.email,
+        carOwnersResponse.data.forEach((owner) => {
+            if (!ownersMap.has(owner.id)) {
+                ownersMap.set(owner.id, {
+                    value: owner.id.toString(),
+                    label: `${owner.fName} ${owner.lName}`,
+                    description: owner.email,
                 });
             }
         });
 
         return Array.from(ownersMap.values());
-    }, [data]);
+    }, [carOwnersResponse]);
+
+    const carOptions: ComboboxOption[] = useMemo(() => {
+        if (!carsResponse?.rows) return [];
+
+        return carsResponse.rows.map((car) => ({
+            value: car.id.toString(),
+            label: `${car.make} ${car.model} (${car.year}) - ${car.plateNumber}`,
+            description: car.owner?.email || "",
+        }));
+    }, [carsResponse]);
 
     const statistics = useMemo(() => {
         if (!data) return {
@@ -147,15 +162,14 @@ export function CarOwnerPaymentList({
         };
 
         const totalOwners = data.length;
-        const calculatedTotalAmount = data.reduce((sum, owner) => sum + owner.totalAmountOwed, 0);
+        const totalAmountOwed = data.reduce((sum, owner) => sum + owner.totalAmountOwed, 0);
         return {
             totalOwners,
-            totalAmountOwed: data.reduce((sum, owner) => sum + owner.totalAmountOwed, 0),
-            totalAmountPaid: data.reduce((sum, owner) => sum + owner.totalAmountOwed, 0),
-            totalAmount: calculatedTotalAmount
+            totalAmountOwed,
+            totalAmountPaid: totalAmountOwed,
+            totalAmount: totalAmountOwed
         }
     }, [data]);
-
 
     const handleFilterChange = (key: keyof CarOwnerPaymentFilters, value: string | number | boolean | undefined) => {
         const newFilters = { ...filters, [key]: value };
@@ -189,7 +203,24 @@ export function CarOwnerPaymentList({
     };
 
 
+    const calculateSelectedAmount = (carOwnerId: number) => {
+        const bookingIds = selectedBookings[carOwnerId] || [];
+        const owner = data.find((o) => o.carOwnerId === carOwnerId);
+        if (!owner) return 0;
+
+        return owner.details
+            .filter((booking) => bookingIds.includes(booking.id))
+            .reduce((sum, booking) => sum + (booking.depositAmount || 0), 0);
+    };
+
     const toggleBookingSelection = (carOwnerId: number, bookingId: number) => {
+        // Prevent selecting bookings with DEPOSITED status
+        const owner = data.find((o) => o.carOwnerId === carOwnerId);
+        const booking = owner?.details.find((b) => b.id === bookingId);
+        if (booking?.depositStatus === "DEPOSITED") {
+            return;
+        }
+
         setSelectedBookings((prev) => {
             const ownerBookings = prev[carOwnerId] || [];
             const isSelected = ownerBookings.includes(bookingId);
@@ -208,10 +239,18 @@ export function CarOwnerPaymentList({
         });
     };
 
-    const selectAllBookings = (carOwnerId: number, bookingIds: number[]) => {
+    const selectAllBookings = (carOwnerId: number) => {
+        const owner = data.find((o) => o.carOwnerId === carOwnerId);
+        if (!owner) return;
+
+        // Filter out bookings with DEPOSITED status
+        const selectableBookingIds = owner.details
+            .filter((booking) => booking.depositStatus !== "DEPOSITED")
+            .map((booking) => booking.id);
+
         setSelectedBookings((prev) => ({
             ...prev,
-            [carOwnerId]: bookingIds,
+            [carOwnerId]: selectableBookingIds,
         }));
     };
 
@@ -223,32 +262,22 @@ export function CarOwnerPaymentList({
         });
     };
 
-    const handlePayOwner = (carOwnerId: number) => {
+    const handlePreparePaymentForOwner = (carOwnerId: number) => {
         const bookingIds = selectedBookings[carOwnerId] || [];
         if (bookingIds.length > 0) {
             const owner = data.find((o) => o.carOwnerId === carOwnerId);
             if (owner) {
-                const totalAmount = calculateSelectedAmount(carOwnerId);
+                const depositAmount = calculateSelectedAmount(carOwnerId);
                 setPaymentDialog({
                     open: true,
                     carOwnerId,
                     ownerName: `${owner.carOwnerDetails.fname} ${owner.carOwnerDetails.lname}`,
                     ownerEmail: owner.carOwnerDetails.email,
                     bookingIds,
-                    totalAmount,
+                    depositAmount,
                 });
             }
         }
-    };
-
-    const calculateSelectedAmount = (carOwnerId: number) => {
-        const bookingIds = selectedBookings[carOwnerId] || [];
-        const owner = data.find((o) => o.carOwnerId === carOwnerId);
-        if (!owner) return 0;
-
-        return owner.details
-            .filter((booking) => bookingIds.includes(booking.id))
-            .reduce((sum, booking) => sum + booking.totalAmount, 0);
     };
 
     const openBookingDetails = (booking: BookingDetail) => {
@@ -271,16 +300,8 @@ export function CarOwnerPaymentList({
         defaultValues: {
             mobilephone: "",
             reason: "Security deposit",
-            amount: 0,
         },
     });
-
-    // Update form amount when dialog opens
-    useEffect(() => {
-        if (paymentDialog.open && paymentDialog.totalAmount > 0) {
-            form.setValue("amount", paymentDialog.totalAmount);
-        }
-    }, [paymentDialog.open, paymentDialog.totalAmount, form]);
 
     const closePaymentDialog = () => {
         setPaymentDialog({
@@ -289,21 +310,33 @@ export function CarOwnerPaymentList({
             ownerName: "",
             ownerEmail: "",
             bookingIds: [],
-            totalAmount: 0,
+            depositAmount: 0,
         });
         form.reset();
     };
 
-    const onSubmitPayment = async () => {
+    const onSubmitPayment = async (data: DepositPaymentFormValues) => {
         if (!paymentDialog.carOwnerId) return;
 
-        try {
-
-            deselectAllBookings(paymentDialog.carOwnerId);
-            closePaymentDialog();
-        } catch (error) {
-            console.error("Payment error:", error);
-        }
+        initiateDeposit(
+            {
+                carOwnerId: paymentDialog.carOwnerId,
+                bookingIds: paymentDialog.bookingIds,
+                reason: data.reason,
+                mobilephone: data.mobilephone,
+            },
+            {
+                onSuccess: () => {
+                    deselectAllBookings(paymentDialog.carOwnerId!);
+                    closePaymentDialog();
+                    success("Success", "Payment initiated successfully");
+                },
+                onError: (err) => {
+                    console.error("Payment error:", err);
+                    error("Failed", "Deposit initiation failed")
+                },
+            }
+        );
     };
 
     return (
@@ -391,7 +424,9 @@ export function CarOwnerPaymentList({
                                     }
                                     placeholder="Select Car Owner..."
                                     emptyText="No car owner found"
-                                    searchPlaceholder="Search car owner..."
+                                    searchPlaceholder="Search car owner by name or email..."
+                                    loading={carOwnersLoading}
+                                    disabled={carOwnersLoading}
                                 />
                             </div>
                         )}
@@ -399,30 +434,21 @@ export function CarOwnerPaymentList({
                         {/* Car Filter */}
                         <div className="space-y-2 ">
                             <Label htmlFor="carId" className="text-xs text-muted-foreground">Car</Label>
-                            <Select
+                            <Combobox
+                                options={[
+                                    { value: "all", label: "All Cars" },
+                                    ...carOptions,
+                                ]}
                                 value={filters.carId?.toString() || "all"}
-                                onValueChange={(value) =>
-                                    handleFilterChange("carId", value === "all" ? undefined : Number(value))
+                                onChange={(value) =>
+                                    handleFilterChange("carId", value === "all" || !value ? undefined : Number(value))
                                 }
-                            >
-                                <SelectTrigger size="md" id="carId" className="h-10 w-full">
-                                    <SelectValue placeholder="All Cars" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Cars</SelectItem>
-                                    {carsLoading ? (
-                                        <SelectItem value="loading" disabled>Loading...</SelectItem>
-                                    ) : carsResponse?.rows?.length === 0 ? (
-                                        <SelectItem value="none" disabled>No cars available</SelectItem>
-                                    ) : (
-                                        carsResponse?.rows?.map((car) => (
-                                            <SelectItem key={car.id} value={car.id.toString()}>
-                                                {car.make} {car.model} ({car.year}) - {car.plateNumber}
-                                            </SelectItem>
-                                        ))
-                                    )}
-                                </SelectContent>
-                            </Select>
+                                placeholder="All Cars"
+                                emptyText="No cars found"
+                                searchPlaceholder="Search by name, plate number, or owner email..."
+                                loading={carsLoading}
+                                disabled={carsLoading}
+                            />
                         </div>
 
                         {/* Deposit Status Filter */}
@@ -599,7 +625,7 @@ export function CarOwnerPaymentList({
                                                     </div>
                                                     <Button
                                                         size="sm"
-                                                        onClick={() => handlePayOwner(owner.carOwnerId)}
+                                                        onClick={() => handlePreparePaymentForOwner(owner.carOwnerId)}
                                                     >
                                                         Pay Selected
                                                     </Button>
@@ -621,13 +647,10 @@ export function CarOwnerPaymentList({
                                                                 variant="outline"
                                                                 size="sm"
                                                                 onClick={() =>
-                                                                    selectAllBookings(
-                                                                        owner.carOwnerId,
-                                                                        owner.details.map((b) => b.id)
-                                                                    )
+                                                                    selectAllBookings(owner.carOwnerId)
                                                                 }
                                                             >
-                                                                Select All
+                                                                Select All (Excluding Deposited)
                                                             </Button>
                                                             <Button
                                                                 variant="ghost"
@@ -646,7 +669,8 @@ export function CarOwnerPaymentList({
                                                                         <TableHead className="font-semibold">Booking ID</TableHead>
                                                                         <TableHead className="font-semibold">Period</TableHead>
                                                                         <TableHead className="font-semibold">Days</TableHead>
-                                                                        <TableHead className="font-semibold">Amount</TableHead>
+                                                                        <TableHead className="font-semibold">Total Amount</TableHead>
+                                                                        <TableHead className="font-semibold">Deposit Amount</TableHead>
                                                                         <TableHead className="font-semibold">Deposit Status</TableHead>
                                                                         <TableHead className="text-right font-semibold">Actions</TableHead>
                                                                     </TableRow>
@@ -656,24 +680,27 @@ export function CarOwnerPaymentList({
                                                                         const isSelected = selectedBookings[
                                                                             owner.carOwnerId
                                                                         ]?.includes(booking.id) ?? false;
+                                                                        const isDeposited = booking.depositStatus === "DEPOSITED";
 
                                                                         return (
                                                                             <TableRow
                                                                                 key={booking.id}
-                                                                                className={isSelected ? "bg-muted/50" : ""}
+                                                                                className={isSelected ? "bg-muted/50" : isDeposited ? "opacity-60" : ""}
                                                                             >
                                                                                 <TableCell>
                                                                                     <input
                                                                                         type="checkbox"
                                                                                         checked={isSelected}
+                                                                                        disabled={isDeposited}
                                                                                         onChange={() =>
                                                                                             toggleBookingSelection(
                                                                                                 owner.carOwnerId,
                                                                                                 booking.id
                                                                                             )
                                                                                         }
-                                                                                        className="h-4 w-4 rounded border-gray-300"
+                                                                                        className="h-4 w-4 rounded border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                                                                         aria-label={`Select booking ${booking.id}`}
+                                                                                        title={isDeposited ? "Cannot select: Deposit already paid" : ""}
                                                                                     />
                                                                                 </TableCell>
                                                                                 <TableCell className="font-mono text-xs">
@@ -692,6 +719,9 @@ export function CarOwnerPaymentList({
                                                                                 </TableCell>
                                                                                 <TableCell className="font-medium">
                                                                                     {formatCurrency(booking.totalAmount)}
+                                                                                </TableCell>
+                                                                                <TableCell className="font-medium">
+                                                                                    {formatCurrency(booking.depositAmount || 0)}
                                                                                 </TableCell>
                                                                                 <TableCell>
                                                                                     <Badge
@@ -909,6 +939,7 @@ export function CarOwnerPaymentList({
                                 <span className="text-sm text-muted-foreground">Email:</span>
                                 <span className="font-medium text-sm">{paymentDialog.ownerEmail}</span>
                             </div>
+
                             <Separator className="my-2" />
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-muted-foreground">Bookings Selected:</span>
@@ -917,7 +948,7 @@ export function CarOwnerPaymentList({
                             <div className="flex justify-between items-center">
                                 <span className="text-sm font-medium">Total Amount:</span>
                                 <span className="text-xl font-bold text-primary">
-                                    {formatCurrency(paymentDialog.totalAmount)}
+                                    {formatCurrency(paymentDialog.depositAmount)}
                                 </span>
                             </div>
                         </div>
@@ -947,29 +978,19 @@ export function CarOwnerPaymentList({
                                     )}
                                 />
 
-                                {/* Amount */}
-                                <FormField
-                                    control={form.control}
-                                    name="amount"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Amount (RWF)</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    {...field}
-                                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                                    disabled
-                                                />
-                                            </FormControl>
-                                            <FormDescription>
-                                                Payment amount in Rwandan Francs
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                {/* Amount - Display Only */}
+                                <div className="space-y-2">
+                                    <Label>Amount (RWF)</Label>
+                                    <Input
+                                        type="text"
+                                        value={formatCurrency(paymentDialog.depositAmount)}
+                                        disabled
+                                        readOnly
+                                    />
+                                    <p className="text-sm text-muted-foreground">
+                                        Payment amount in Rwandan Francs
+                                    </p>
+                                </div>
 
                                 {/* Reason */}
                                 <FormField
@@ -1005,9 +1026,9 @@ export function CarOwnerPaymentList({
                                     </Button>
                                     <Button
                                         type="submit"
-                                        disabled={form.formState.isSubmitting}
+                                        disabled={initiateDepositPending || form.formState.isSubmitting}
                                     >
-                                        {form.formState.isSubmitting ? "Processing..." : "Make Payment"}
+                                        {initiateDepositPending || form.formState.isSubmitting ? "Processing..." : "Make Payment"}
                                     </Button>
                                 </div>
                             </form>

@@ -14,8 +14,4 @@ export const depositPaymentSchema = z.object({
         .string()
         .min(5, "Reason must be at least 5 characters")
         .max(200, "Reason must not exceed 200 characters"),
-    amount: z
-        .number()
-        .positive("Amount must be positive")
-        .min(1, "Amount must be at least 1 RWF"),
 });
