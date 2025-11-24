@@ -184,6 +184,7 @@ export default function Home() {
     const params: CarQueryParams = {
       page,
       limit: 25,
+      status:"approved"
     };
 
     if (selectedCategory !== "all") {
