@@ -101,36 +101,29 @@ export default function PaymentsPage() {
                     )}
                 </TabsList>
 
-                {isLoading && activeTab === "payments" ? (
-                    <div className="flex items-center justify-center min-h-[400px]">
-                        <Spinner />
-                    </div>
-                ) : (
-                    <>
-                        {/* Booking History Tab */}
-                        <TabsContent value="history" className="space-y-6">
-                            <HistoryContent
-                                userId={!isAdmin ? loggedInUserId : undefined}
-                                ownerId={isOwner && !isAdmin ? loggedInUserId : undefined}
-                                isAdmin={isAdmin}
-                            />
-                        </TabsContent>
 
-                        {(isAdmin || isOwner) && (
-                            <TabsContent value="payments" className="space-y-6">
-                                <CarOwnerPaymentList
-                                    data={data?.data || []}
-                                    onFilterChange={handleFilterChange}
-                                    isLoading={isLoading}
-                                    totalPages={data?.totalPages || 1}
-                                    currentPage={filters.skip || 0}
-                                    isAdmin={isAdmin}
-                                    currentUserId={loggedInUserId}
-                                    isOwner={isOwner}
-                                />
-                            </TabsContent>
-                        )}
-                    </>
+                {/* Booking History Tab */}
+                <TabsContent value="history" className="space-y-6">
+                    <HistoryContent
+                        userId={!isAdmin ? loggedInUserId : undefined}
+                        ownerId={isOwner && !isAdmin ? loggedInUserId : undefined}
+                        isAdmin={isAdmin}
+                    />
+                </TabsContent>
+
+                {(isAdmin || isOwner) && (
+                    <TabsContent value="payments" className="space-y-6">
+                        <CarOwnerPaymentList
+                            data={data?.data || []}
+                            onFilterChange={handleFilterChange}
+                            isLoading={isLoading}
+                            totalPages={data?.totalPages || 1}
+                            currentPage={filters.skip || 0}
+                            isAdmin={isAdmin}
+                            currentUserId={loggedInUserId}
+                            isOwner={isOwner}
+                        />
+                    </TabsContent>
                 )}
             </Tabs>
         </div >

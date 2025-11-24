@@ -433,7 +433,7 @@ export default function HistoryContent({
             </Card>)}
 
             {/* Bookings List - Scrollable Container  overflow-y-auto */}
-            <div className="flex-1 pr-2">
+            <div className="flex-1">
                 {isLoading ? (
                     <Card>
                         <CardContent className="py-10">
@@ -512,6 +512,7 @@ export default function HistoryContent({
                                     </div>
                                 </CardHeader>
                                 <CardContent>
+                                    
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                                         <div className="space-y-1">
                                             <p className="text-xs text-muted-foreground">Renter</p>
