@@ -212,7 +212,7 @@ export function CarListingForm({
     const isLastStep = currentStep === STEPS.length - 1;
 
     return (
-        <div className="container mx-auto max-w-7xl pb-8">
+        <div className="container mx-auto max-w-7xl">
             <ProgressStepper steps={STEPS} currentStep={currentStep} />
 
             {/* Form Content */}
@@ -309,7 +309,7 @@ interface ProgressStepperProps {
 
 function ProgressStepper({ steps, currentStep }: ProgressStepperProps) {
     return (
-        <div className="mb-8">
+        <div className="mb-4 lg:mb-6">
             <div className="flex items-center justify-between">
                 {steps.map((step, index) => (
                     <div key={step.id} className="flex-1 flex items-center">
@@ -372,8 +372,8 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
     });
 
     return (
-        <div className="space-y-6 w-full">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormInput
                     name="title"
                     control={control}
@@ -501,11 +501,11 @@ function ListingInformationStep({ control }: { control: Control<any> }) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function FeaturesStep({ control }: { control: Control<any> }) {
     return (
-        <div className="space-y-8 w-full">
+        <div className="w-full space-y-4 lg:space-y-6">
             {/* Comfort Features */}
             <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Comfort Features</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Comfort Features</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormCheckbox name="isPowerSteering" control={control} label="Power Steering" />
                     <FormCheckbox name="isCruiseControl" control={control} label="Cruise Control" />
                     <FormCheckbox name="isNavigation" control={control} label="Navigation System" />
@@ -517,8 +517,8 @@ function FeaturesStep({ control }: { control: Control<any> }) {
 
             {/* Interior Features */}
             <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Interior Features</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Interior Features</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormCheckbox name="isAirConditioner" control={control} label="Air Conditioner" />
                     <FormCheckbox name="isLeatherSeats" control={control} label="Leather Seats" />
                     <FormCheckbox name="isMemorySeats" control={control} label="Memory Seats" />
@@ -531,8 +531,8 @@ function FeaturesStep({ control }: { control: Control<any> }) {
 
             {/* Exterior Features */}
             <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Exterior Features</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Exterior Features</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormCheckbox name="isFogLightsFront" control={control} label="Fog Lights (Front)" />
                     <FormCheckbox name="isRainSensingWipe" control={control} label="Rain Sensing Wipers" />
                     <FormCheckbox name="isRearSpoiler" control={control} label="Rear Spoiler" />
@@ -543,8 +543,8 @@ function FeaturesStep({ control }: { control: Control<any> }) {
 
             {/* Safety Features */}
             <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Safety Features</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Safety Features</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormCheckbox name="isBreakeAssist" control={control} label="Brake Assist" />
                     <FormCheckbox name="isChildSafetyLocks" control={control} label="Child Safety Locks" />
                     <FormCheckbox name="isTractionControl" control={control} label="Traction Control" />
@@ -558,8 +558,8 @@ function FeaturesStep({ control }: { control: Control<any> }) {
 
             {/* Equipment & Accessories */}
             <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Equipment & Accessories</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Equipment & Accessories</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormCheckbox name="isSpareTireIncluded" control={control} label="Spare Tire Included" />
                     <FormCheckbox name="isJackIncluded" control={control} label="Jack Included" />
                     <FormCheckbox name="isWheelSpannerIncluded" control={control} label="Wheel Spanner Included" />
@@ -568,12 +568,13 @@ function FeaturesStep({ control }: { control: Control<any> }) {
 
             {/* Drive Type */}
             <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Drive Type</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Drive Type</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormCheckbox name="isRightHandDrive" control={control} label="Right Hand Drive" />
                     <FormCheckbox name="isLeftHandDrive" control={control} label="Left Hand Drive" />
                 </div>
             </div>
+
         </div>
     );
 }
@@ -590,8 +591,8 @@ function PricingStep({ control }: { control: Control<any> }) {
     const priceWithFee = priceFee ? Number(pricePerDay) + Number(priceFee) : null;
 
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormInput
                     name="pricePerDay"
                     control={control}
@@ -649,9 +650,9 @@ function ImportantInfoStep({ control, form }: { control: Control<any>; form: any
     });
 
     return (
-        <div className="space-y-6 w-full">
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                <div className="md:col-span-2 space-y-6">
+        <div className="w-full space-y-4 lg:space-y-6">
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 space-y-2 lg:space-y-4'>
+                <div className="md:col-span-2 space-y-4 lg:space-y-6">
                     <Controller
                         name="requiredDocs"
                         control={control}
@@ -754,9 +755,9 @@ function ImportantInfoStep({ control, form }: { control: Control<any>; form: any
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="col-span-2">
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         <FormSelect
                             name="availabilityType"
                             control={control}
@@ -775,10 +776,10 @@ function ImportantInfoStep({ control, form }: { control: Control<any>; form: any
                                 control={control}
                                 render={({ field: { value = [], onChange }, fieldState: { error } }) => (
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Select Available Days
                                         </label>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                                             {CUSTOM_DAYS.map((day) => {
                                                 const isChecked = isDaySelected(value as string[], day);
 
@@ -828,23 +829,15 @@ function ImportantInfoStep({ control, form }: { control: Control<any>; form: any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ImagesStep({ control }: { control: Control<any> }) {
     return (
-        <div className="space-y-6">
+        <div className="w-full space-y-4 lg:space-y-6">
             <FormFileUpload
                 name="carImages"
                 control={control}
-                label="Car Images"
+                label="Select your car images from your device or drag and drop them here"
                 accept="image/*"
                 multiple={true}
                 maxSize={3}
             />
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                    <strong>Important:</strong> Upload clear, high-quality images of your car. Include photos from
-                    different angles (front, back, sides, interior). Good photos significantly increase your chances
-                    of getting bookings.
-                </p>
-            </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800 mb-2">
@@ -856,6 +849,7 @@ function ImagesStep({ control }: { control: Control<any> }) {
                     <li>Include at least 5-8 photos from different angles</li>
                     <li>Show both exterior and interior details</li>
                     <li>Highlight any special features or unique aspects</li>
+                    <li>Upload clear, high-quality images of your car. Include photos from different angles (front, back, sides, interior). Good photos significantly increase your chances of getting bookings.</li>
                 </ul>
             </div>
         </div>

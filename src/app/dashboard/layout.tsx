@@ -57,7 +57,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="h-screen w-full overflow-hidden flex bg-gray-50">
+    <div className="min-h-screen w-full flex bg-gray-50">
       {/* Sidebar */}
       <DashboardSidebar
         activeTab={getActiveTab()}
@@ -69,7 +69,7 @@ export default function DashboardLayout({
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+      <div className="flex-1 flex flex-col min-h-screen bg-gray-50">
         {/* Header */}
         <DashboardHeader
           title={getPageTitle()}
@@ -77,7 +77,7 @@ export default function DashboardLayout({
           isCollapsed={isSidebarCollapsed}
         />
 
-        <main className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+        <main className="flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
           {children}
         </main>
       </div>
