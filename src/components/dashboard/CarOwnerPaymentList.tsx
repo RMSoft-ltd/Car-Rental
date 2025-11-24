@@ -163,10 +163,18 @@ export function CarOwnerPaymentList({
 
         const totalOwners = data.length;
         const totalAmountOwed = data.reduce((sum, owner) => sum + owner.totalAmountOwed, 0);
+        
+        // Calculate totalAmountPaid: sum of depositAmount for bookings with DEPOSITED status
+        const totalAmountPaid = data.reduce((sum, owner) => {
+            return sum + owner.details
+                .filter((booking) => booking.depositStatus === "DEPOSITED")
+                .reduce((bookingSum, booking) => bookingSum + (booking.depositAmount ?? booking.totalAmount ?? 0), 0);
+        }, 0);
+        
         return {
             totalOwners,
             totalAmountOwed,
-            totalAmountPaid: totalAmountOwed,
+            totalAmountPaid,
             totalAmount: totalAmountOwed
         }
     }, [data]);
@@ -210,7 +218,7 @@ export function CarOwnerPaymentList({
 
         return owner.details
             .filter((booking) => bookingIds.includes(booking.id))
-            .reduce((sum, booking) => sum + (booking.depositAmount || 0), 0);
+            .reduce((sum, booking) => sum + booking.totalAmount, 0);
     };
 
     const toggleBookingSelection = (carOwnerId: number, bookingId: number) => {
