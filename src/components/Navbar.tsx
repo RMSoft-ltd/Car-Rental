@@ -27,7 +27,6 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const userId = user?.id ?? 0;
-
   const { totalItems, totalPrice } = useCartSummary(userId);
 
   useEffect(() => {

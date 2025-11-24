@@ -1,4 +1,3 @@
-// components/UserDetailsModal.tsx
 "use client";
 
 import { useState } from "react";

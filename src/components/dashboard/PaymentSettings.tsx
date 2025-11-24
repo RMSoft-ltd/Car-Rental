@@ -5,7 +5,6 @@ import {
   Plus,
   Trash2,
   Edit3,
-  Check,
   Shield,
   Phone,
   X,
@@ -26,9 +25,8 @@ interface PaymentMethod {
   backendId?: number;
   phoneNumber: string;
   displayName: string;
-  isDefault: boolean;
+  isActive: boolean;
   lastUsed?: string;
-  verified: boolean;
 }
 
 const formatLastUsed = (iso?: string) => {
@@ -49,9 +47,8 @@ const mapChannelToPaymentMethod = (
   backendId: channel.id,
   phoneNumber: channel.paymentAccountNumber,
   displayName: channel.paymentMethod || "Payment Channel",
-  isDefault: channel.isActive,
+  isActive: channel.isActive,
   lastUsed: formatLastUsed(channel.createdAt),
-  verified: channel.isActive,
 });
 
 export default function PaymentSettings() {
@@ -84,16 +81,8 @@ export default function PaymentSettings() {
   const [formData, setFormData] = useState({
     phoneNumber: "",
     displayName: "",
+    isActive: true,
   });
-
-  const setDefaultPayment = (id: string) => {
-    setPaymentMethods((methods) =>
-      methods.map((method) => ({
-        ...method,
-        isDefault: method.id === id,
-      }))
-    );
-  };
 
   const removePaymentMethod = (id: string) => {
     setPaymentMethods((methods) =>
@@ -111,13 +100,13 @@ export default function PaymentSettings() {
       {
         paymentMethod: "MTN Mobile Money",
         paymentAccountNumber: formData.phoneNumber,
-        isActive: true,
+        isActive: formData.isActive,
       },
       {
         onSuccess: async () => {
           await refetchPaymentChannels();
           setShowAddForm(false);
-          setFormData({ phoneNumber: "", displayName: "" });
+          setFormData({ phoneNumber: "", displayName: "", isActive: true });
           setFormError(null);
           toast.success(
             "Payment channel added",
@@ -156,7 +145,7 @@ export default function PaymentSettings() {
         )
       );
       setEditingId(null);
-      setFormData({ phoneNumber: "", displayName: "" });
+      setFormData({ phoneNumber: "", displayName: "", isActive: true });
       setEditError(null);
       return;
     }
@@ -167,14 +156,14 @@ export default function PaymentSettings() {
         payload: {
           paymentMethod: formData.displayName,
           paymentAccountNumber: formData.phoneNumber,
-          isActive: target.isDefault,
+          isActive: formData.isActive,
         },
       },
       {
         onSuccess: async () => {
           await refetchPaymentChannels();
           setEditingId(null);
-          setFormData({ phoneNumber: "", displayName: "" });
+          setFormData({ phoneNumber: "", displayName: "", isActive: true });
           setEditError(null);
           toast.success("Payment method updated", "Your changes have been saved.");
         },
@@ -187,13 +176,14 @@ export default function PaymentSettings() {
     setFormData({
       phoneNumber: method.phoneNumber,
       displayName: method.displayName,
+      isActive: method.isActive,
     });
     setShowAddForm(false);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setFormData({ phoneNumber: "", displayName: "" });
+    setFormData({ phoneNumber: "", displayName: "", isActive: true });
     setEditError(null);
   };
 
@@ -297,6 +287,29 @@ export default function PaymentSettings() {
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                       />
                     </div>
+
+                    {/* Status */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Status
+                      </label>
+                      <select
+                        value={formData.isActive ? "active" : "inactive"}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            isActive: e.target.value === "active",
+                          })
+                        }
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent cursor-pointer"
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        Inactive accounts cannot be used for payouts.
+                      </p>
+                    </div>
                   </div>
                 {editError && (
                   <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
@@ -327,9 +340,9 @@ export default function PaymentSettings() {
                 // Display Mode
                 <div
                   className={`border-2 rounded-xl p-5 transition-all ${
-                    method.isDefault
-                      ? "border-gray-900 bg-gray-50 shadow-sm"
-                      : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                    method.isActive
+                      ? "border-green-600 bg-green-50 shadow-sm"
+                      : "border-gray-200 hover:border-gray-300 hover:shadow-sm bg-white"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -345,18 +358,16 @@ export default function PaymentSettings() {
                           <h4 className="font-semibold text-gray-900 text-lg">
                             {method.displayName}
                           </h4>
-                          {method.isDefault && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-900 text-white">
-                              <Check className="w-3 h-3 mr-1" />
-                              Default
-                            </span>
-                          )}
-                          {method.verified && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
-                              <Shield className="w-3 h-3 mr-1" />
-                              Active
-                            </span>
-                          )}
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                              method.isActive
+                                ? "bg-green-100 text-green-800 border-green-200"
+                                : "bg-gray-100 text-gray-600 border-gray-200"
+                            }`}
+                          >
+                            <Shield className="w-3 h-3 mr-1" />
+                            {method.isActive ? "Active" : "Inactive"}
+                          </span>
                         </div>
                         <p className="text-sm text-gray-600 font-medium">
                           MTN Mobile Money • {method.phoneNumber}
@@ -371,14 +382,6 @@ export default function PaymentSettings() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2">
-                      {!method.isDefault && (
-                        <button
-                          onClick={() => setDefaultPayment(method.id)}
-                          className="text-sm font-semibold text-gray-700 hover:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-all cursor-pointer"
-                        >
-                          Set Default
-                        </button>
-                      )}
                       <button
                         onClick={() => startEdit(method)}
                         className="p-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all cursor-pointer"
@@ -423,7 +426,7 @@ export default function PaymentSettings() {
             <button
               onClick={() => {
                 setShowAddForm(false);
-                setFormData({ phoneNumber: "", displayName: "" });
+                setFormData({ phoneNumber: "", displayName: "", isActive: true });
                 setFormError(null);
               }}
               className="p-1 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
@@ -488,6 +491,29 @@ export default function PaymentSettings() {
                 Give this account a memorable name
               </p>
             </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                value={formData.isActive ? "active" : "inactive"}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    isActive: e.target.value === "active",
+                  })
+                }
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent cursor-pointer"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1.5">
+                Switch to inactive to temporarily disable payouts to this account.
+              </p>
+            </div>
             {formError && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
                 {formError}
@@ -500,7 +526,7 @@ export default function PaymentSettings() {
             <button
               onClick={() => {
                 setShowAddForm(false);
-                setFormData({ phoneNumber: "", displayName: "" });
+                setFormData({ phoneNumber: "", displayName: "", isActive: true });
                 setFormError(null);
               }}
               className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
