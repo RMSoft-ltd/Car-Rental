@@ -6,7 +6,13 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Menu, Transition } from "@headlessui/react";
 import { FaBars, FaTimes } from "react-icons/fa";
-import { User, LayoutDashboard, LogOut, HelpCircle, UserPlus } from "lucide-react";
+import {
+  User,
+  LayoutDashboard,
+  LogOut,
+  HelpCircle,
+  UserPlus,
+} from "lucide-react";
 import { HiChevronDown } from "react-icons/hi";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/shared/ToastProvider";
@@ -79,7 +85,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky overflow-hidden top-0 z-50">
+    <nav className="bg-white border-b border-gray-200 sticky  top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 sm:h-20">
           <div className="flex-shrink-0">
@@ -88,7 +94,7 @@ export default function Navbar() {
                 src="/logo1.png"
                 alt="KwickCar Logo"
                 width={120}
-                height={32} 
+                height={32}
                 unoptimized
                 className="w-24 object-cover sm:w-32 lg:w-40 h-auto transition-all duration-200"
               />
@@ -123,7 +129,12 @@ export default function Navbar() {
                   </div>
 
                   {/* Total Price */}
-                  <div className="hidden lg:block text-sm text-gray-700">
+                  <div
+                    onClick={() => {
+                      router.push("/cart");
+                    }}
+                    className="hidden cursor-pointer lg:block text-sm text-gray-700"
+                  >
                     <span className="font-semibold">RWF {totalPrice}</span>
                   </div>
                 </div>
@@ -134,11 +145,9 @@ export default function Navbar() {
 
             {/* Profile / Auth Section */}
             {isAuthenticated && user ? (
-              <Menu as="div" className="relative inline-block text-left">
+              <Menu as="div" className="relative  inline-block text-left">
                 <div>
-                  <Menu.Button
-                    className="group flex items-center text-gray-900 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-50 cursor-pointer outline-none focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 transition-all duration-200"
-                  >
+                  <Menu.Button className="group flex items-center text-gray-900 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-50 cursor-pointer outline-none focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 transition-all duration-200">
                     <UserAvatar user={user} size="default" />
                     <div className="hidden lg:block text-left min-w-0 flex-1 ml-2">
                       <p className="text-sm lg:text-base font-semibold text-gray-900 truncate">
@@ -161,7 +170,7 @@ export default function Navbar() {
                   leaveFrom="transform opacity-100 scale-100"
                   leaveTo="transform opacity-0 scale-95"
                 >
-                  <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-lg bg-white shadow-lg ring-1 ring-gray-300 ring-opacity-5 focus:outline-none z-50">
+                  <Menu.Items className="absolute  right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-lg bg-white shadow-lg ring-1 ring-gray-300 ring-opacity-5 focus:outline-none z-50">
                     <>
                       {/* Authenticated User Menu */}
                       <div className="px-4 py-3">
@@ -211,7 +220,9 @@ export default function Navbar() {
                         <Menu.Item>
                           {({ active }) => (
                             <button
-                              onClick={() => router.push("/dashboard/add-listing")}
+                              onClick={() =>
+                                router.push("/dashboard/add-listing")
+                              }
                               className={clsx(
                                 active
                                   ? "bg-gray-100 text-gray-900"
@@ -287,25 +298,27 @@ export default function Navbar() {
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
             {/* Mobile Cart */}
-            {isAuthenticated && (<div className="relative">
-              <button
-                onClick={() => {
-                  router.push("/cart");
-                }}
-                className="text-gray-700 hover:text-gray-900 p-2 relative cursor-pointer transition-colors"
-              >
-                <Image
-                  src="/images/cart.svg"
-                  alt="Cart"
-                  width={24}
-                  height={24}
-                  className="object-contain"
-                />
-                <span className="absolute -top-1 -right-1 bg-black text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
-                  {totalItems}
-                </span>
-              </button>
-            </div>)}
+            {isAuthenticated && (
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    router.push("/cart");
+                  }}
+                  className="text-gray-700 hover:text-gray-900 p-2 relative cursor-pointer transition-colors"
+                >
+                  <Image
+                    src="/images/cart.svg"
+                    alt="Cart"
+                    width={24}
+                    height={24}
+                    className="object-contain"
+                  />
+                  <span className="absolute -top-1 -right-1 bg-black text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                </button>
+              </div>
+            )}
 
             <button
               onClick={toggleMobileMenu}
@@ -337,7 +350,12 @@ export default function Navbar() {
 
               {isAuthenticated ? (
                 <>
-                  <div className="px-3 py-2 text-left md:text-center bg-gray-50 rounded-md">
+                  <div
+                    onClick={() => {
+                      router.push("/cart");
+                    }}
+                    className="px-3 py-2 text-left md:text-center bg-gray-50 rounded-md"
+                  >
                     <span className="text-sm font-semibold text-gray-700">
                       Total: RWF {totalPrice}
                     </span>

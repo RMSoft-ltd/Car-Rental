@@ -82,15 +82,14 @@ export const useUsers = (
   });
 };
 
-/**
- * Hook for fetching a specific user by ID
- */
 export const useUser = (
-id: number, p0: { enabled: boolean; }): UseQueryResult<SingleUserResponse, Error> => {
+  id: number, 
+  options?: { enabled?: boolean }
+): UseQueryResult<SingleUserResponse, Error> => {
     return useQuery<SingleUserResponse, Error>({
         queryKey: userKeys.detail(id),
         queryFn: () => getUserById(id),
-        enabled: !!id,
+        enabled: options?.enabled !== false && !!id,
         staleTime: USER_QUERY_CONFIG.staleTime,
         gcTime: USER_QUERY_CONFIG.gcTime,
         refetchOnWindowFocus: false,

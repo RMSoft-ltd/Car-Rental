@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Search, Calendar, Car, Filter } from "lucide-react";
+import { Calendar, Car, Filter } from "lucide-react";
 import { useBookingHistory } from "@/hooks/use-booking-history";
 import { formatCurrency, formatDate } from "@/utils/formatter";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +40,7 @@ export default function RentalHistoryContent() {
     limit: 25,
     userId: isAdmin ? undefined : loggedInUserId,
   });
-  const [searchQuery, setSearchQuery] = useState("");
+ 
   const [currentPage, setCurrentPage] = useState(1);
   const isPaginationChange = useRef(false);
 
@@ -62,16 +62,7 @@ export default function RentalHistoryContent() {
     return () => clearTimeout(timeoutId);
   }, [filters, refetch]);
 
-  // Handle search
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFilters(prev => ({
-      ...prev,
-      search: searchQuery || undefined,
-      skip: 0
-    }));
-    setCurrentPage(1);
-  };
+
 
   // Handle filter changes
   const handleFilterChange = (key: keyof BookingHistoryFilters, value: string | number | undefined) => {
@@ -133,7 +124,6 @@ export default function RentalHistoryContent() {
   // Clear all filters
   const handleClearFilters = () => {
     setFilters({ skip: 0, limit: 25, userId: isAdmin ? undefined : loggedInUserId });
-    setSearchQuery("");
     setCurrentPage(1);
   };
 
@@ -152,33 +142,7 @@ export default function RentalHistoryContent() {
   return (
     <div className="flex-1 p-4 lg:p-8 h-full overflow-auto bg-gray-50">
       <div className="container mx-auto">
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                type="text"
-                placeholder="Type make, model, car title, user name, or owner name to search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSearch(e);
-                  }
-                }}
-                className="w-full py-6"
-              />
-            </div>
-            <Button
-              onClick={handleSearch}
-              className="bg-black text-white px-6 py-6 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center gap-2"
-            >
-              <Search className="w-5 h-5" />
-              Search
-            </Button>
-          </div>
-        </div>
+     
 
         {/* Filters */}
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -280,7 +244,6 @@ export default function RentalHistoryContent() {
                   <SelectItem value="10">10 items</SelectItem>
                   <SelectItem value="25">25 items</SelectItem>
                   <SelectItem value="50">50 items</SelectItem>
-                  <SelectItem value="100">100 items</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -332,7 +295,10 @@ export default function RentalHistoryContent() {
                     Total Amount
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                    Status
+                    Booking Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    Payment Status
                   </th>
                 </tr>
               </thead>
@@ -461,7 +427,18 @@ export default function RentalHistoryContent() {
                         >
                           {getBookingStatusLabel(rental.bookingStatus)}
                         </Badge>
-                        <Badge
+                        
+                        {rental.depositStatus && rental.depositStatus !== "PENDING" && (
+                          <Badge variant="outline" className="text-xs">
+                            Deposit: {rental.depositStatus}
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
+                    {/* Status */}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                       <Badge
                           variant={getStatusVariant(rental.paymentStatus)}
                           className={`text-xs ${getStatusClassName(
                             rental.paymentStatus
@@ -469,6 +446,7 @@ export default function RentalHistoryContent() {
                         >
                           {getPaymentStatusLabel(rental.paymentStatus)}
                         </Badge>
+                        
                         {rental.depositStatus && rental.depositStatus !== "PENDING" && (
                           <Badge variant="outline" className="text-xs">
                             Deposit: {rental.depositStatus}

@@ -267,10 +267,9 @@ export default function Home() {
   // Fetch data
   const { data, isLoading, isError, error, refetch } = useCarList(queryParams);
 
-  const cars = data?.rows ?? [];
+ const cars = useMemo(() => data?.rows ?? [], [data?.rows]);
 
-  const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
-
+const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
   const updatedFilterSections = useMemo(
     () => getUpdatedFilterSections(FILTER_SECTIONS, filterCounts),
     [filterCounts]
