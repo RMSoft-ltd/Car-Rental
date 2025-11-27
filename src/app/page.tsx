@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { MapPin, Calendar, Clock, Search, ArrowUpDown } from "lucide-react";
 import HorizontalCarCard from "@/components/HorizontalCarCard";
-import { CarQueryParams } from "@/types/car-listing";
+import { Car, CarQueryParams } from "@/types/car-listing";
 import { HorizontalCarCardSkeleton } from "@/components/skelton/HorizontalCarCardSkeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCarList } from "@/hooks/use-car-list";
@@ -31,6 +31,126 @@ import {
   calculateFilterCounts,
   getUpdatedFilterSections,
 } from "@/utils/filterCountCalculator";
+
+// ============================================
+// Custom Hooks
+// ============================================
+
+const useInfiniteScroll = ({
+  isLoading,
+  hasMore,
+  onLoadMore,
+  threshold = 0.1,
+  rootMargin = "100px",
+}: {
+  isLoading: boolean;
+  hasMore: boolean;
+  onLoadMore: () => void;
+  threshold?: number;
+  rootMargin?: string;
+}) => {
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoading && hasMore) {
+          onLoadMore();
+        }
+      },
+      { threshold, rootMargin }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+      observer.disconnect();
+    };
+  }, [isLoading, hasMore, onLoadMore, threshold, rootMargin]);
+
+  return observerTarget;
+};
+
+const useFilterState = () => {
+  const [selectedCarTypes, setSelectedCarTypes] = useState<string[]>([]);
+  const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>([]);
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const [selectedFuelTypes, setSelectedFuelTypes] = useState<string[]>([]);
+  const [selectedYearRange, setSelectedYearRange] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedSort, setSelectedSort] = useState<string>("recommended");
+
+  const toggleArrayFilter = useCallback(
+    (setter: React.Dispatch<React.SetStateAction<string[]>>) =>
+      (item: string) => {
+        setter((prev) =>
+          prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+        );
+      },
+    []
+  );
+
+  const toggleTransmission = useCallback((transmission: string) => {
+    setSelectedTransmissions((prev) =>
+      prev.includes(transmission) ? [] : [transmission]
+    );
+  }, []);
+
+  const togglePriceRange = useCallback((range: string) => {
+    setSelectedPriceRange((prev) => (prev === range ? null : range));
+  }, []);
+
+  const toggleYearRange = useCallback((range: string) => {
+    setSelectedYearRange((prev) => (prev === range ? null : range));
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setSelectedCarTypes([]);
+    setSelectedTransmissions([]);
+    setSelectedPriceRange(null);
+    setSelectedFeatures([]);
+    setSelectedFuelTypes([]);
+    setSelectedYearRange(null);
+    setSelectedCategory("all");
+  }, []);
+
+  return {
+    filters: {
+      selectedCarTypes,
+      selectedTransmissions,
+      selectedPriceRange,
+      selectedFeatures,
+      selectedFuelTypes,
+      selectedYearRange,
+      selectedCategory,
+      selectedSort,
+    },
+    setters: {
+      setSelectedCarTypes,
+      setSelectedTransmissions,
+      setSelectedPriceRange,
+      setSelectedFeatures,
+      setSelectedFuelTypes,
+      setSelectedYearRange,
+      setSelectedCategory,
+      setSelectedSort,
+    },
+    actions: {
+      toggleArrayFilter,
+      toggleTransmission,
+      togglePriceRange,
+      toggleYearRange,
+      clearAllFilters,
+    },
+  };
+};
 
 // ============================================
 // Subcomponents
@@ -152,48 +272,54 @@ const EmptyState = React.memo<{ refetch: () => void; reset: () => void }>(
 );
 EmptyState.displayName = "EmptyState";
 
+const LoadingSpinner = React.memo(() => (
+  <div className="flex justify-center items-center py-8">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+  </div>
+));
+LoadingSpinner.displayName = "LoadingSpinner";
+
+const EndOfResults = React.memo(() => (
+  <div className="text-center py-8 text-gray-600 bg-white rounded-lg shadow-sm">
+    <p className="text-sm">You&apos;ve reached the end of the results</p>
+  </div>
+));
+EndOfResults.displayName = "EndOfResults";
+
 // ============================================
 // Main Component
 // ============================================
 
 export default function Home() {
-  // Filter state
-  const [selectedCarTypes, setSelectedCarTypes] = useState<string[]>([]);
-  const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>(
-    []
-  );
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(
-    null
-  );
-  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
-  const [selectedFuelTypes, setSelectedFuelTypes] = useState<string[]>([]);
-  const [selectedYearRange, setSelectedYearRange] = useState<string | null>(
-    null
-  );
+  // Use custom filter hook
+  const { filters, setters, actions } = useFilterState();
+  const {
+    selectedCarTypes,
+    selectedTransmissions,
+    selectedPriceRange,
+    selectedFeatures,
+    selectedFuelTypes,
+    selectedYearRange,
+    selectedCategory,
+    selectedSort,
+  } = filters;
 
-  // UI state
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedSort, setSelectedSort] = useState<string>("recommended");
   const [page, setPage] = useState<number>(1);
+  const [accumulatedCars, setAccumulatedCars] = useState<Car[]>([]);
 
-  // Refs
-  const observerTarget = useRef<HTMLDivElement>(null);
-
-  // query params from filters
+  // Build query params from filters
   const queryParams: CarQueryParams = useMemo(() => {
     const params: CarQueryParams = {
       page,
       limit: 25,
-      status:"approved"
+      status: "approved",
     };
 
     if (selectedCategory !== "all") {
       params.size = selectedCategory;
     }
 
-    if (
-      selectedSort && selectedSort !== "recommended" ? selectedSort : undefined
-    ) {
+    if (selectedSort && selectedSort !== "recommended") {
       switch (selectedSort) {
         case "pricePerDay-asc":
           params.sortBy = "pricePerDay";
@@ -268,21 +394,32 @@ export default function Home() {
   // Fetch data
   const { data, isLoading, isError, error, refetch } = useCarList(queryParams);
 
- const cars = useMemo(() => data?.rows ?? [], [data?.rows]);
+  // Accumulate cars across pages
+  useEffect(() => {
+    if (data?.rows) {
+      if (page === 1) {
+        setAccumulatedCars(data.rows);
+      } else {
+        setAccumulatedCars((prev) => [...prev, ...data.rows]);
+      }
+    }
+  }, [data?.rows, page]);
 
-const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
+  const filterCounts = useMemo(() => calculateFilterCounts(accumulatedCars), [accumulatedCars]);
   const updatedFilterSections = useMemo(
     () => getUpdatedFilterSections(FILTER_SECTIONS, filterCounts),
     [filterCounts]
   );
 
-  const resetPage = useCallback(() => {
-    setPage(1);
-  }, []);
+  // Calculate if there are more pages to load
+  const hasMore = useMemo(() => {
+    return accumulatedCars.length < (data?.total ?? 0);
+  }, [accumulatedCars.length, data?.total]);
 
-  // Watch for filter changes and reset page
+  // Reset page and accumulated cars when filters change
   useEffect(() => {
-    resetPage();
+    setPage(1);
+    setAccumulatedCars([]);
   }, [
     selectedSort,
     selectedCarTypes,
@@ -291,75 +428,39 @@ const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
     selectedFeatures,
     selectedFuelTypes,
     selectedYearRange,
-    resetPage,
+    selectedCategory,
   ]);
 
-  // Infinite scroll observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          !isLoading &&
-          data?.rows &&
-          data.rows.length > 0 &&
-          data.rows.length < (data.total || 0)
-        ) {
-          setPage((prev) => prev + 1);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+  // Load more callback for infinite scroll
+  const loadMore = useCallback(() => {
+    if (!isLoading && hasMore) {
+      setPage((prev) => prev + 1);
     }
+  }, [isLoading, hasMore]);
 
-    return () => observer.disconnect();
-  }, [isLoading, data?.rows, data?.total]);
+  // Use custom infinite scroll hook
+  const observerTarget = useInfiniteScroll({
+    isLoading,
+    hasMore,
+    onLoadMore: loadMore,
+    threshold: 0.1,
+    rootMargin: "100px",
+  });
 
-  // Filter toggle handlers
-  const toggleArrayFilter = useCallback(
-    (setter: React.Dispatch<React.SetStateAction<string[]>>) =>
-      (item: string) => {
-        setter((prev) =>
-          prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
-        );
-      },
-    []
-  );
-
-  const toggleTransmission = useCallback((transmission: string) => {
-    setSelectedTransmissions((prev) =>
-      prev.includes(transmission) ? [] : [transmission]
-    );
-  }, []);
-
-  const togglePriceRange = useCallback((range: string) => {
-    setSelectedPriceRange((prev) => (prev === range ? null : range));
-  }, []);
-
-  const toggleYearRange = useCallback((range: string) => {
-    setSelectedYearRange((prev) => (prev === range ? null : range));
-  }, []);
-
-  const clearAllFilters = useCallback(() => {
-    setSelectedCarTypes([]);
-    setSelectedTransmissions([]);
-    setSelectedPriceRange(null);
-    setSelectedFeatures([]);
-    setSelectedFuelTypes([]);
-    setSelectedYearRange(null);
-    setSelectedCategory("all");
+  // Reset function that clears filters and refetches
+  const resetSearch = useCallback(() => {
+    actions.clearAllFilters();
     setPage(1);
-    // Trigger refetch after clearing filters
+    setAccumulatedCars([]);
     setTimeout(() => refetch(), 0);
-  }, [refetch]);
+  }, [actions, refetch]);
 
   // Computed values
   const carCount = data?.total ?? 0;
-  const hasNoCars = !isLoading && carCount === 0;
-  const hasCars = cars.length > 0;
+  const hasNoCars = !isLoading && accumulatedCars.length === 0;
+  const hasCars = accumulatedCars.length > 0;
+  const showLoadingSpinner = isLoading && page > 1;
+  const showEndOfResults = hasCars && !hasMore && !isLoading;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -457,13 +558,12 @@ const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Filter Sidebar */}
-
             <aside className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6 ">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-bold text-gray-900">Filter</h3>
                   <button
-                    onClick={clearAllFilters}
+                    onClick={resetSearch}
                     className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
                     aria-label="Clear all filters"
                   >
@@ -475,7 +575,7 @@ const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
                   title="Car Type"
                   items={updatedFilterSections.carType}
                   selectedItems={selectedCarTypes}
-                  onToggle={toggleArrayFilter(setSelectedCarTypes)}
+                  onToggle={actions.toggleArrayFilter(setters.setSelectedCarTypes)}
                 />
 
                 <div className="mb-4 pb-4 border-b border-gray-200">
@@ -489,7 +589,7 @@ const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
                         label={item.label}
                         count={item.count}
                         checked={selectedTransmissions.includes(item.label)}
-                        onChange={() => toggleTransmission(item.label)}
+                        onChange={() => actions.toggleTransmission(item.label)}
                       />
                     ))}
                   </div>
@@ -499,28 +599,28 @@ const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
                   title="Price Range"
                   items={updatedFilterSections.priceRange}
                   selectedItems={selectedPriceRange ? [selectedPriceRange] : []}
-                  onToggle={togglePriceRange}
+                  onToggle={actions.togglePriceRange}
                 />
 
                 <FilterSection
                   title="Features"
                   items={updatedFilterSections.features}
                   selectedItems={selectedFeatures}
-                  onToggle={toggleArrayFilter(setSelectedFeatures)}
+                  onToggle={actions.toggleArrayFilter(setters.setSelectedFeatures)}
                 />
 
                 <FilterSection
                   title="Fuel Type"
                   items={updatedFilterSections.fuelType}
                   selectedItems={selectedFuelTypes}
-                  onToggle={toggleArrayFilter(setSelectedFuelTypes)}
+                  onToggle={actions.toggleArrayFilter(setters.setSelectedFuelTypes)}
                 />
 
                 <FilterSection
                   title="Year"
                   items={updatedFilterSections.year}
                   selectedItems={selectedYearRange ? [selectedYearRange] : []}
-                  onToggle={toggleYearRange}
+                  onToggle={actions.toggleYearRange}
                   showBorder={false}
                 />
               </div>
@@ -531,7 +631,7 @@ const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
               <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6 mb-6">
                 <div className="flex flex-col md:flex-row md:justify-between mb-4">
                   <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-                    {isLoading ? "Loading..." : `${carCount} Cars Available`}
+                    {isLoading && page === 1 ? "Loading..." : `${carCount} Cars Available`}
                   </h2>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
@@ -542,17 +642,17 @@ const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
                     <SelectInput
                       options={[...SORT_OPTIONS]}
                       value={selectedSort}
-                      onValueChange={(value: string) => setSelectedSort(value)}
+                      onValueChange={(value: string) => setters.setSelectedSort(value)}
                     />
                   </div>
                 </div>
 
                 <Tabs
                   value={selectedCategory}
-                  onValueChange={setSelectedCategory}
+                  onValueChange={setters.setSelectedCategory}
                   className="flex cursor-pointer flex-wrap gap-2"
                 >
-                  <TabsList className=" cursor-pointer  ">
+                  <TabsList className="cursor-pointer">
                     {CAR_CATEGORIES.map((category) => (
                       <TabsTrigger
                         className="cursor-pointer"
@@ -580,8 +680,8 @@ const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
 
               {/* Car Listings */}
               <div className="space-y-6">
-                {/* Loading State */}
-                {isLoading &&
+                {/* Initial Loading State */}
+                {isLoading && page === 1 &&
                   Array.from({ length: 3 }).map((_, i) => (
                     <HorizontalCarCardSkeleton key={i} />
                   ))}
@@ -589,22 +689,28 @@ const filterCounts = useMemo(() => calculateFilterCounts(cars), [cars]);
                 {/* Empty State */}
                 {hasNoCars && (
                   <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-6">
-                    <EmptyState refetch={refetch} reset={clearAllFilters} />
+                    <EmptyState refetch={refetch} reset={resetSearch} />
                   </div>
                 )}
 
                 {/* Cars List */}
                 {hasCars &&
-                  cars.map((car, index) => (
+                  accumulatedCars.map((car, index) => (
                     <HorizontalCarCard
-                      key={`${car.id}-${page}`}
+                      key={car.id}
                       car={car}
-                      isTopPick={index < 2 && page === 1}
+                      isTopPick={index < 2}
                     />
                   ))}
 
+                {/* Loading More Indicator */}
+                {showLoadingSpinner && <LoadingSpinner />}
+
                 {/* Infinite scroll trigger */}
                 <div ref={observerTarget} className="h-4" />
+
+                {/* End of Results Message */}
+                {showEndOfResults && <EndOfResults />}
               </div>
             </main>
           </div>

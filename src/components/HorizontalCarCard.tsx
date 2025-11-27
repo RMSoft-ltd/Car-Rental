@@ -90,7 +90,7 @@ export default function HorizontalCarCard({
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-all duration-300 relative transform hover:-translate-y-1 overflow-hidden">
+      <div key={car.id} className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-all duration-300 relative transform hover:-translate-y-1 overflow-hidden">
         {/* Top Pick Badge */}
         {isTopPick && (
           <div className="absolute top-3 left-3 bg-black text-white px-2 py-1 text-xs font-medium z-10 rounded">
